@@ -1,0 +1,5246 @@
+
+ var tester = tester ||  (function () {
+// Brixy core BX namespace.
+/**
+* Core namespace of the Brixy framework.
+* @namespace BX
+* @author Stanislav Antos
+* @version 1.0.0
+*/
+var BX = BX || {
+	
+	
+	/**
+	* Returns a string representation of the object in the form of `"[object ClassName]"`.  
+	* Base Extend Script `Object.prototype.toString()` method doesn't distinguish the type and always returns `"[object Object]"`.
+	* @memberOf BX
+	* @return {string}
+	*/
+	toString: function() {
+		var n = this.constructor.name;
+		return '[object ' + (n === 'anonymous' ? 'Object' : n) + ']';
+	},
+
+	/**
+	* Subclassing. Adds the prototype of the parent class to the child class.  
+	* `BX.subclass()` should be called before adding of child's prototype methods and properties.
+	* 
+	* @example
+	* // parent class
+	* function Parent(surname) {
+	* 	this._surname = surname;
+	* }
+	* Parent.prototype.getSurname = function() {
+	* 	return this._surname;
+	* };
+	* 
+	* // subclass
+	* function Child(name, surname) {
+	* 	// you may call the Parent constructor (if needed)
+	* 	Parent.call(this, surname);
+	* 	this._name = name;
+	* }
+	* BX.subclass(Child, Parent); // subclassing
+	* Child.prototype.getName = function() {
+	* 	return this._name + ' ' + this._surname;
+	* 	// or you may directly call the Parent method
+	* 	return this._name + ' ' + Parent.prototype.getSurname.call(this);
+	* };
+	* 
+	* @memberOf BX
+	* @param {Function} Child
+	* @param {Function} Parent
+	*/
+	subclass: function (Child, Parent) {
+		var F = function() {};
+		F.prototype = Parent.prototype;
+		Child.prototype = new F();
+		Child.prototype.constructor = Child;	
+	},
+	
+	/**
+	* Evaluates the file.
+	* @memberOf BX
+	* @param {File} file
+	*/
+	evalFile: function (file) {
+		$.evalFile(file);
+	}
+};
+
+/**
+* @namespace BX.error
+*/
+BX.error || (function() {
+	
+	/**
+	* ErrorItem object.
+	* @class
+	* @alias BX.error.ErrorItem
+	* 
+	* @property {string} location - Name of the module or method where the error has occurred.
+	* @property {string} message - Description of the error.
+	* @property {int} line - Line number where the error occured.
+	* @property {string} fileName - Name of the source file.
+	* 
+	* @param {string} location - Name of the module or method where the error has occurred.
+	* @param {Error|string} error - Description of the error.
+	* @param {Error|string} [primeError] - A prime error that caused this exception. (optional)
+	*/
+	function ErrorItem(location, error, primeError) {
+		var m = '',
+			l,
+			f;
+			
+		if (error) {
+			if (error instanceof Error || error instanceof ErrorItem) {
+				l = error.line;
+				f = error.fileName;
+				m = error.message;
+			}
+			else
+				m = m + error; // convert to string
+		}
+		
+		if (primeError) {
+			m = m ? m + '\n' + primeError : primeError;
+			
+			if (primeError instanceof Error) { // raw error that caused the exception
+				l = primeError.line;
+				f = primeError.fileName;
+			}
+		}
+		
+		this.location = location;
+		this.message = m;
+		this.line = l;
+		this.fileName = f;
+	}
+	
+	/**
+	* Returns the error string.
+	* @return {string}
+	*/
+	ErrorItem.prototype.toString = function() {
+		var f = this.fileName ? decodeURI(this.fileName) : '';
+		
+		return (this.location ? '-> ' + this.location + ':' : '') 
+			+ (this.message ? '\n' + this.message : '') 
+			+ (f ? '\nFile: ' + f.substr(f.lastIndexOf('/') + 1) : '') 
+			+ (this.line ? '\nLine: ' + this.line : '');
+	};
+	
+	/**
+	* ErrorChain object wraps a chain of errors. Creation of the ErrorChain instance is possible without **new** keyword.  
+	* There is available method `BX.error()` as a shortcut to `BX.error.ErrorChain()`.
+	* 
+	* @example <caption>Example 1:</caption>
+	* throw BX.error('Application.run()', 'Run method failed.', Error('Something is wrong.'));
+	* 
+	* @example <caption>Example 2 - without the third parameter:</caption>
+	* throw BX.error('Application.run()', 'Run method failed.');
+	* // or better:
+	* throw BX.error('Application.run()', Error('Run method failed.')); // Error object captures the line number and file name
+	* 
+	* @example <caption>Example 3 - try/catch block:</caption>
+	* try {
+	* 	// ...
+	* }
+	* catch (e) {
+	* 	throw BX.error('Application.run()', Error('Run method failed.'), e); // chaining of the errors
+	* }
+	* 
+	* @class
+	* @alias BX.error.ErrorChain
+	* @param {string} location - Name of the module or method where the error has occurred.
+	* @param {Error|string} error - Description of the error.
+	* @param {BX.error.ErrorChain|Error|string} [primeError] - A prime error that caused this exception. (optional)
+	*/
+	function ErrorChain(location, error, primeError) {
+		if (primeError && typeof primeError.addError === 'function') { // error chaining (primeError may not be subclass of ErrorChain)
+			primeError.addError(location, error);
+			return primeError;
+		}
+		
+		if (!(this instanceof ErrorChain)) // ErrorChain is called without 'new' keyword
+			return new ErrorChain(location, error, primeError);
+			
+		this._errors = [];
+		this._callStack = $.stack;
+		this.addError(location, error, primeError);
+	}
+	
+	/**
+	* Adds new error to error list.
+	* @param {string} location - Name of the module or method where the error has occurred.
+	* @param {Error|string} error - Description of the error.
+	* @param {BX.error.ErrorChain|Error|string} [primeError] - A prime error that caused this exception. (optional)
+	*/
+	ErrorChain.prototype.addError = function(location, error, primeError) {
+		if (location || error)
+			this._errors.push(new BX.error.ErrorItem(location, error, primeError));
+	};
+	
+	/**
+	* Returns call stack.
+	* @return {string}
+	*/
+	ErrorChain.prototype.getCallStack = function() {
+		return this._callStack;
+	};
+	
+	/**
+	* Returns error list.
+	* @return {Array}
+	*/
+	ErrorChain.prototype.getErrors = function() {
+		return this._errors;
+	};
+	
+	/**
+	* Returns the original error that caused the exception.
+	* @return {BX.error.ErrorItem|null}
+	*/
+	ErrorChain.prototype.getPrimeError = function() {
+		return this._errors.length ? this._errors[0] : null;
+	};
+	
+	/**
+	* Returns the error string.
+	* @return {string}
+	*/
+	ErrorChain.prototype.toString = function() {
+		return 'Error occured:\n\n' + (this._errors ? this._errors.join('\n\n') : '');
+	};
+	
+	BX.error.ErrorChain = BX.error = ErrorChain;
+	
+	BX.error.ErrorItem = ErrorItem;
+	
+	// registered error reporters
+	var _reporters = [];
+	
+	/**
+	* Reports an error issue. Calls method `report(err)` on all registered reporters.
+	* @param {*} err - Error object or message.
+	*/
+	BX.error.report = function(err) {
+		if (err == undefined)
+			return;
+		
+		var passed = false,
+			hasOwn = Object.prototype.hasOwnProperty,
+			r,
+			i = 0,
+			n = _reporters.length;
+		
+		// try to process at least one reporter
+		for ( ; i < n; i++) {
+			try {
+				if (!hasOwn.call(_reporters, i))
+					continue;
+				r = _reporters[i];
+				if (typeof r === 'string')
+					r = BX.module(r).Me;
+				if (typeof r === 'function')
+					r = new r();
+				r.report(err);
+				passed || (passed = true);
+			}
+			catch (e) {
+			}
+		}
+		
+		if (!passed) // none reporter processed
+			alert(err);
+	};
+	
+	/**
+	* Adds an error reporter. Reporter should have `report(err)` method.
+	* @param {Object|Function|string} reporter - Reporter object or constructor or module name.
+	*/
+	BX.error.addReporter = function(reporter) {
+		_reporters.push(reporter);
+	};
+
+})();
+
+/**
+* Module system.
+* @namespace BX.module
+*/
+BX.module || (function() {
+
+	var _modules = {};
+
+	/**
+	* Returns instance of the module.
+	* If instance is defined as a creation function, it is invoked only on the first call of the get() method.
+	* There is available method BX.module() as a shortcut to BX.module.module().
+	* @memberOf BX.module
+	* @param {string} name - Name of the module.
+	* @return {*}
+	*/
+	function module(name) {
+		try {
+			if (!_modules.hasOwnProperty(name))
+				throw Error('Module "' + name + '" is not defined.');
+
+			return _modules[name].get();
+		}
+		catch (e) {
+			throw new BX.error('BX.module()', Error('Cannot load module "' + name + '".'), e);
+		}
+	}
+
+	/**
+	 * Adds new module.
+	 * @memberOf BX.module
+	 * @method define
+	 * @param {string} name - Name of the module.
+	 * @param {*} factory - Module object or factory function.
+	 * @param {string} [rewriteMode='error'] - How to redefine module if it already exists: `'error'` = throw an exception (default), `'skip'` = keep the old definition, `'rewrite'` = rewrite the old definition.
+	 */
+	module.define = function(name, factory, rewriteMode) {
+		if (_modules.hasOwnProperty(name)) {
+			switch (rewriteMode || 'error') {
+				case 'skip':
+					return;
+				case 'error':
+					throw new BX.error('BX.module.define()', 'Cannot define module.', Error('Module "' + name + '" already exists.'));
+					break;
+				case 'rewrite':
+					break;
+				default:
+					throw new BX.error('BX.module.define()', 'Cannot properly redefine existing module "' + name + '". Unknown rewrite mode.');
+			}
+		}
+
+		_modules[name] = new BX.module.Module(factory);
+	};
+
+	/**
+	* Checks if the module exists.
+	* @memberOf BX.module
+	* @method exists
+	* @param {string} name - Name of the module.
+	* @return {boolean}
+	*/
+	module.exists = function(name) {
+		return _modules.hasOwnProperty(name);
+	};
+
+	/**
+	* Returns the list of the module names.
+	* @memberOf BX.module
+	* @method list
+	* @return {Array}
+	*/
+	module.list = function() {
+		var l = [];
+
+		for (var m in _modules) {
+			if (_modules.hasOwnProperty(m))
+				l.push(m);
+		}
+
+		return l;
+	};
+
+	/**
+	* Returns the property Me of the module.
+	* Property Me should hold the constructor of the object wrapped by this module.
+	* @memberOf BX.module
+	* @method Me
+	* @param {string} name - Module name.
+	* @return {Function}
+	* @throws Exception if module.Me is missing or is not a Function.
+	*/
+	module.Me = function(name) {
+		var m = module(name);
+
+		if (!m.hasOwnProperty('Me'))
+			throw Error('Missing property "Me" of the module "' + name + '".');
+
+		if (typeof m.Me !== 'function')
+			throw Error('Property "Me" of the module "' + name + '" should be a Function.');
+
+		return m.Me;
+	};
+
+	BX.module.module = BX.module = module;
+})();
+
+BX.module.Module || (function() {
+	
+	/**
+	* Module item.
+	* @class
+	* @alias BX.module.Module
+	* @param {*} factory - Module object or factory function.
+	*/
+	function Module(factory) {
+		this._instance = factory;
+	}
+	
+	/**
+	* Gets module object.
+	* @return {*}
+	*/
+	Module.prototype.get = function() {
+		if (typeof this._instance === "function") {
+				this._instance = this._instance();
+		}
+		this.get = getInstance;
+		return this.get();
+	};
+	
+	function getInstance() {
+		return this._instance;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Module.prototype.toString = BX.toString;
+	
+	BX.module.Module = Module;
+})();
+
+// Tester object
+/**
+* Additional methods for work with Extend Script types.
+* 
+* @module 'brixy.es.types'
+*/
+BX.module.define('brixy.es.types', function() {
+	
+	/**
+	* Tests if the value is a type of string.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {boolean}
+	*/
+	function isString(value) {
+		var t = typeof value;
+		
+		return (t === 'string' || (t === 'object' && value instanceof String));
+	}
+	
+	/**
+	* Tests if the value is a type of number.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {boolean}
+	*/
+	function isNumber(value) {
+		var t = typeof value;
+		
+		return (t === 'number' || (t === 'object' && value instanceof Number));
+	}
+	
+	/**
+	* Tests if the value is a type of boolean.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {boolean}
+	*/
+	function isBoolean(value) {
+		var t = typeof value;
+		
+		return (t === 'boolean' || (t === 'object' && value instanceof Boolean));
+	}
+	
+	/**
+	* Returns the base type of the value.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {string}
+	*/
+	function baseType(value) {
+		var t = typeof value,
+			c = '';
+		
+		if (value == undefined) // undefined or null
+			return 'undefined';
+			
+		if (t === 'object')
+			c = value.constructor.name;
+			
+		if (t === 'string' || c === 'String')
+			return 'string';
+		if (t === 'number' || c === 'Number')
+			return 'number';
+		if (t === 'boolean' || c === 'Boolean')
+			return 'boolean';
+		if (c === 'Array') // doesn't check 'Array like' objects
+			return 'array';
+		if (value instanceof RegExp) // duality: (typeof /reguar/ === 'function') versus (/regular/ instanceof RegExp === true)
+			return 'object';
+		
+		return t; // function or object or xml
+	}
+	
+	/**
+	* Returns class name of the value.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {string}
+	*/
+	function className(value) {
+		
+		if (value === undefined)
+			return 'undefined';
+			
+		if (value === null)
+			return 'null';
+		
+		switch (typeof value) {
+			case 'string': return 'String';
+			case 'number': return 'Number';
+			case 'boolean': return 'Boolean';
+			case 'function': return (value instanceof RegExp) ? 'RegExp' : 'Function';
+			case 'xml': return 'XML';
+			case 'object': return value.constructor.name;
+			default: return typeof value; // unknown
+		}
+	}
+	
+	/**
+	* Returns string representation of the value.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value.
+	* @param {string} [asClass] - If applied, the result string is decorated as if it were a given class. (optional)
+	* @return {string}
+	*/
+	function valueString(value, asClass) {
+		
+		var c = asClass || className(value);
+		switch (c) {
+			case 'undefined':
+			case 'null': return c;
+			case 'String': return '"' + value + '"';
+			case 'Number': return value;
+			case 'Boolean': return value ? 'true' : 'false';
+			case 'Function': return 'function' + (value.name === 'anonymous' ? '' : ' ' + value.name) + '()';
+			case 'XML': return value.toXMLString();
+			default: return value.toString();
+		}
+	}
+	
+	/**
+	* Escapes the special regular expression characters. Prepares a string for use within a regular expression.  
+	* Thanks to [Mozilla Developer Network](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {string} str - Source string.
+	* @return {string} - Escaped string.
+	*/
+	function escapeRegexpStr(str) {
+		// return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
+		return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	}
+	
+	
+	// publish
+	return {
+		isString: isString,
+		isNumber: isNumber,
+		isBoolean: isBoolean,
+		baseType: baseType,
+		className: className,
+		valueString: valueString,
+		escapeRegexpStr: escapeRegexpStr
+	};	
+});
+/**
+* Defines helper methods for work with {@link module:'brixy.ui.SuiBuilder'~SuiBuilder} components.
+* 
+* @module 'brixy.ui.helpers'
+*/
+BX.module.define('brixy.ui.helpers', function() {
+	
+	/**
+	* Doubles ampersands. 
+	* ScriptUI fields use ampersand to marking a shortcut character.
+	* 
+	* @memberOf module:'brixy.ui.helpers'
+	* @param {string} str
+	* @return {string}
+	*/
+	function doubleAmps(str) {
+		return str.replace(/(&)/g, '&&');
+	}
+	
+	/*
+	* Tests if string has form '{...}'.
+	* 
+	* @memberOf module:'brixy.ui.helpers'
+	* @param {string} str - Tested string.
+	* @return {bool}
+	*/
+	function isResourceString(str) {
+		return str && str.constructor.name === 'String' && /^\s*\{.*\}\s*$/.test(str);
+	}
+	
+	/**
+	* Returns all selected elements from the group. Tests if the value property of the element is equal to true.
+	* 
+	* @memberOf module:'brixy.ui.helpers'
+	* @param {ScriptUIcontrol} group
+	* @return {Array}
+	*/
+	function selectedChildren(group) {
+		var n = group.children.length,
+			i = 0,
+			sel = [];
+			
+		for ( ; i < n; i++) {
+			if (group.children[i].value)
+				sel.push(group.children[i]);
+		}
+		
+		return sel;
+	}
+
+	
+	// publish
+	return {
+		doubleAmps: doubleAmps,
+		isResourceString: isResourceString,
+		selectedChildren: selectedChildren
+	};	
+});
+
+/**
+* Validator object.
+* 
+* @module 'brixy.ui.SuiValidator'
+*/
+BX.module.define('brixy.ui.SuiValidator', function() {
+	var types = BX.module('brixy.es.types');
+	
+	/*
+	* Rule object holds settings for Validators methods.
+	* @class
+	* @param {ScriptUIcontrol} element - Tested element.
+	* @param {function} validator - Validator method.
+	* @param {boolean} negate - Negate the rule.
+	* @param {string} property - Tested property of the element.
+	* @param {Array} args - Additional parameters that will be passed to validator method. The last may be a custom error message.
+	*/
+	function Rule(element, validator, negate, property, args) {
+		this.element = element;
+		this.validator = validator;
+		this.negate = negate;
+		this.property = property;
+		this.args = args;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Rule.prototype.toString = BX.toString;
+	
+	/*
+	* Gets an array of arguments for validator callback.
+	* @return {Array}
+	*/
+	Rule.prototype.getArgs = function() {
+		return [].concat(this.negate, this.element[this.property], this.args);
+	};
+
+	
+	/*
+	* CustomRule object holds settings for custom validator method.
+	* @class
+	* @param {ScriptUIcontrol} element - Tested element.
+	* @param {function} validator - Validator method.
+	* @param {Array} args - Additional parameters that will be passed to validator method.
+	*/
+	function CustomRule(element, validator, args) {
+		this.element = element;
+		this.validator = validator;
+		this.args = args;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	CustomRule.prototype.toString = BX.toString;
+	
+	/*
+	* Gets an array of arguments for validator callback.
+	* @return {Array}
+	*/
+	CustomRule.prototype.getArgs = function() {
+		return this.args;
+	};
+	
+	/**
+	* SuiValidator object.
+	* @class
+	* @alias module:'brixy.ui.SuiValidator'~SuiValidator
+	*/
+	function SuiValidator() {
+		this._rules = [];
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	SuiValidator.prototype.toString = BX.toString;
+	
+	/**
+	* Validate all rules.
+	* @return {boolean} Result of the validation.
+	*/
+	SuiValidator.prototype.validate = function() {
+		try{
+			for (var i = 0, n = this._rules.length; i < n; i++) {
+				if (!this._validateRule(this._rules[i]))
+					return false;
+			}
+		}
+		catch(e){
+			alert('Validation failed. ' + e);
+			return false;
+		}
+		
+		return true;
+	};
+	
+	/*
+	* Validates a rule.
+	* @param {Rule} rule - Tested rule.
+	* @return {boolean} Result of the validation.
+	* @throws {string} Exception if validation failed.
+	*/
+	SuiValidator.prototype._validateRule = function(rule) {
+		try {
+			rule.validator.apply(rule.element, rule.getArgs());
+		}
+		catch (e) {
+			alert(e || 'Validation failed.');
+				
+			if (rule.element.visible && ('active' in rule.element))
+				rule.element.active = true;
+			
+			return false;
+		}
+	
+		return true;
+	};
+	
+	/**
+	* Adds new rule.
+	* @param {ScriptUIcontrol} element - Tested element.
+	* @param {string|function} validator - Validator method.
+	* @param {Array} [args] - Additional parameters will be passed to validator method. (optional)
+	* @throws {string} Exception if a validator rule cannot be set.
+	*/
+	SuiValidator.prototype.addRule = function(element, validator, args) {
+		// element
+		if (!element || typeof element !== 'object')
+			throw Error('Element is not defined.');
+			
+		var ctype = types.className(validator),
+			negate = false,
+			property = '';
+		
+		// validator is a string
+		if (ctype === 'String') {
+			validator = validator.toLowerCase();
+			
+			if (validator.length > 1) {
+				negate = validator[0] === '!';
+				if (negate)
+					validator = validator.substring(1);
+			}
+			
+			if (validator in Validators)
+				validator = Validators[validator];
+			else
+				throw Error('Validator "' + validator + '" was not found.');
+				
+			// tested property
+			if (!args || !args.length) { // not defined, try to find a 'text' or 'value' property
+				if ('text' in element)
+					property = 'text';
+				else if ('value' in element)
+					property = 'value';
+				else
+					throw Error('Tested property of the ' + element + ' is not defined.');
+			}
+			else
+				property = args[0];
+				
+			if (!(property in element))
+				throw Error('The tested property ' + element + '.' + property + ' is not defined. Please specify the property name as the second parameter.');
+			
+			// add rule
+			this._rules.push(new Rule(element, validator, negate, property, [].slice.call(args, 1)));
+		}
+		// validator is a function
+		else if (ctype === 'Function') {
+			// add rule
+			this._rules.push(new CustomRule(element, validator, [].concat(args)));
+		}
+		else
+			throw Error('Validator method should be a function.');
+	};
+	
+	
+	// Static validator methods:
+	
+	/**
+	* Validators namespace.
+	* @namespace
+	* @memberOf module:'brixy.ui.SuiValidator'
+	*/
+	var Validators = {
+		
+		/**
+		* Tests if the value equals to the required value.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {*} required - Required value.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		equal: function(negate, value, required, message) {
+			if (!!negate !== (value == required))
+				return;
+			
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'This field should not be equal to ' + required + '.';
+			
+			throw 'Please enter ' + required + '.';
+		},
+		
+		/**
+		* Tests if the value has the required length.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {int} [min=0] - Minimum length of the value. (optional)
+		* @param {int} [max=min] - Maximum length of the value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		haslength: function(negate, value, min, max, message) {
+			var n = (value != undefined && value.length != undefined) ? value.length : 0;
+			
+			min = (min == undefined) ? 0 : min - 0;
+			max = (max == undefined || max < min) ? min : max - 0;
+			
+			if (!!negate !== (n >= min && n <= max))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (min == max) {
+				if (negate)
+					throw 'A length should not be ' + min + '.';
+				else
+					throw 'A length should be ' + min + '.';
+			}
+			else {
+				if (negate)
+					throw 'A length should be less than ' + min + ' or greater than ' + max + '.';
+				else
+					throw 'A length should be between ' + min + ' and ' + max + '.';
+			}
+		},
+		
+		/**
+		* Tests if the value occurs in the array.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {Array} array - Array of values.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		inarray: function(negate, value, array, message) {
+			var arr = (array == undefined) ? [] : [].concat(array),
+				i = 0,
+				n = arr.length,
+				r = false;
+			
+			for ( ; i < n; i++) {
+				if (value == arr[i]) {
+					r = true;
+					break;
+				}
+			}
+			
+			if (!!negate !== r)
+				return;
+				
+			if (message)
+				throw message;
+				
+			throw 'Please fill in a suitable value.';
+		},
+		
+		/**
+		* Tests if the value is decimal. Exponential notation is not allowed (e.g. 1.2e+25).
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {string} [decimalPoint=$.decimalPoint] - Decimal separator. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		isdecimal: function(negate, value, decimalPoint, message) {
+			var dp = (!decimalPoint) ? $.decimalPoint : decimalPoint,
+				reg = RegExp('^\\s*[-+]?\\d+(?:' + types.escapeRegexpStr(dp) + '\\d*)?\\s*$');
+				
+			if (!!negate !== reg.test(value))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'Value should not be a decimal.';
+			
+			throw 'Please fill in a decimal value.';
+		},
+		
+		/**
+		* Tests if the value is integer. Exponential notation is not allowed (e.g. 1e+25).
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		isinteger: function(negate, value, message) {
+			if (!!negate !== /^\s*[-+]?\d+\s*$/.test(value))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'Value should not be an integer.';
+			
+			throw 'Please fill in an integer value.';
+		},
+		
+		/**
+		* Tests if the array contains a checked or selected item.
+		* 
+		* @example
+		* column().validator('itemselected', 'children')
+		* listBox().validator('itemselected', 'items')
+		* // or:
+		* listBox().validator('required', 'selection')
+		* 
+		* @param {boolean} negate - Negate the condition.
+		* @param {Array} value - Tested array.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		itemselected: function(negate, value, message) {
+			var i,
+				n,
+				v,
+				r = false;
+			
+			if (value != undefined && value.length) {
+				for (i = 0, n = value.length; i < n; i++) {
+					v = value[i];
+					if (v && (typeof v === 'object') && (v.value || v.selected)) {
+						r = true;
+						break;
+					}
+				}
+			}
+			
+			if (!!negate !== r)
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'Items should not be selected.';
+			
+			throw 'Please select an item.';
+		},
+
+		/**
+		 * Tests if the number is lesser than or equal to a given limit.
+		 * @param {boolean} negate - Negate the condition.
+		 * @param {*} value - Tested value.
+		 * @param {*} [max=0] - Maximum value. (optional)
+		 * @param {string} [message] - Custom error message. (optional)
+		 */
+		maximum: function(negate, value, max, message) {
+			max = (max == undefined) ? 0 : max - 0;
+
+			if (!!negate !== value <= max)
+				return;
+
+			if (message)
+				throw message;
+
+			if (negate)
+				throw 'Please enter a value greater than ' + max + '.';
+			else
+				throw 'Please enter a value less than or equal to ' + max + '.';
+		},
+
+		/**
+		* Tests if the value has maximum length.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {int} [max=0] - Maximum length of the value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		maxlength: function(negate, value, max, message) {
+			Validators.haslength.call(this, negate, value, Number.MIN_VALUE, max, message);
+		},
+
+		/**
+		 * Tests if the number is greater than or equal to a given limit.
+		 * @param {boolean} negate - Negate the condition.
+		 * @param {*} value - Tested value.
+		 * @param {*} [min=0] - Minimum value. (optional)
+		 * @param {string} [message] - Custom error message. (optional)
+		 */
+		minimum: function(negate, value, min, message) {
+			min = (min == undefined) ? 0 : min - 0;
+
+			if (!!negate !== value >= min)
+				return;
+
+			if (message)
+				throw message;
+
+			if (negate)
+				throw 'Please enter a value lesser than ' + min + '.';
+			else
+				throw 'Please enter a value greater than or equal to ' + min + '.';
+		},
+
+		/**
+		* Tests if the value has minimum length.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {int} [min=0] - Minimum length of the value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		minlength: function(negate, value, min, message) {
+			Validators.haslength.call(this, negate, value, min, Number.MAX_VALUE, message);
+		},
+		
+		/**
+		* Tests if value matches the regular expression. Uses the Extend Script RegExp object.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {RegExp|string} regexp - Regular expression or string. In case of string, the doubling of backslashles is necessary.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		pattern: function(negate, value, regexp, message) {
+			var reg = (regexp instanceof RegExp) ? regexp : RegExp(regexp);
+			
+			if (!!negate !== reg.test(value))
+				return;
+				
+			if (message)
+				throw message;
+				
+			throw 'Please fill in the suitable value.';
+		},
+		
+		/**
+		* Tests if the value is in required range.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {*} [min=0] - Minimum value. (optional)
+		* @param {*} [max=min] - Maximum value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		range: function(negate, value, min, max, message) {
+			min = (min == undefined) ? 0 : min - 0;
+			max = (max == undefined || max < min) ? min : max - 0;
+
+			if (!!negate !== (value >= min && value <= max))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (min == max) {
+				if (negate)
+					throw 'A value should not be ' + min + '.';
+				else
+					throw 'Please enter ' + min + '.';
+			}
+			else {
+				if (negate)
+					throw 'Please enter a value less than ' + min + ' or greater than ' + max + '.';
+				else
+					throw 'Please enter a value between ' + min + ' and ' + max + '.';
+			}
+		},
+		
+		/**
+		* Tests if the value is defined and is not empty string. Boolean values (true or false) are both OK.
+		* 
+		* @example
+		* dropDownList().validator('required', 'selection')
+		* editText().validator('required') // tests 'text' property
+		* 
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		required: function(negate, value, message) {
+			if (!!negate !== (value != undefined && value !== ''))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'This field should be empty.';
+				
+			throw 'Please fill in the required value.';
+		}
+		
+	};
+	
+	
+	// publish
+	return {
+		Validators: Validators,
+		/** 
+		* SuiValidator class.
+		* @memberOf module:'brixy.ui.SuiValidator'
+		* @type {module:'brixy.ui.SuiValidator'~SuiValidator}
+		*/
+		Me: SuiValidator
+	};
+});
+
+
+/**
+* Defines base {@link module:'brixy.ui.SuiBuilder'~SuiBuilder} components.
+* 
+* @module 'brixy.ui.components.base'
+*/
+BX.module.define('brixy.ui.components.base', function() {
+	var helpers = BX.module('brixy.ui.helpers'),
+		SuiValidator = BX.module('brixy.ui.SuiValidator').Me;
+
+	/*
+	* Creates new standard ScriptUI element.
+	* 
+	* @param {ScriptUIcontrol} container - Container element.
+	* @param {string} type - ScriptUI control type.
+	* @param {string|Array<string>} resource - Text property or array of items or resource string. (optional)
+	* @return {ScriptUIcontrol}
+	*/
+	function addSuiElement(container, type, resource) {
+		var tx = false;
+		
+		if (resource == undefined) // undefined or null
+			resource = '{}';
+		else if (resource.constructor.name === 'Array')
+			resource = '{properties: {items: ' + resource.toSource() + '}}';
+		else if (!helpers.isResourceString(resource)) { // String
+			tx = resource.toString();
+			resource = '{}';
+		}
+
+		var e = container.add(type + resource);
+		if (tx)
+			e.text = tx;
+			
+		return e;
+	}
+	
+	
+	// publish
+	return {
+
+		/* ***** Base builder's methods. ***** */
+
+		/**
+		* Registers an event listener to the current element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} eventName - Event name.
+		* @param {function} callback - Event handler.
+		* @param {boolean} capturePhase - When true, the handler is called only in the capturing phase of the event propagation. Default is false. (optional)
+		* @throws {Error} Exception if callback is not a function.
+		*/
+		addEventListener: function(eventName, callback, capturePhase) {
+			if (!callback)
+				throw Error('Null is not a function.');
+			if (typeof callback !== 'function')
+				throw Error(callback + ' is not a function.');
+			
+			this.element.addEventListener(eventName, callback, capturePhase);
+		},
+		
+		/**
+		* The alignment style for current element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Array<string>} alignment - Alignment style.
+		*/
+		align: function(alignment) {
+			this.element.alignment = alignment;
+		},
+		
+		/**
+		* The alignment style for children elements.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {String|Array<string>} alignment - Alignment style.
+		* @throws {Error} Exception if element doesn't support alignChildren property.
+		*/
+		alignChildren: function(alignment) {
+			if ('alignChildren' in this.element)
+				this.element.alignChildren = alignment;
+			else
+				throw Error('Method alignChildren() is invalid in this context.');
+		},
+		
+		/**
+		* Adds onClick event that closes a window with the result code. 
+		* If validate is true, it runs a builder validate() method. Window remains open if validation failed.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {boolean} [validate] - Validate the controls before closing.
+		* @param {int} [result] - Code returned by window. (optional)
+		*/
+		closeOnClick: function(validate, result) {
+			var b = this;
+			
+			// InDesign CC (2015, Win): addEventListener('click', ...) doesn't work with OK and Cancel button
+			this.element.onClick = function() {
+				var w = b._containers[0];
+				if (!w || w.constructor.name !== 'Window')
+					throw Error('Window does not exist.');
+					
+				if (validate && b.validator && !b.validator.validate())
+					return false;
+			
+				w.close((result == undefined) ? 1 : result);
+			};
+		},
+
+		/**
+		* Sets builder counter. It helps to identify builder method.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {int} counter - Your number.
+		*/
+		counter: function(counter) {
+			var c = Number(counter);
+			this._counter = c > 0 ? Math.floor(c) : 0;
+		},
+		
+		/**
+		* Doubles ampersands. 
+		* ScriptUI fields use ampersand to marking a shortcut character.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [property='text'] - Property name. (optional)
+		*/
+		doubleAmps: function(property) {
+			property = (property == undefined) ? 'text' : property + '';
+				
+			if (property in this.element)
+				this.element[property] = helpers.doubleAmps(this.element[property]);
+		},
+
+		/**
+		* Sets the parent container as the current container.
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		end: function() {
+			var c = this._containers,
+				i = c.length;
+				
+			if (i > 1) { // don't delete the first container - Window
+				this.element = c.pop();
+				this.container = c[i-2]; // the last
+			}
+		},
+		
+		/**
+		* Immediately executes the callback method.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {function} callback - Custom method (.execute(callback, par1, par2)). Keyword 'this' references the builder.
+		* @param {...*} [pars, ...] - Additional parameters will be passed to callback method. (optional)
+		* @throws {Error} Exception if callback is not a function.
+		*/
+		execute: function(callback /*, callback parameters */) {
+			if (typeof callback !== 'function')
+				throw Error(callback + ' is not a function.');
+				
+			callback.apply(this, [].slice.call(arguments, 1));
+		},
+		
+		/**
+		* Saves the current element into SuiBuilder's repository.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} id - ID of this element.
+		* @throws {Error} Exception on error.
+		*/
+		id: function(id) {
+			if (!id)
+				throw Error('Invalid id key.');
+			if (!this.element)
+				throw Error('Element is undefined.');
+				
+			this._ids[id + ''] = this.element;
+		},
+		
+		/**
+		* Adds a click event listener that activates a target element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} id - ID of target element.
+		*/
+		labelFor: function(id) {
+			var b = this.builder;
+			
+			this.element.addEventListener('click', function(event) {
+				try {
+					var el = b.get(id);
+					el.active = false;
+					el.active = true;
+				}
+				catch (e) { // ignore all problems
+				}
+			});
+		},
+		
+		/**
+		* Sets the property/properties of the current element.
+		* Does not check if this property exists in the element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Object} property - Property name or Object of the property name-value pairs.
+		* @param {*} [value] - Ignored if property is Object. (optional)
+		*/
+		set: function(property, value) {
+			if (typeof property === 'object' && property.constructor.name !== 'String') {
+				for (var p in property) {
+					this.element[p] = property[p];
+				}
+			}
+			else
+				this.element[property + ''] = value;
+		},
+		
+		/**
+		* Shows the window.
+		*
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [position] - The window position. Supported only 'center'. (optional)
+		* @throws {Error} Exception if Window doesn't exist.
+		*/
+		showWindow: function(position) {
+			if (!this._containers.length)
+				throw Error('Window does not exist.');
+			
+			var w = this._containers[0];
+			if (!w || w.constructor.name !== 'Window')
+				throw Error('Window does not exist.');
+			
+			this._containers.length = 1;
+			this.container = this.element = w;
+			
+			if (position === 'center')
+				w.center();
+			this._result = w.show();
+		},
+		
+		/**
+		* Sets the subitem of the multicolumn ListBox item.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {int} index - Index of the subitem. Note: subitem[0] is the second item of the ScriptUI ListBox row.
+		* @param {string} text - Text of this subitem.
+		* @param {string|File|ScriptUIImage} [image] - Image of this subitem. (optional)
+		* @throws {Error} Exception if element doesn't have 'item' property.
+		*/
+		subItem: function(index, text, image) {
+			if (this.element.type === 'item' && this.element.parent.type === 'listbox') {
+				if (index >= this.element.subItems.length)
+					throw Error('ListBox multicolumn row has just ' + this.element.subItems.length + ' subitems.');
+					
+				this.element.subItems[index].text = text;
+				if (image)
+					this.element.subItems[index].image = image;
+			}
+			else
+				throw Error('Method subItem() is invalid in this context.');
+		},
+		
+		/**
+		* Sets the validation method on the current element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|function} callback - Validator method.
+		* @param {...*} [args, ...] - Additional arguments will be passed to the callback method. (optional)
+		* @throws {Error} Exception if a validator cannot be set.
+		*/
+		validator: function(callback /*, callback parameters */) {
+			if (!this.validator)
+				this.validator = new SuiValidator();
+				
+			this.validator.addRule(this.element, callback, [].slice.call(arguments, 1));
+		},
+	
+	
+		/* ***** Base builder's components. ***** */
+
+		/**
+		* Adds new Button element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		button: function(resource) {
+			this.element = addSuiElement(this.container, 'button', resource);
+		},
+		
+		/**
+		* Adds new Checkbox element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		checkbox: function(resource) {
+			this.element = addSuiElement(this.container, 'checkbox', resource);
+		},
+		
+		/**
+		* Adds new Group with orientation 'column'.  
+		* Container component.
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		column: function() {
+			this.container = this.container.add("group {orientation: 'column'}");
+		},
+		
+		/**
+		* Adds new Panel with orientation 'column'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [title] - Panel title. (optional)
+		*/
+		columnPanel: function(title) {
+			this.container = this.container.add("panel {orientation: 'column'}");
+			this.container.text = title || '';
+		},
+		
+		/**
+		* Adds new DropDownList element. Specify items as the array parameter or use item() for adding further items.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {Array|string} [resource] - Array of items or resource specification. (optional)
+		*/
+		dropDownList: function(resource) {
+			this.container = addSuiElement(this.container, 'dropdownlist', resource);
+		},
+		
+		/**
+		* Adds new EditText element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		editText: function(resource) {
+			this.element = addSuiElement(this.container, 'edittext', resource);
+		},
+		
+		/**
+		* Adds new FlashPlayer element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|File} [resource] - Resource string or file path or File to load. (optional)
+		* @param {string|File} [file] - File path or File to load. (optional)
+		*/
+		flashPlayer: function(resource, file) {
+			var f = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (!helpers.isResourceString(resource)) {
+				f = resource;
+				resource = '{}';
+			}
+			if (file)
+				f = file;
+
+			this.element = this.container.add('flashplayer' + resource);
+			if (f)
+				this.element.loadMovie(f);
+		},
+		
+		/**
+		* Adds new Group element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Creation properties. (optional)
+		*/
+		group: function(resource) {
+			this.container = addSuiElement(this.container, 'group', resource);
+		},
+		
+		/**
+		* Adds new IconButton element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|File|Array<string>|ScriptUIImage} [resource] - IconButton resource string or image path or Array|ScriptUIImage of the 4-state button images. (optional)
+		*/
+		iconButton: function(resource) {
+			var im = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (resource.constructor.name === 'Array') {
+				im = ScriptUI.newImage(resource[0], resource[1], resource[2], resource[3]);
+				resource = '{}';
+			}
+			else if (!helpers.isResourceString(resource)){
+				im = resource;
+				resource = '{}';
+			}
+
+			this.element = this.container.add('iconbutton' + resource);
+			if (im)
+				this.element.image = im;
+		},
+		
+		/**
+		* Adds new Image element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|File|ScriptUIImage} [resource] - Image resource string or image file|path. (optional)
+		*/
+		image: function(resource) {
+			var im = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (!helpers.isResourceString(resource)) {
+				im = resource;
+				resource = '{}';
+			}
+
+			this.element = this.container.add('image' + resource);
+			if (im)
+				this.element.image = im;
+		},
+		
+		/**
+		* Adds new item to the ListBox, DropDownList or TreeView.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Array<string>} text - Text of this item or array of strings for the columns of multicolumn ListBox row.
+		* @param {int} [index] - The index of this item in the list of items. (optional)
+		* @throws {Error} Exception if element doesn't have 'items' property.
+		* @throws {Error} Exception if ListBox doesn't have enough columns.
+		*/
+		item: function(text, index) {
+			var c = this.container,
+				el,
+				i,
+				n;
+				
+			if ('items' in c) {
+				if (text && text.constructor.name === 'Array' && text.length && c.type === 'listbox' && 'columns' in c) {
+					n = text.length;
+					if (n > c.columns.titles.length)
+						throw Error('ListBox has ' + c.columns.titles.length + ' columns only.');
+						
+					el = c.add('item', text[0], index);
+					for (i = 1; i < n; i++)
+						el.subItems[i-1].text = text[i];
+					
+					this.element = el;
+				}
+				else
+					this.element = c.add((text === '-' && c.type === 'dropdownlist') ? 'separator' : 'item', text, index);
+			}
+			else
+				throw Error('Component type "item" is invalid in this context.');
+		},
+		
+		/**
+		* Adds new ListBox.  
+		* Specify lines as the array parameter or use item() for adding further lines.  
+		* In case of multiline ListBox specify the column titles as the array parameter. Use item() for adding new line. Use subItem() for setting of the item cell.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Array<string>} [resource] -  Resource string or array of lines or array of column titles for the multicolumn ListBox. (optional)
+		*/
+		listBox: function(resource) {
+			var pr = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (resource.constructor.name === 'Array' && 'columns' in ListBox) {
+				pr = { 
+					numberOfColumns: resource.length, 
+					showHeaders: true, 
+					columnTitles: resource
+				};
+			}
+
+			if (pr)
+				this.container = this.container.add('listbox', undefined, '', pr);
+			else
+				this.container = this.container.add('listbox' + resource);
+		},
+		
+		/**
+		* Adds new node item into the TreeView.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} text - Text of this item.
+		* @param {int} [index] - The index of this node in the list of items (optional)
+		* @throws {Error} Exception if element doesn't have 'items' property.
+		*/
+		nodeItem: function(text, index) {
+			var c = this.container;
+			if ('items' in c) {
+				this.container = c.add('node', text, index);
+			}
+			else
+				throw Error('Component type "nodeItem" is invalid in this context.');
+		},
+		
+		/**
+		* Adds new Panel element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		panel: function(resource) {
+			this.container = addSuiElement(this.container, 'panel', resource);
+		},
+		
+		/**
+		* Adds new Progressbar element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Resource specification. (optional)
+		*/
+		progressBar: function(resource) {
+			this.element = addSuiElement(this.container, 'progressbar', resource);
+		},
+		
+		/**
+		* Adds new RadioButton element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		radioButton: function(resource) {
+			this.element = addSuiElement(this.container, 'radiobutton', resource);
+		},
+		
+		/**
+		* Adds new Group with orientation 'row'.  
+		* Container component.
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		row: function() {
+			this.container = this.container.add('group {orientation: "row"}');
+		},
+		
+		/**
+		* Adds new Panel with orientation 'row'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [title] - Panel title. (optional)
+		*/
+		rowPanel: function(title) {
+			this.container = this.container.add('panel {orientation: "row"}');
+			this.container.text = title || '';
+		},
+		
+		/**
+		* Adds new Scrollbar element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Resource specification. (optional)
+		*/
+		scrollbar: function(resource) {
+			this.element = addSuiElement(this.container, 'scrollbar', resource);
+		},
+		
+		/**
+		* Adds new Slider element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Resource specification. (optional)
+		*/
+		slider: function(resource) {
+			this.element = addSuiElement(this.container, 'slider', resource);
+		},
+		
+		/**
+		* Adds new Group with orientation 'stack'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		stack: function() {
+			this.container = this.container.add('group {orientation: "stack"}');
+		},
+		
+		/**
+		* Adds new Panel with orientation 'stack'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [title] - Panel title. (optional)
+		*/
+		stackPanel: function(title) {
+			this.container = this.container.add('panel {orientation: "stack"}');
+			this.container.text = title || '';
+		},
+		
+		/**
+		* Adds new StaticText element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		staticText: function(resource) {
+			this.element = addSuiElement(this.container, 'statictext', resource);
+		},
+		
+		/**
+		* Adds new Tab element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		tab: function(resource) {
+			this.container = addSuiElement(this.container, 'tab', resource);
+		},
+		
+		/**
+		* Adds new TabbedPanel element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		tabbedPanel: function(resource) {
+			this.container = addSuiElement(this.container, 'tabbedpanel', resource);
+		},
+		
+		/**
+		* Adds new TreeView element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {Array|string} [resource] - Array of items or resource specification. (optional)
+		*/
+		treeView: function(resource) {
+			this.container = addSuiElement(this.container, 'treeview', resource);
+		},
+		
+		/**
+		* Creates new window with the standard ScriptUI Window parameters.
+		* Window is the base element and it is only a single Window element in each SuiBuilder instance.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} type - Window type: 'window'|'palette'|'dialog'.
+		* @param {string} [title] - Window title. (optional)
+		* @param {Bounds} [bounds] - Position and size of the window. (optional)
+		* @param {Object} [properties] - Creation-only properties. (optional)
+		* @throws {Error} Exception if Window is not the first element in this builder.
+		*/
+		window: function(type, title, bounds, properties) {
+			if (this.container)
+				throw Error('Window must be the first component, some already exists.');
+			
+			if (title && !this.name)
+				this.name = title;
+				
+			this.container = new Window(type, title, bounds, properties);
+		}
+		
+	};
+
+});
+
+/**
+* Easy and fun creation of Adobe ScriptUI user interface.
+* 
+* @module 'brixy.ui.SuiBuilder'
+*/
+BX.module.define('brixy.ui.SuiBuilder', function() {
+	var baseComponents = BX.module('brixy.ui.components.base');
+	
+	/**
+	* SuiBuilder object.
+	* 
+	* @class
+	* @alias module:'brixy.ui.SuiBuilder'~SuiBuilder
+	* @param {string} name - Builder's name. (optional)
+	* 
+	* @property {Object} _builder - Private builder object.
+	* @property {string} _builder.name - Builder's name.
+	* @property {component} _builder.element - Current SUI component.
+	* @property {component} _builder.container - Current SUI container component.
+	* @property {Object} _builder.validator - Validator object.
+	* @property {SuiBuilder} _builder.builder - This SuiBuilder instance.
+	*/
+	function SuiBuilder(name) {
+		this._builder = {
+			name: name, // builder's name
+			element: null, // current element
+			container: null, // current container
+			validator: null, // validator object
+			builder: this, // SuiBuilder instance
+			_containers: [], // the chain of the container components
+			_ids: {}, // repository of the elements saved by the id() method
+			_result: 0, // a result returned from the ScriptUI Window.show() method
+			_counter: 0 // the number of the builder methods already executed
+		};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	SuiBuilder.prototype.toString = BX.toString;
+	
+	/**
+	* Returns saved element.
+	* 
+	* @param {string} id
+	* @return {component}
+	*/
+	SuiBuilder.prototype.get = function (id) {
+		return this._builder._ids[id];
+	};
+	
+	/**
+	* Returns all saved elements.
+	* 
+	* @return {Object}
+	*/
+	SuiBuilder.prototype.getAll = function () {
+		return this._builder._ids;
+	};
+	
+	/**
+	* Returns a result of the ScriptUI window.show() method.
+	* 
+	* @return {int}
+	*/
+	SuiBuilder.prototype.result = function () {
+		return this._builder._result;
+	};
+	
+	/**
+	* Adds methods into SuiBuilder instance. Existing methods are replaced.
+	* 
+	* @param {...Object} [components, ...] - Each argument is object with component definitions.
+	*/
+	SuiBuilder.prototype.addComponents = function (components /* components2, ... */) {
+		var n = arguments.length,
+			i = 0,
+			comps;
+			
+		for ( ; i < n; i++) {
+			comps = arguments[i];
+			if (typeof comps === 'object') {
+				for (var c in comps) {
+					this.addComponent(c, comps[c]);
+				}
+			}
+		}
+	};
+	
+	/**
+	* Adds method into SuiBuilder instance. Existing method are replaced.
+	* 
+	* @param {string} name - Component name.
+	* @param {function} callback
+	*/
+	SuiBuilder.prototype.addComponent = function (name, callback) {
+		if (!callback || typeof callback !== 'function')
+			throw BX.error('brixy.ui.SuiBuilder.addComponent()', Error('Cannot add component "' + name + '".'), 'Callback must be a function. ' + callback + ' is given.');
+			
+		this[name] = function(/* custom parameters */) {
+			return member.call(this, name, callback, arguments);
+		};
+	};
+	
+	/**
+	* Adds methods into SuiBuilder prototype.
+	* 
+	* @param {Object} members - Methods.
+	* @param {boolean} [replace=false] - If true, existing methods will be replaced. (optional)
+	*/
+	SuiBuilder.attach = function (members, replace) {
+		if (typeof members === 'object') {
+			for (var m in members) {
+				if (replace || !(m in SuiBuilder.prototype))
+					attachMember(m, members[m]);
+			}
+		}
+	};
+	
+	/*
+	* Adds a method into SuiBuilder prototype.
+	* 
+	* @param {string} name - Name of the method.
+	* @param {function} callback - Method.
+	*/
+	function attachMember(name, callback) {
+		if (!callback || typeof callback !== 'function')
+			throw BX.error('brixy.ui.SuiBuilder.attachMember()', Error('Cannot add component "' + name + '".'), 'Callback must be a function. ' + callback + ' is given.');
+			
+		SuiBuilder.prototype[name] = function(/* custom parameters */) {
+			return member.call(this, name, callback, arguments);
+		};
+	}
+	
+	/*
+	* General builder method.
+	* 
+	* @param {string} name - Method name.
+	* @param {function} callback - Method.
+	* @param {Array} args - Arguments for callback.
+	* @throws {BX.error.ErrorChain} Exception if component creation failed.
+	* @return {SuiBuilder} Provides fluent interface.
+	*/
+	function member(name, callback, args) {
+		try {
+			var b = this._builder,
+				n;
+				
+			b._counter++;
+			
+			callback.apply(b, args);
+			
+			if (b.container) {
+				n = b._containers.length;
+				if (!n || b._containers[n-1] !== b.container) {
+					b._containers.push(b.container);
+					b.element = b.container;
+				}
+			}
+		}
+		catch (e) {
+			throw createMemberError(this, name, args, e);
+		}
+		return this;
+	}
+	
+	/**
+	* Removes methods from the SuiBuilder prototype.
+	* 
+	* @param {string|Array<string>} members - The list of the method names to detach.
+	*/
+	SuiBuilder.detach = function (members) {
+		if (!members)
+			return;
+		
+		if (members.constructor.name === 'String') { // one
+			remove(members);
+		}
+		else if (members.constructor.name === 'Array') { // array
+			for (var i = 0, n = members.length; i < n; i++) {
+				remove(members[i]);
+			}
+		}
+		
+		function remove(name) {
+			if (name in SuiBuilder.prototype) {
+				SuiBuilder.prototype[name] = null;
+				delete SuiBuilder.prototype[name];
+			}
+		}
+	};
+		
+	/*
+	* Error factory.
+	* 
+	* @param {SuiBuilder} builder - SuiBuilder object.
+	* @param {string} functionName - Function name.
+	* @param {Array} args - Function arguments.
+	* @param {Error|string} error - Error message.
+	* @return {BX.error.ErrorChain}
+	*/
+	function createMemberError(builder, functionName, args, error) {
+		var method,
+			message,
+			s,
+			ord,
+			a = [],
+			i,
+			n,
+			types = BX.module('brixy.es.types');
+		
+		// method name
+		for (i = 0, n = args.length; i < n; i++) {
+			a.push(types.valueString(args[i]));
+		}
+		method = functionName + '(' + a.join(', ') + ')';
+		
+		// convert _counter to ordinal number
+		s = builder._builder._counter.toString(10);
+		n = s.length;
+		if (n > 1 && s[n-2] === '1')
+			ord = s + 'th';
+		else
+			ord = s + ({1: 'st', 2: 'nd', 3: 'rd'}[s[n-1]] || 'th');
+
+		// error message
+		message = (builder._builder.name ? '"' + builder._builder.name + '": ' : 'SuiBuilder: ') + 'the ' + ord + ' method of builder chain failed.';
+		
+		return new BX.error.ErrorChain('brixy.ui.SuiBuilder.' + method, message, error);
+	}
+	
+	
+	// publish
+	return {
+		/** 
+		* SuiBuilder class.
+		* @memberOf module:'brixy.ui.SuiBuilder'
+		* @type module:'brixy.ui.SuiBuilder'~SuiBuilder
+		*/
+		Me: SuiBuilder
+	};
+});
+
+// SuiBuilder base components
+BX.module('brixy.ui.SuiBuilder').Me.attach(BX.module('brixy.ui.components.base'), true);
+
+
+
+
+/**
+* Defines components for {@link module:'brixy.ui.SuiBuilder'~SuiBuilder}.
+* 
+* @module 'brixy.ui.components.colorize'
+*/
+BX.module.define('brixy.ui.components.colorize', function() {
+
+	// publish
+	return {
+
+		/**
+		* Sets foreground colors of the element.
+		* 
+		* @memberOf module:'brixy.ui.components.colorize'
+		* @param {Array} enabled - Color for element when enabled or active.
+		* @param {Array} disabled - Color for element when disabled or inactive.
+		*/
+		foregroundColor: function(enabled, disabled) {
+			var gr = this.element.graphics,
+				type = gr.PenType.SOLID_COLOR;
+			
+			disabled || (disabled = enabled);
+			
+			gr.foregroundColor = gr.newPen(type, enabled, 1);
+			gr.disabledForegroundColor = gr.newPen(type, disabled, 1);
+		},
+		
+		/**
+		* Sets background colors of the element.
+		* 
+		* @memberOf module:'brixy.ui.components.colorize'
+		* @param {Array} enabled - Color for element when enabled or active.
+		* @param {Array} disabled - Color for element when disabled or inactive.
+		*/
+		backgroundColor: function(enabled, disabled) {
+			var gr = this.element.graphics,
+				type = gr.BrushType.SOLID_COLOR;
+			
+			disabled || (disabled = enabled);
+			
+			gr.backgroundColor = gr.newBrush(type, enabled);
+			gr.disabledBackgroundColor = gr.newBrush(type, disabled);
+		}
+		
+	};
+
+});
+/**
+* @module 'brixy.tester.Result'
+*/
+BX.module.define('brixy.tester.Result', function() {
+	
+	/** 
+	* Status of the test result.
+	* @memberOf module:'brixy.tester.Result'
+	* @readonly
+	* @enum {string}
+	*/
+	var STATUS = {OK: '*', FAILED: 'F', SKIPPED: '?'};
+	
+	/**
+	* Test value.
+	* 
+	* @class
+	* @alias module:'brixy.tester.Result'~Value
+	* @property {*} value - Tested value.
+	* @property {string} caption - String representation of the value.
+	*/
+	function Value(value, caption) {
+		this.value = value;
+		this.caption = caption + '';
+	}
+	
+	/**
+	* Result object.
+	* 
+	* @class
+	* @alias module:'brixy.tester.Result'~Result
+	* @param {module:'brixy.tester.Result'.STATUS} status
+	* @param {string} name
+	* @param {string} description
+	*/
+	function Result(status, name, description) {
+		this._status = status;
+		this._name = name;
+		this._description = description;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Result.prototype.toString = BX.toString;
+	
+	/**
+	* Returns true if result is OK.
+	* @return {boolean}
+	*/
+	Result.prototype.passed = function() {
+		return this._status === STATUS.OK;
+	};
+	
+	/**
+	* Name of the result.
+	* @return {string}
+	*/
+	Result.prototype.getName = function() {
+		return this._name;
+	};
+	
+	/**
+	* Returns a status of the result.
+	* @return {module:'brixy.tester.Result'.STATUS}
+	*/
+	Result.prototype.getStatus = function() {
+		return this._status;
+	};
+	
+	/**
+	* Description of the result.
+	* @return {string}
+	*/
+	Result.prototype.getDescription = function() {
+		return this._description;
+	};
+	
+	/**
+	* Long description of the result (i.e. name and description).
+	* @return {string}
+	*/
+	Result.prototype.getLongDescription = function() {
+		return this._name + ': ' + this._description;
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Result class.
+		* @memberOf module:'brixy.tester.Result'
+		* @type {module:'brixy.tester.Result'~Result}
+		*/
+		Me: Result,
+		/** 
+		* Value class.
+		* @memberOf module:'brixy.tester.Result'
+		* @type {module:'brixy.tester.Result'~Value}
+		*/
+		Value: Value,
+		STATUS: STATUS
+	};
+});
+/**
+* @module 'brixy.es.reflection'
+*/
+BX.module.define('brixy.es.reflection', function() {
+	
+	/**
+	* Returns own properties of the object. It doesn't get built-in ExtendScript methods (value.reflect.methods).
+	* 
+	* @memberOf module:'brixy.es.reflection'
+	* @param {Object} value
+	* @return {Array} - Array of property names.
+	*/
+	function getOwnProperties(value) {
+		if (value == undefined)
+			return [];
+		
+		var props = value ? value.reflect.properties : [], // Array of ReflectionInfo
+			i = 0,
+			n = props.length,
+			pr,
+			arr = [],
+			used = {},
+			hasOwn = Object.prototype.hasOwnProperty,
+			isEnu = Object.prototype.propertyIsEnumerable;
+		
+		// Notes:
+		// 1. Reflection.properties doesn't contain properties, that refer to function, eg. {fun: function(){return true;}}. These are detected by for/in loop.
+		// 2. for/in loop doesn't retrieve some of the properties contained in the Reflection.properties, eg. InDesign document.filePath.*, ScriptUI button.layoutDirection.
+		// 3. Why there are duplicates (in both cases)? eg. InDesign rectangle.isValid
+		for ( ; i < n; i++) {
+			pr = props[i].toString();
+			if (hasOwn.call(used, pr) || !isEnu.call(value, pr)) // skip duplicates and non-enumerables
+				continue;
+				
+			used[pr] = true; // checked property cache
+			
+			if (hasOwn.call(value, pr))
+				arr.push(pr);
+		}
+		
+		for (pr in value) {
+			if (!hasOwn.call(used, pr) && hasOwn.call(value, pr)) // skip used
+				arr.push(pr);
+		}
+		
+		return arr;
+	}
+	
+	
+	// publish
+	return {
+		getOwnProperties: getOwnProperties
+	};	
+});
+
+/**
+* @module 'brixy.debug.helpers'
+*/
+BX.module.define('brixy.debug.helpers', function() {
+	
+	/**
+	* Creates resizeable dialog window for reports.
+	* 
+	* @memberOf module:'brixy.debug.helpers'
+	* @param {string} title - Window title.
+	* @return {Window} - New ScriptUI Window instance.
+	*/
+	function reportDialog(title) {
+		var dial = new Window ('dialog', title, undefined, {resizeable: true});
+		
+		/*
+		* Resizeable dialog window.
+		*/
+		dial.onResizing = dial.onResize = function() {
+			this.layout.resize();
+		};
+		
+		/*
+		* Sets minimumSize of window to fit its content.
+		*/
+		dial.onShow = function () {
+			//this.layout.layout();
+			this.minimumSize = this.preferredSize;
+			this.layout.resize();
+			
+			var report = this.findElement('report');
+			if (report)
+				report.minimumSize = report.size;
+		};
+		
+		return dial;
+	}
+	
+	// publish methods
+	return {
+		reportDialog: reportDialog
+	};
+});
+
+
+/**
+* @module 'brixy.debug.dump'
+*/
+BX.module.define('brixy.debug.dump', function() {
+	var reportDialog = BX.module('brixy.debug.helpers').reportDialog,
+		types = BX.module('brixy.es.types'),
+		reflection = BX.module('brixy.es.reflection');
+
+	/**
+	* Shows dialog window with structured information about own properties of the value.
+	* 
+	* @memberOf module:'brixy.debug.dump'
+	* @param {*} value - Value to dump.
+	* @param {int} [depth=3] - Level of nesting. Default is 3. (optional)
+	* @param {string} [title] - The title of the dialog window. (optional)
+	*/
+	function dump(value, depth, title) {
+		var dial,
+			tree;
+			
+		if (depth == undefined)
+			depth = 3;
+			
+		dial = reportDialog('Dump (' + types.className(value) + ')' + (title ? ' - ' +  title : ''));
+		tree = dial.add ("treeview {alignment: ['fill', 'fill'], minimumSize: [400, 500], properties: {name: 'report'}}");
+
+		dumpValue(tree, '', value, depth);
+
+		dial.show();
+	}
+	
+	/**
+	* Maximum length of node text. Set zero to unlimited.
+	* @memberOf module:'brixy.debug.dump'
+	* @type {int}
+	* @default 200
+	*/
+	dump.truncateLength = 200;
+	
+	/*
+	* Adds node item for value.
+	* 
+	* @param {TreeView|ListItem} node.
+	* @param {string} [name] - Name of value. (optional)
+	* @param {*} value.
+	* @param {int} depth - Level of nesting.
+	*/
+	function dumpValue(node, name, value, depth) {
+		if (depth < 0)
+			return;
+		
+		var i,
+			n,
+			c,
+			title;
+			
+		// get property name
+		title = name ? name += ':' : '';
+		c = types.className(value);
+		switch (c) {
+			case 'undefined':
+			case 'null':
+				node.add('item', title + ' ' + c); // add simple node
+				return;
+			case 'Number':
+			case 'Boolean':
+				node.add('item', title + ' ' + types.valueString(value, c)); // add simple node
+				return;
+			case 'String':
+				node.add('item', title + ' ' + truncate(types.valueString(value, c))); // add simple node
+				return;
+			case 'Function':
+				break;
+			default:
+				title = name + ' (' + c + ')'; // object or XML
+		}
+		
+		// get property value
+		// XML
+		if (c === 'XML') {
+			node.add('item', title + ' ' + truncate(value.toXMLString()));
+		}
+		// Array or 'array like' objects (e.g. InDesign collections)
+		else if (likeArray(c, value)) {
+			n = value.length;
+			if (depth >= 1 && n) {// has child items
+				if (name)
+					node = node.add('node', title + ' [...]');
+			
+				for (i = 0; i < n; i++) {
+					if (i in value) // cannot use hasOwnProperty(), eg. index of chars in new String()
+						dumpValue(node, i.toString(), value[i], depth-1);
+				}
+			}
+			else // simple item
+				node.add('item', title + ' [' + (n ? truncate(value.toString()) : '') + ']');
+		}
+		// object/function node may have own properties
+		else if (depth >= 1) {
+			var rootnode = null,
+				pr,
+				v,
+				// Gets object own properties. Dumping of methods (value.reflect.methods) like show() has no meaning.
+				props = reflection.getOwnProperties(value).sort();
+			
+			for (i = 0, n = props.length; i < n; i++) {
+				pr = props[i];
+				
+				try {
+					v = value[pr];
+				}
+				catch (e) { // not applicable property, eg. InDesign Document.filePath of the unsaved document
+					v = 'Warning: ' + e.message;
+				}
+				if (!rootnode)
+					rootnode = name ? node.add('node', title + ' {...}') : node;
+					
+				dumpValue(rootnode, pr, v, depth-1); // add child node
+			}
+
+			if (!rootnode) // object without properties
+				node.add('item', title + ' ' + truncate(types.valueString(value, c)));
+		}
+		// simple item
+		else {
+			node.add('item', title + ' ' + truncate(types.valueString(value, c)));
+		}
+	}
+	
+	/*
+	* Removes endlines. Truncate string if required.
+	* @param {string} str
+	*/
+	function truncate(str) {
+		str = str.replace(/\r|\n/g, ' ');
+		if (dump.truncateLength > 0 && str.length > dump.truncateLength) { // truncate
+			return str.substr(0, dump.truncateLength) + '...';
+		}
+		return str;
+	}
+	
+	/*
+	* Tests if value is Array or 'array like' object (e.g. InDesign collection).
+	* @param className
+	* @param value
+	* @return {boolean}
+	*/
+	function likeArray(className, value) {
+		try {
+			return className === 'Array' || (('length' in value) && (typeof value.length === 'number') && ('0' in value));
+		}
+		catch (e) {
+			return false;
+		}
+	}
+
+
+	return {
+		dump: dump
+	};
+});
+
+/**
+* @module 'brixy.tester.report'
+*/
+BX.module.define('brixy.tester.report', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me,
+		helpers = BX.module('brixy.ui.helpers'),
+		STATUS = BX.module('brixy.tester.Result').STATUS,
+		COLOR = {
+			TEXT: [0.0, 0.0, 0.0],
+			FAILED: [1.0, 0.0, 0.0],
+			PASSED: [0.25, 0.6, 0],
+			BACK: [1.0, 1.0, 1.0],
+			OVER: [0.9, 0.9, 0.9]
+		},
+		SCROLL = {
+			SIZE: 20
+		};
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* Shows a dialog with tester results.
+	* @memberOf module:'brixy.tester.report'
+	* @param {module:'brixy.tester.Job'~Job[]} jobs - Processed jobs.
+	*/
+	function showResult(jobs) {
+		var b = new Sui(),
+			numJobs = jobs.length,
+			numF = 0,
+			i;
+			
+		for (i = 0; i < numJobs; i++) {
+			if (!jobs[i].passed())
+				numF++;
+		}
+
+		b.addComponents(reportComponents);
+		
+		b.window('dialog', 'Brixy Tester - result')
+			.row().alignChildren('top')
+				.column()
+					.jobBox(jobs)
+					.staticText(numJobs + ' test jobs, ' + numF + ' failed')
+					.end()
+				.column()
+					.button('OK')
+		.showWindow();
+	}
+	
+	// SuiBuilder components
+	var reportComponents = {
+		
+		jobBox: function (jobs) {
+			var b = this.builder,
+				numJobs = jobs.length,
+				maxRows = SCROLL.SIZE,
+				numRows = Math.min(maxRows, numJobs),
+				maxCh = 0,
+				i;
+				
+			for (i = 0; i < numJobs; i++) {
+				maxCh = Math.max(maxCh, jobs[i].getName().length);
+			}
+			
+			b.rowPanel().alignChildren('fill').set('spacing', 1).set('margins', 1)
+				.jobList(numRows, maxCh)
+				.execute(populateJobList, 0);
+				if (numJobs > maxRows) {
+					b.scrollbar()
+						.set('preferredSize', [20, undefined])
+						.set({minvalue: 0, maxvalue: numJobs - maxRows, value: 0, jumpdelta: numRows})
+						.set('onChanging', onScroll);
+				}
+				b.end();
+				
+			function populateJobList(start){
+				var i = start,
+					n = numRows + start,
+					row;
+					
+				for ( ; i < n; i++) {
+					row = b.get('row' + (i - start));
+					populateJobRow(row, jobs[i]);
+				}
+			}
+			
+			function populateJobRow(row, job){
+				if (!job || !(row instanceof Group))
+					return;
+				
+				row.testJob = job;
+				
+				var txE = row.children[0],
+					stE = row.children[1],
+					passed = job.passed(),
+					col,
+					gr = txE.graphics,
+					penType = gr.PenType.SOLID_COLOR;
+				
+				// text
+				txE.text = job.getName();
+				col = passed ? COLOR.TEXT : COLOR.FAILED;
+				gr.foregroundColor = gr.newPen(penType, col, 1);
+				gr.disabledForegroundColor = gr.newPen(penType, col, 1);
+				// status
+				stE.text = passed ? 'OK' : 'FAILED';
+				col = passed ? COLOR.PASSED : COLOR.FAILED;
+				gr = stE.graphics;
+				gr.foregroundColor = gr.newPen(penType, col, 1);
+				gr.disabledForegroundColor = gr.newPen(penType, col, 1);
+			}
+			
+			function onScroll(){
+				this.value = Math.floor(this.value);
+				
+				if (onScroll.old === this.value)
+					return;
+					
+				onScroll.old = this.value;
+				populateJobList(this.value);
+			}
+		},
+		
+		jobList: function (numRows, maxCh) {
+			var i;
+			
+			this.builder.column().alignChildren('fill').set('spacing', 1).set('margins', 1);
+				if (numRows === 0) {
+					this.builder.staticText('No job executed.');
+				}
+				for (i = 0; i < numRows; i++) {
+					this.builder.jobRow(i, maxCh);
+				}
+				this.builder.end();
+		},
+		
+		jobRow: function (index, maxCh) {
+			this.builder.row().id('row' + index).set('margins', 5).backgroundColor(COLOR.BACK)
+				.addEventListener('click', function (event) {
+					showJobResult(this.testJob);
+				})
+				.addEventListener('mouseover',setRowBackground)
+				.addEventListener('mouseout', setRowBackground)
+				.staticText().set('characters', maxCh)
+				.staticText().set('characters', 6).set('justify', 'center')
+				.end();
+		}
+	};
+	
+	function setRowBackground(event) {
+		var gr = this.graphics;
+		gr.backgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, (event.type === 'mouseover') ? COLOR.OVER : COLOR.BACK);
+	}
+	
+	/*
+	* Shows a window with job result.
+	* @param {module:'brixy.tester.Job'~Job} job
+	*/
+	 function showJobResult(job) {
+		if (!job) {
+			alert('Error: Job not found.');
+			return;
+		}
+		
+		var b = new Sui(),
+			stats = job.getStatistics();
+		
+		b.addComponents(jobComponents);
+		
+		b.window('dialog', 'Brixy Tester - job result')
+			.row().alignChildren('top')
+				.column().set('margins', 11)
+					.staticText(job.getName()).doubleAmps() // job name
+					.rowPanel().align('fill').end() // line
+					.column().set('spacing', 2)
+						.staticText(stats.total + ' tests')
+						.staticText(stats.failed + ' failed');
+						if (stats.failed)
+							b.foregroundColor(COLOR.FAILED);
+						if (stats.skipped)
+							b.staticText(stats.skipped + ' skipped').foregroundColor(COLOR.FAILED);
+						b.staticText(stats.duration + ' milliseconds')
+						.end()
+					.end()
+				.column().alignChildren('fill').set('spacing', 2)
+					.columnPanel().alignChildren('fill').backgroundColor(COLOR.BACK)
+						.sectionList(job.sectionList()) // sections
+						.end()
+					.end()
+				.column()
+					.button('OK')
+		.showWindow();
+	}
+	
+	// SuiBuilder components
+	var jobComponents = {
+		
+		sectionList: function (sections) {
+			var sec,
+				i = 0,
+				n = sections.length;
+				
+			for ( ; i < n; i++) {
+				sec = sections[i];
+				
+				if (i > 0)
+					this.builder.rowPanel().align('fill').end(); // line
+					
+				if (sec.getName()) // section name
+					this.container.add('statictext', undefined, helpers.doubleAmps(sec.getName()));
+				
+				this.builder.resultBox(sec.resultList()); // results
+			}
+		},
+		
+		resultBox: function (results) {
+			var i,
+				n,
+				r,
+				status,
+				el,
+				contF = null,
+				contR = this.container.add('group {orientation: "row", spacing: 3}'),
+				penType = contR.graphics.PenType.SOLID_COLOR;
+			
+			// row of results
+			for (i = 0, n = results.length; i < n; i++) {
+				r = results[i];
+				status = r.getStatus();
+				
+				el = contR.add('statictext', undefined, status);
+				el.graphics.foregroundColor = el.graphics.newPen(penType, (status === STATUS.OK) ? COLOR.PASSED : COLOR.FAILED, 1);
+				el.helpTip = r.getLongDescription();
+				
+				if (status === STATUS.FAILED) {
+					// failures
+					if (!contF) {
+						contF = this.container.add('group {orientation: "column", spacing: 2, alignChildren: "left"}');
+						contF.add('statictext', undefined, 'Failures:');
+					}
+					contF.add('statictext', undefined, helpers.doubleAmps('- ' + r.getLongDescription()));
+				}
+			}
+		}
+		
+	};
+
+	/**
+	* Shows a dialog with failed result.
+	* 
+	* @memberOf module:'brixy.tester.report'
+	* @param {module:'brixy.tester.Result'~Result} result - Test result.
+	* @param {module:'brixy.tester.Result'~Value} actual - Tested value.
+	* @param {module:'brixy.tester.Result'~Value} expected - Expected value.
+	* @param {int} depth - Comparison depth.
+	* @return {Object} {abortTester: boolean, showNext: boolean}
+	*/
+	function showFailure(result, actual, expected, depth) {
+		var b = new Sui();
+			
+		b.addComponents(failureComponents);
+		
+		b.window('dialog', 'Brixy Tester - failure report')
+			.row().alignChildren('top')
+				.column().alignChildren('fill')
+					.columnPanel().alignChildren('left').backgroundColor([1.0, 1.0, 1.0])
+						.staticText('Test failed').foregroundColor([1.0, 0.0, 0.0])
+						.staticText(result.getLongDescription()).doubleAmps()
+						.end()
+					.columnPanel('Actual:').alignChildren('left').set('margins', [14, 20, 14, 14])
+						.valueBox(actual, depth)
+						.end()
+					.columnPanel('Expected:').alignChildren('left').set('margins', [14, 20, 14, 14])
+						.valueBox(expected, depth)
+						.end()
+					.checkbox('Show this window on next failure').id('next').set('value', true)
+					.end()
+				.column().alignChildren('fill')
+					.button("{text: 'Continue', properties: {name: 'ok'}}").closeOnClick(true, 1)
+					.button('Abort tester').closeOnClick(true, 2)
+		.showWindow();
+		
+		return {
+			abortTester: b.result() !== 1,
+			showNext: b.get('next').value
+		};
+	}
+	
+	// SuiBuilder components
+	var failureComponents = {
+		
+		valueBox: function (val, depth) {
+			var dump = BX.module('brixy.debug.dump').dump,
+				builder = this.builder,
+				t = BX.module('brixy.es.types').baseType(val.value);
+			
+			builder.staticText(val.caption).doubleAmps();
+			
+			if (val.value === val.caption)
+				return;
+			
+			switch (t) {
+			case 'object':
+			case 'array':
+				builder.row()
+					.button('show...').set('onClick', function() {
+						var d = parseInt(builder.get('depth').text, 10);
+						if (isNaN(d))
+							d = 3;
+						builder.get('depth').text = d;
+						dump(val.value, d);
+					})
+					.staticText('depth:')
+					.editText(depth).id('depth').set('characters', 3)
+					.end();
+				break;
+			case 'function':
+				builder.button('show...').set('onClick', function() {
+					alert(val.value);
+				});
+				break;
+			default:
+				builder.staticText('Value: ' + val.value).doubleAmps();
+			}
+		}
+	};
+	
+	
+	// publish
+	return {
+		showResult: showResult,
+		showFailure: showFailure
+	}
+});
+
+/**
+* @module 'brixy.tester.Section'
+*/
+BX.module.define('brixy.tester.Section', function() {
+	
+	var STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* Section object.
+	* @class
+	* @alias module:'brixy.tester.Section'~Section
+	* @param {string} [name]
+	*/
+	function Section(name) {
+		this._name = name || '';
+		this._resultList = [];
+		
+		this._statsCache = null;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Section.prototype.toString = BX.toString;
+	
+	/**
+	* Adds a result.
+	* @param {module:'brixy.tester.Result'~Result} result
+	*/
+	Section.prototype.addResult = function(result) {
+		this._resultList.push(result);
+		this._statsCache = null;
+	};
+	
+	/**
+	* Counts number of tests, number of failed/skipped tests.
+	* @return {Object} - `{total: int, failed: int, skipped: int}`
+	*/
+	Section.prototype.getStatistics = function() {
+		if (this._statsCache)
+			return this._statsCache;
+			
+		var i = 0,
+			n = this._resultList.length,
+			f = 0, s = 0;
+		
+		for ( ; i < n; i++) {
+			switch (this._resultList[i].getStatus()) {
+			case STATUS.FAILED: f++; break;
+			case STATUS.SKIPPED: s++; break;
+			}
+		}
+	
+		this._statsCache = {
+			total: n,
+			failed: f,
+			skipped: s
+		};
+		return this._statsCache;
+	};
+	
+	/**
+	* Returns true if job passed.
+	* @return {boolean}
+	*/
+	Section.prototype.passed = function() {
+		var stat = this.getStatistics();
+		return stat.failed == 0 && stat.skipped == 0;
+	};
+	
+	/**
+	* Gets section name.
+	* @return {string}
+	*/
+	Section.prototype.getName = function() {
+		return this._name;
+	};
+	
+	/**
+	* Gets result list.
+	* @return {Array}
+	*/
+	Section.prototype.resultList = function() {
+		return this._resultList;
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Section class.
+		* @memberOf module:'brixy.tester.Section'
+		* @type {module:'brixy.tester.Section'~Section}
+		*/
+		Me: Section
+	};
+});
+
+/**
+* @module 'brixy.tester.Assert'
+*/
+BX.module.define('brixy.tester.Assert', function() {
+	var STATUS = BX.module('brixy.tester.Result').STATUS,
+		Value = BX.module('brixy.tester.Result').Value,
+		types = BX.module('brixy.es.types'),
+		reflection = BX.module('brixy.es.reflection');
+		
+	/**
+	* Asserts namespace.
+	* @namespace
+	* @memberOf module:'brixy.tester.Assert'
+	*/
+	var Asserts = {};
+	
+	/**
+	* Test rating.
+	* 
+	* @class
+	* @alias module:'brixy.tester.Assert'~Rating
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} depth
+	* @param {module:'brixy.tester.Result'.STATUS} status
+	* @param {module:'brixy.tester.Specials'~Specials} specs
+	*
+	* @property {module:'brixy.tester.Assert'~Value} actual
+	* @property {module:'brixy.tester.Assert'~Value} expected
+	* @property {int} depth
+	* @property {module:'brixy.tester.Result'.STATUS} status
+	* @property {string} note
+	*/
+	function Rating(actual, expected, depth, status, specs) {
+		this.actual = createValue(actual, specs);
+		this.expected = createValue(expected, specs);
+		this.depth = depth;
+		if (status === STATUS.OK || status === STATUS.FAILED) {
+			this.status = status;
+			this.note = '';
+		}
+		else {
+			this.status = STATUS.SKIPPED;
+			this.note = status;
+		}
+	}
+	
+	/*
+	* Create value.
+	* @property {*} value
+	* @property {string} caption
+	* @return {module:'brixy.tester.Result'~Value}
+	*/
+	function createValue(val, specs) {
+		var s,
+			value,
+			caption;
+			
+		if (specs && (s = specs.get(val))) {
+			value = s.value(val);
+			caption = s.caption(val) + '';
+		} else {
+			value = val;
+			caption = types.valueString(val);
+		}
+		
+		if (caption.length > 70) // trim a long string
+			caption = caption.substr(0, 70) + '...';
+		
+		return new Value(value, caption);
+	}
+	
+	/**
+	* Tests if objects are identical.
+	* @param {*} actual
+	* @param {*} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.is = function(actual, expected) {
+		var s = (actual === expected) ? STATUS.OK : STATUS.FAILED;
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if objects are not identical.
+	* @param {*} actual
+	* @param {*} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isNot = function(actual, expected) {
+		var s = (actual !== expected) ? STATUS.OK : STATUS.FAILED;
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if value is a member of the object.
+	* @param {*} actual
+	* @param {Array|Object} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isMember = function(actual, expected) {
+		var s = contains(actual, expected);
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if value is not a member of the object.
+	* @param {*} actual
+	* @param {Array|Object} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.notMember = function(actual, expected) {
+		var s = contains(actual, expected);
+		return new Rating(actual, expected, 1, revertStatus(s));
+	};
+	
+	/**
+	* Tests if objects are equal.
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} depth
+	* @param {module:'brixy.tester.Specials'~Specials} [specs] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isLike = function(actual, expected, depth, specs) {
+		var s = compare(actual, expected, depth, specs);
+		return new Rating(actual, expected, depth, s, specs);
+	};
+	
+	/**
+	* Tests if objects are not equal.
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} depth
+	* @param {module:'brixy.tester.Specials'~Specials} [specs] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.notLike = function(actual, expected, depth, specs) {
+		var s = compare(actual, expected, depth, specs);
+		return new Rating(actual, expected, depth, revertStatus(s), specs);
+	};
+	
+	/**
+	* Tests if a callback throws an exception. Compares the thrown error only when argument `expected` is given.  
+	* Note: Error messages are localised ("Error: message" vs. "Chyba: message").
+	* @param {function} actual
+	* @param {*} [expected] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isThrown = function(actual, expected) {
+		var s = simulateCall(actual, expected);
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if a callback doesn't throw an exception. Compares the thrown error only when argument `expected` is given.  
+	* Note: Error messages are localised ("Error: message" vs. "Chyba: message").
+	* @param {function} actual
+	* @param {*} [expected] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.notThrown = function(actual, expected) {
+		var s = simulateCall(actual, expected);
+		return new Rating(actual, expected, 1, revertStatus(s));
+	};
+	
+	
+	/* helpers */
+	
+	function revertStatus(status) {
+		switch (status) {
+			case STATUS.OK: return STATUS.FAILED;
+			case STATUS.FAILED: return STATUS.OK;
+		}
+		return status;
+	}
+	
+	function simulateCall(actual, expected) {
+		var s = STATUS.FAILED;
+		
+		if (types.className(actual) !== 'Function')
+			return 'Actual parameter should be a function.';
+			
+		try {
+			actual();
+		}
+		catch (err) {
+			if (expected)
+				s = (expected == err) ? STATUS.OK : STATUS.FAILED;
+			else
+				s = STATUS.OK;
+		}
+		
+		return s;
+	}
+	
+	/*
+	* Compare two values.
+	*/
+	function compare(actual, expected, depth, specs) {
+		if (actual === expected)
+			return STATUS.OK;
+		
+		var a = (specs && specs.getValue(actual)) || actual,
+			e = (specs && specs.getValue(expected)) || expected,
+			t = types.baseType(a) + types.baseType(e),
+			s;
+		
+		switch (t) {
+			case 'objectobject':
+				s = compareObjects(a, e, depth, specs);
+				break;
+			case 'arrayarray':
+				s = compareArrays(a, e, depth, specs);
+				break;
+			default:
+				if (/.*(object|array).*/.test(t)) // array-any OR object-any
+					s = STATUS.FAILED;
+				else
+					s = (a == e) ? STATUS.OK : STATUS.FAILED;
+		}
+		
+		return s;
+	}
+	
+	/*
+	* Compare arrays.
+	* Note: Compares items of the array. If nesting limit occured, it only compares the sum of items.
+	*/
+	function compareArrays(a, b, depth, specs) {
+		var n = a.length,
+			i = 0,
+			s;
+		
+		// check number of items
+		if (n !== b.length)
+			return STATUS.FAILED;
+		
+		// nesting limit
+		if (depth === 0)
+			return (n > 0) ? 'Nesting level is too low to compare arrays.' : STATUS.OK;
+		
+		// check values of items
+		for ( ; i < n; i++) {
+			if (i in a !== i in b) // both or none has to contain index
+				return STATUS.FAILED;
+				
+			s = compare(a[i], b[i], depth--, specs);
+			if (s !== STATUS.OK)
+				return s;
+		}
+		
+		return STATUS.OK;
+	}
+	
+	/*
+	* Compare objects.
+	* Note: Compares properties of the objects (constructors are NOT compared). If nesting limit occured, it only compares the sum of properties.
+	*/
+	function compareObjects(a, b, depth, specs) {
+		var arr,
+			pr,
+			s,
+			i,
+			n;
+		
+		n = reflection.getOwnProperties(b).length;
+		arr = reflection.getOwnProperties(a);
+		
+		// check number of properties
+		if (n !== arr.length)
+			return STATUS.FAILED;
+			
+		// nesting limit
+		if (depth === 0)
+			return (n > 0) ? 'Nesting level is too low to compare objects.' : STATUS.OK;
+		
+		// check values of properties
+		for (i = 0; i < n; i++) {
+			pr = arr[i];
+			
+			if (!(pr in b))
+				return STATUS.FAILED;
+				
+			s = compare(a[pr], b[pr], depth--, specs);
+			if (s !== STATUS.OK)
+				return s;
+		}
+		
+		return STATUS.OK;
+	}
+
+	/*
+	* Checks if a value is a member of the container.
+	*/
+	function contains(value, container) {
+		if (value === container)
+			return STATUS.FAILED;
+		
+		var t = types.baseType(container),
+			isOwn = Object.prototype.hasOwnProperty,
+			i,
+			n;
+		
+		if (t === 'array') {
+			for (i = 0, n = container.length; i < n; i++) {
+				if (isOwn.call(container, i) && value === container[i])
+					return STATUS.OK;
+			}
+		}
+		else if (t === 'object') {
+			for (i in container) {
+				if (isOwn.call(container, i) && value === container[i])
+					return STATUS.OK;
+			}
+		}
+		
+		return STATUS.FAILED;
+	}
+	
+	
+	return {
+		Asserts: Asserts,
+		/** 
+		* Rating class.
+		* @memberOf module:'brixy.tester.Assert'
+		* @type {module:'brixy.tester.Assert'~Rating}
+		*/
+		Rating: Rating
+	};
+});
+/**
+* Set of special type definitions. Each defines a method for getting a test value and a method for getting a string representation of the value.
+* 
+* @example
+* // special Date type may looks like
+* {
+* 	constr: Date, // constructor method
+* 	value: function(val) { return val.getTime(); }, // returns a value for testing instead of original value
+* 	caption: function(val) { return 'Date("' + val.toLocaleString() + '")'; } // returns a text for reporting
+* }
+* 
+* @module 'brixy.tester.Specials'
+*/
+BX.module.define('brixy.tester.Specials', function() {
+	
+	/**
+	* Specials object.
+	* @class
+	* @alias module:'brixy.tester.Specials'~Specials
+	*/
+	function Specials() {
+		this._types = {};
+	}
+
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Specials.prototype.toString = BX.toString;
+
+	/**
+	* Adds new special type definition.
+	* 
+	* @param {Function} Type - Object's constructor.
+	* @param {Function} valueCallback - `function(val){ return val.something; }` returns a value for testing instead of original value.
+	* @param {Function} captionCallback - `function(val){ return val.toString(); }` returns a string to show in report dialog.
+	* @throws Exception
+	*/
+	Specials.prototype.addType = function(Type, valueCallback, captionCallback) {
+		try {
+			if (typeof Type !== 'function')
+				throw Error('New special type should be a function.');
+				
+			if (typeof valueCallback !== 'function' || typeof captionCallback !== 'function')
+				throw Error('Callback should be a function.');
+				
+			var n = Type.name;
+				
+			if (!this._types.hasOwnProperty(n)) {
+				this._types[n] = [];
+			}
+			
+			this._types[n].push({constr: Type, value: valueCallback, caption: captionCallback});
+		}
+		catch (e) {
+			throw BX.error('brixy.tester.Specials.addType()', Error('Cannot add new special type.'), e);
+		}
+	};
+
+	/**
+	* Gets a special type definition.
+	* 
+	* @param {Object} val
+	* @return {Object} Special type definition `{constr: Type, value: Function, caption: Function}`.
+	*/
+	Specials.prototype.get = function(val) {
+		try {
+			var c = val.constructor.name + '',
+				s;
+				
+			if (this._types.hasOwnProperty(c)) {
+				s = this._types[c];
+				for (var i = 0, n = s.length; i < n; i++) {
+					if (val.constructor === s[i].constr)
+						return s[i];
+				}
+			}
+		}
+		catch (e) {
+		}
+		return null;
+	};
+
+	/**
+	* Gets a special type value.
+	* 
+	* @param {Object} val
+	* @return {*}
+	*/
+	Specials.prototype.getValue = function(val) {
+		var s = this.get(val);
+		return s ? s.value(val) : null;
+	};
+
+	
+	// publish
+	return {
+		/** 
+		* Specials class.
+		* @memberOf module:'brixy.tester.Specials'
+		* @type {module:'brixy.tester.Specials'~Specials}
+		*/
+		Me: Specials
+	};
+});
+
+/**
+* @module 'brixy.tester.It'
+*/
+BX.module.define('brixy.tester.It', function() {
+	var Asserts = BX.module('brixy.tester.Assert').Asserts,
+		Specials = BX.module('brixy.tester.Specials').Me,
+		Result = BX.module('brixy.tester.Result').Me,
+		STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* It object.
+	* @class
+	* @alias module:'brixy.tester.It'~It
+	* @param {module:'brixy.tester.Job'~Job} job - Reference to the job instance.
+	* @param {int} [comparisonDepth=10] - Nesting level of the comparison of the objects.
+	*/
+	function It(job, comparisonDepth) {
+		this._specials = null;
+		this._job = job;
+		comparisonDepth = parseInt(comparisonDepth);
+		this._comparisonDepth = isNaN(comparisonDepth) ? 10 : comparisonDepth;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	It.prototype.toString = BX.toString;
+	
+	/**
+	* Adds new special type definition. Methods `isLike()` and `notLike()` compares own properties of tested objects. 
+	* Special types allows to define own values to be used in testing.
+	* 
+	* @example
+	* // Before using a special type definition:
+	* // test passed because Date doesn't have own properties,
+	* // but dates are different
+	* it.isLike('', new Date(), new Date(1000));
+	* 
+	* // Let's define Date as a special type:
+	* it.addSpecialType(
+	* 	Date, 
+	* 	function(val) { return val.getTime(); }, 
+	* 	function(val) { return 'Date("' + val.toLocaleString() + '")'; }
+	* );
+	* it.notLike('', new Date(), new Date(1000));
+	* it.isLike('', new Date(1000), new Date(1000));
+	* // and that we wished
+	* 
+	* @param {Function} Type - Object's constructor.
+	* @param {Function} valueCallback - `function(val){ return val.something; }` returns a value for testing.
+	* @param {Function} captionCallback - `function(val){ return val.toString(); }` returns a string to show in report dialog.
+	*/
+	It.prototype.addSpecialType = function(Type, valueCallback, captionCallback) {
+		if (!this._specials)
+			this._specials = new Specials();
+		
+		this._specials.addType(Type, valueCallback, captionCallback);
+	};
+	
+	/**
+	* Adds new special type definition.
+	* @param {Object} def - `{constr: Type, value: Function, caption: Function}`
+	* @throws Exception
+	*/
+	It.prototype.addSpecialTypeDef = function(def) {
+		try {
+			this.addSpecialType(def.constr, def.value, def.caption);
+		}
+		catch (e) {
+			throw BX.error('brixy.tester.It.addSpecialTypeDef()', Error('Cannot add new special type definition.'), e);
+		}
+	};
+	
+	/*
+	* Creates a result of the test, sends it to the job.
+	* @param {module:'brixy.tester.Assert'~Rating} rating
+	* @param {string} testName
+	* @param {string} descO - Description of the successful test.
+	* @param {string} descF - Description of the failed test.
+	*/
+	It.prototype._evaluate = function(rating, testName, descO, descF) {
+		var description = '';
+		
+		switch (rating.status) {
+		case STATUS.OK:
+			description = (descO + '') || 'OK';
+			break;
+		case STATUS.FAILED:
+			description = (descF + '') || 'Failed';
+			break;
+		case STATUS.SKIPPED:
+			description = 'Incomplete test.';
+			break;
+		}
+		
+		if (rating.note)
+			description = description + ' ' + rating.note;
+		description = description.replace('%a', rating.actual.caption).replace('%e', rating.expected.caption);
+		
+		var result = new Result(rating.status, testName, description);
+		this._job.onResult(result, rating.actual, rating.expected, rating.depth);
+	};
+	
+
+	/* Test methods */
+	
+	/**
+	* Tests if values are identical.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.is = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.is(actual, expected), 
+			name || 'is',
+			'%a is %e.',
+			'%a should be %e.'
+		);
+	};
+	
+	/**
+	* Tests if values are not identical.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.isNot = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isNot(actual, expected), 
+			name || 'isNot',
+			'%a is not %e.',
+			'%a should not be %e.'
+		);
+	};
+	
+	/**
+	* Tests if actual value is member of the expected value.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.isMember = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isMember(actual, expected), 
+			name || 'is a member',
+			'%a is a member of the %e.',
+			'%a should be a member of the %e.'
+		);
+	};
+	
+	/**
+	* Tests if actual value is not member of the expected value.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.notMember = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.notMember(actual, expected), 
+			name || 'is not a member',
+			'%a is not a member of the %e.',
+			'%a should not be a member of the %e.'
+		);
+	};
+	
+	/**
+	* Tests if values are equal.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} [depth=10] - Nesting level of the comparison of the objects.
+	*/
+	It.prototype.isLike = function(name, actual, expected, depth) {
+		depth = toDepth(depth, this._comparisonDepth);
+		this._evaluate(
+			Asserts.isLike(actual, expected, depth, this._specials), 
+			name || 'isLike',
+			'%a is like a %e. Max comparison depth: ' + depth + '.',
+			'%a should be like a %e. Max comparison depth: ' + depth + '.'
+		);
+	};
+	
+	/**
+	* Tests if values are not equal.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} [depth=10] - Nesting level of the comparison of the objects.
+	*/
+	It.prototype.notLike = function(name, actual, expected, depth) {
+		depth = toDepth(depth, this._comparisonDepth);
+		this._evaluate(
+			Asserts.notLike(actual, expected, depth, this._specials), 
+			name || 'notLike',
+			'%a is not like a %e. Max comparison depth: ' + depth + '.',
+			'%a should not be like a %e. Max comparison depth: ' + depth + '.'
+		);
+	};
+	
+	/**
+	* Tests if actual function throws exception.
+	* @param {string} name
+	* @param {function} actual
+	* @param {*} [expected]
+	*/
+	It.prototype.isThrown = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isThrown(actual, expected), 
+			name || 'isThrown',
+			'%a throws exception' + (expected ? ': ' + expected : '.'),
+			'%a should throw exception' + (expected ? ': ' + expected : '.')
+		);
+	};
+	
+	/**
+	* Tests if actual function doesn't throw exception.
+	* @param {string} name
+	* @param {function} actual
+	* @param {*} [expected]
+	*/
+	It.prototype.notThrown = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.notThrown(actual, expected), 
+			name || 'notThrown',
+			'%a does not throw exception' + (expected ? ': ' + expected : '.'),
+			'%a should not throw exception' + (expected ? ': ' + expected : '.')
+		);
+	};
+
+	function toDepth(depth, defDepth) {
+		depth = parseInt(depth);
+		if (isNaN(depth)) {
+			depth = defDepth;
+		}
+		return (depth < 0) ? 0 : depth;
+	}
+	
+	
+	// publish
+	return {
+		/** 
+		* It class.
+		* @memberOf module:'brixy.tester.It'
+		* @type {module:'brixy.tester.It'~It}
+		*/
+		Me: It
+	};
+});
+
+/**
+* @module 'brixy.tester.Job'
+*/
+BX.module.define('brixy.tester.Job', function() {
+	var Section = BX.module('brixy.tester.Section').Me,
+		Result = BX.module('brixy.tester.Result').Me,
+		STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* AbortException exception.
+	* @class
+	* @alias module:'brixy.tester.Job'~AbortException
+	*/
+	function AbortException() {
+	}
+	
+	/**
+	* Job object.
+	* @class
+	* @alias module:'brixy.tester.Job'~Job
+	* @property {Object} it - Assert library instance. Default is {@link module:'brixy.tester.It'~It}.
+	
+	* @param {string} [name='Test job'] - Job name.
+	* @param {boolean} dialogOnFailure - Shows the report dialog when test fails.
+	* @param {Function|string} [assertLib='brixy.tester.It'] - Assert library. Accepts a constructor or module name. (optional)
+	* @param {int} [comparisonDepth=10] - Default comparison depth. (optional)
+	*/
+	function Job(name, dialogOnFailure, assertLib, comparisonDepth) {
+		// assertLibrary should be a module name or constructor
+		var It = assertLib || 'brixy.tester.It';
+		if (typeof It !== 'function') {
+			It = BX.module.Me(It);
+		}
+		this.it = new It(this, (comparisonDepth == undefined) ? 10 : comparisonDepth);
+		
+		this._name = name || 'Test job';
+		this._sections = [];
+		this._currentSection = null;
+		this._dialogOnFailure = !!dialogOnFailure;
+		this._timeStart = this._timeEnd = (new Date()).getTime();
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Job.prototype.toString = BX.toString;
+	
+	/**
+	* Gets job name.
+	* @return {string}
+	*/
+	Job.prototype.getName = function() {
+		return this._name;
+	};
+	
+	/**
+	* Sets job name.
+	* @param {string} name
+	*/
+	Job.prototype.setName = function(name) {
+		this._name = name;
+	};
+	
+	/**
+	* Adds a new job section.
+	* @param {string} [name]
+	* @return {module:'brixy.tester.Section'~Section} current job section
+	*/
+	Job.prototype.addSection = function(name) {
+		this._currentSection = new Section(name);
+		this._sections.push(this._currentSection);
+		
+		return this._currentSection;
+	};
+	
+	/**
+	* Gets current job section. Create new section if none exists.
+	* @return {module:'brixy.tester.Section'~Section} current job section
+	*/
+	Job.prototype.currentSection = function() {
+		if (!this._currentSection)
+			this.addSection();
+		
+		return this._currentSection;
+	};
+	
+	/**
+	* Gets list of all sections.
+	* @return {Array}
+	*/
+	Job.prototype.sectionList = function() {
+		return this._sections;
+	};
+	
+	/**
+	* Adds a result to the current job section. 
+	* @param {module:'brixy.tester.Result'~Result} result
+	*/
+	Job.prototype.addResult = function(result) {
+		this._timeEnd = (new Date()).getTime();
+		this.currentSection().addResult(result);
+	};
+	
+	/**
+	* Adds a failed result to the current job section. 
+	* @param {string} name
+	* @param {string} description
+	*/
+	Job.prototype.addFailedResult = function(name, description) {
+		this.addResult(new Result(STATUS.FAILED, name, description));
+	};
+	
+	/**
+	* Adds a skipped result to the current job section. 
+	* @param {string} name
+	* @param {string} description
+	*/
+	Job.prototype.addSkippedResult = function(name, description) {
+		this.addResult(new Result(STATUS.SKIPPED, name, description));
+	};
+	
+	/**
+	* Adds the result to the current job section, shows error if needed. Assert library methods calls it after evaluating a test.
+	* @param {module:'brixy.tester.Result'~Result} result
+	* @param {module:'brixy.tester.Result'~Value} actual - Actual tested value.
+	* @param {module:'brixy.tester.Result'~Value} expected - Expected value.
+	* @param {int} depth - The nesting level of the comparison of the objects.
+	*/
+	Job.prototype.onResult = function(result, actual, expected, depth) {
+		this.addResult(result);
+		
+		// failure report
+		if (!result.passed() && this._dialogOnFailure) {
+			// dialog
+			var r = BX.module('brixy.tester.report').showFailure(result, actual, expected, depth);
+			if (r.abortTester)
+				throw new AbortException();
+
+			this._dialogOnFailure = r.showNext;
+			
+			// subtract a time when the dialog was displayed
+			var t = (new Date()).getTime();
+			this._timeStart += t - this._timeEnd;
+			this._timeEnd = t;
+		}
+	};
+	
+	/**
+	* Counts number of tests, number of failed/skipped tests, job duration.
+	* @return {Object} - `{total: int, failed: int, skipped: int, duration: milliseconds}`
+	*/
+	Job.prototype.getStatistics = function() {
+		var i = 0,
+			n = this._sections.length,
+			t,
+			f,
+			s = t = f = 0,
+			stat;
+		
+		for ( ; i < n; i++) {
+			stat = this._sections[i].getStatistics();
+			t += stat.total;
+			f += stat.failed;
+			s += stat.skipped;
+		}
+	
+		return {
+			total: t,
+			failed: f,
+			skipped: s,
+			duration: this._timeEnd - this._timeStart
+		};
+	};
+	
+	/**
+	* Returns true if job passed.
+	* @return {boolean}
+	*/
+	Job.prototype.passed = function() {
+		for (var i = 0, n = this._sections.length; i < n; i++) {
+			if (!this._sections[i].passed())
+				return false;
+		}
+		return true;
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Job class.
+		* @memberOf module:'brixy.tester.Job'
+		* @type {module:'brixy.tester.Job'~Job}
+		*/
+		Me: Job,
+		/** 
+		* AbortException class.
+		* @memberOf module:'brixy.tester.Job'
+		* @type {module:'brixy.tester.Job'~AbortException}
+		*/
+		AbortException: AbortException
+	};
+});
+
+/**
+ * Warning: This module definition works in 'skip' rewrite mode. It does not throw an exception, if module already exists.
+ * @module 'brixy.fs.FileLoader'
+ */
+BX.module.define('brixy.fs.FileLoader', function() {
+	
+	/**
+	* FileLoader class. Subclass or instance should at least define own `onLoadFile(file)` method.
+	* @class
+	* @alias module:'brixy.fs.FileLoader'~FileLoader
+	*/
+	function FileLoader() {
+		this._aliases = {}; // fullNames of the folder aliases
+		this._loaded = []; // fullNames of the loaded files
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	FileLoader.prototype.toString = BX.toString;
+	
+	/**
+	* Creates alias of the folder path.
+	* @param {string} alias - Folder shortcut.
+	* @param {string} path - Folder path relative to the home folder (alias for '') or absolute path.
+	* @throws Exception if folder doesn't exist.
+	* @throws Exception if alias already exists for a different path.
+	*/
+	FileLoader.prototype.alias = function(alias, path) {
+		if (arguments.length === 1) {
+			path = alias;
+			alias = '';
+		}
+		
+		var a = 'a_' + alias,
+			home = this.aliasPath(''),
+			f,
+			p = (path += '');
+			
+		if (home && p)
+			p = '/' + p; // multiple / are ignored by Extend Script
+		
+		f = Folder(home + p); // relative to the home folder
+		
+		if (!f.exists)
+			f = Folder(path); // or absolute path
+			
+		if (f instanceof File)
+			f = f.parent;
+			
+		if (!f.exists)
+			throw Error('Creating of the alias "' + alias + '" failed. Not found the "' + f.fullName + '".');
+		
+		if (this._aliases.hasOwnProperty(a)) {
+			if (f.fullName != this._aliases[a])
+				throw Error('Creating of the alias "' + alias + '" failed. Alias already exists with path:\n' + this._aliases[a]);
+			
+			return;
+		}
+
+		this._aliases[a] = f.fullName;
+	};
+	
+	/**
+	* Stores path to the included list to prevent the further loading.
+	* Doesn't test if file exists.
+	* @param {string} alias - Folder shortcut.
+	* @param {string} path - File or folder path.
+	* @throws Exception if alias doesn't exist.
+	*/
+	FileLoader.prototype.ignore = function(alias, path) {
+		var a = this.aliasPath(alias),
+			f,
+			p = (path += '');
+			
+		if (a && p)
+			p = '/' + p; // multiple / are ignored by Extend Script
+			
+		f = File(a + p); // relative to the alias
+		
+		if (!f.exists && !alias)
+			f = File(path); // or absolute path
+			
+		if (!f.exists)
+			throw Error('Cannot ignore alias "' + alias + '". Not found the file "' + f.fullName + '".');
+		
+		f = f.fullName; // keep the consistent encoding
+		
+		if (!this.isLoaded(f))
+			this.addPath(f);
+	};
+	
+	/**
+	* Includes jsx|jsxinc|js|jsxbin file. Folders are traversed recursively.
+	* Each file is included only once.
+	* @param {string} alias - Folder shortcut.
+	* @param {string} path - File or folder path.
+	* @throws Exception if alias or file doesn't exist.
+	*/
+	FileLoader.prototype.load = function(alias, path) {
+		var a = this.aliasPath(alias);
+		
+		path = (path == undefined) ? '' : path + '';
+			
+		if (a && path)
+			path = '/' + path; // multiple / are ignored by Extend Script
+			
+		this.loadFile(File(a + path));
+	};
+	
+	/**
+	* Loads the file if it is of an allowed type. Each file is loaded only once.
+	* @param {File|Folder} file - File or folder object.
+	* @throws Exception if file doesn't exist.
+	*/
+	FileLoader.prototype.loadFile = function(file) {
+		var path;
+		
+		file = File(file);
+		if (!file.exists)
+			throw Error('Not found the file "' + file.fullName + '".');
+
+		if (this.isLoaded(path = file.fullName))
+			return;
+			
+		this._loaded.push(path);
+		
+		if (file instanceof File) {
+			if (this.isAllowedFile(path))
+				this.onLoadFile(file);
+		}
+		else if (this.isAllowedFolder(path)) {
+			this.onLoadFolder(file);
+		}
+	};
+	
+	/**
+	* Does nothing.
+	* Subclass or instance should define own onLoadFile method.
+	* @param {File} file
+	*/
+	FileLoader.prototype.onLoadFile = function(file) {
+	};
+	
+	/**
+	* Loads files and folders. Folders are traversed recursively.
+	* Subclass or instance may define own onLoadFolder method.
+	* @param {Folder} folder
+	*/
+	FileLoader.prototype.onLoadFolder = function(folder) {
+		var list;
+		
+		folder = Folder(folder);
+		list = folder.getFiles();
+		if (!list)
+			return;
+			
+		for (var i = 0, n = list.length; i < n; i++) {
+			this.loadFile(list[i]);
+		}
+	};
+	
+	/**
+	* Filters the file. Subclass or instance may define own fileFilter method.
+	* @param {string} path - Full path of the file.
+	* @return {boolean}
+	*/
+	FileLoader.prototype.isAllowedFile = function(path) {
+		return /.+\.(jsx|jsxinc|jsxbin|js)$/i.test(path);
+	};
+	
+	/**
+	* Filters the folder. Subclass or instance may define own fileFilter method.
+	* @param {string} path - Full path of the folder.
+	* @return {boolean}
+	*/
+	FileLoader.prototype.isAllowedFolder = function(path) {
+		return true;
+	};
+	
+	/**
+	* Returns full path of the alias.
+	* @param {string} alias
+	* @throws Exception if alias doesn't exist.
+	*/
+	FileLoader.prototype.aliasPath = function(alias) {
+		var a = 'a_' + alias;
+			
+		if (this._aliases.hasOwnProperty(a))
+			return this._aliases[a];
+		
+		if (a === 'a_') // path to home folder may be undefined
+			return '';
+			
+		throw Error('Alias "' + alias + '" does not exist.');
+	};
+	
+	/**
+	* Return the array of the included file paths.
+	* @return {string[]} - Array of the included file paths.
+	*/
+	FileLoader.prototype.loadedPaths = function() {
+		return Array.prototype.concat(this._loaded);
+	};
+	
+	/**
+	* Tests if the path is already included.
+	* @param {string} path - Full path of the file.
+	*/
+	FileLoader.prototype.isLoaded = function(path) {
+		var i = 0,
+			n = this._loaded.length;
+		
+		for ( ; i < n; i++) {
+			if (this._loaded[i] === path)
+				return true;
+		}
+		
+		return false;
+	};
+	
+	/**
+	* Adds the include path without applying of the file filter.
+	* @param {string} path
+	*/
+	FileLoader.prototype.addPath = function(path) {
+		this._loaded.push(path);
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* FileLoader class.
+		* @memberOf module:'brixy.fs.FileLoader'
+		* @type {module:'brixy.fs.FileLoader'~FileLoader}
+		*/
+		Me: FileLoader
+	};
+}, 'skip'); // do not redefine existing module
+/**
+* @module 'brixy.debug.callStack'
+*/
+BX.module.define('brixy.debug.callStack', function() {
+
+	/**
+	* Shows a stack of method calls.
+	* @memberOf module:'brixy.debug.callStack'
+	* @param {string} [stack=$.stack] - Call stack. If not given, $.stack is used. (optional)
+	*/
+	function callStack(stack) {
+		if (stack == undefined)
+			stack = $.stack;
+			
+		var row,
+			dial = new Window('dialog', 'Call stack'),
+			panel = dial.add("panel {alignChildren: 'left', spacing: 2}"),
+			gr = panel.graphics;
+			
+		gr.backgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, [1.0, 1.0, 1.0]);
+		gr.disabledBackgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, [1.0, 1.0, 1.0]);
+
+		var lines = (stack + '').split(/[\r\n]/),
+			line,
+			r,
+			i = 0,
+			n = lines.length;
+		
+		for ( ; i < n; i++) {
+			line = lines[i];
+			if (!line)
+				continue;
+				
+			r = line.match(/^\[(.*)\]$/);
+			if (r) {
+				row = addFileRow(panel);
+				addText(row, 'File: ' + r[1], [1.0, 0.0, 0.0]);
+			}
+			else {
+				row = addMethodRow(panel);
+				r = line.match(/^([^\(]*)(\(.*\))$/);
+				if (r) {
+					addText(row, r[1], [0.2, 0.2, 0.5]);
+					addText(row, r[2], [0.5, 0.5, 0.5]);
+				}
+				else {
+					addText(row, line, [0.2, 0.2, 0.5]);
+				}
+			}
+		}
+		
+		dial.show();
+	}
+	
+	function addFileRow(panel) {
+		return panel.add('group {orientation: "row"}');
+	}
+	
+	function addMethodRow(panel) {
+		return panel.add('group {orientation: "row", indent: 10, spacing: 10}');
+	}
+	
+	function addText(row, text, color) {
+		var el = row.add('statictext');
+		el.text = text.replace(/(&)/g, '&&');
+		
+		var gr = el.graphics;
+		gr.foregroundColor = gr.newPen(gr.PenType.SOLID_COLOR, color, 1);
+		gr.disabledForegroundColor = gr.newPen(gr.PenType.SOLID_COLOR, color, 1);
+	}
+
+
+	return {
+		callStack: callStack
+	};
+});
+
+/**
+* @module 'brixy.debug.Summary'
+*/
+BX.module.define('brixy.debug.Summary', function() {
+	var reportDialog = BX.module('brixy.debug.helpers').reportDialog;
+
+	/**
+	* Summary object.
+	* 
+	* @class
+	* @alias module:'brixy.debug.Summary'~Summary
+	*/
+	function Summary() {
+		this._columns = [];
+		this._objects = [];
+		this._totals = [];
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Summary.prototype.toString = BX.toString;
+	
+	/**
+	* Records the $.summary() result.
+	* 
+	* @param {string} name
+	*/
+	Summary.prototype.shot = function(name) {
+		var total = 0,
+			index = this._columns.length,
+			objects = this._objects;
+		
+		$.summary().replace(/(\d+)\s+?(\S+)/g, function(source, count, oName) {
+			var i = 0,
+				n = objects.length,
+				o;
+			
+			total += Number(count);
+			
+			for ( ; i < n; i++) {
+				o = objects[i];
+					
+				if (o.name === oName) {
+					o.counts[index] = count;
+					return;
+				}
+			}
+			
+			o = {name: oName, counts: new Array(index + 1)};
+			o.counts[index] = count;
+			objects.push(o);
+		});
+		
+		this._columns[index] = name;
+		this._totals[index] = total;
+	};
+	
+	/**
+	* Shows a report window with records.
+	* 
+	* @param {boolean} [thenClear=false] - Clear all records after closing window. (optional)
+	*/
+	Summary.prototype.report = function(thenClear) {
+		var i = 0,
+			n = this._objects.length,
+			o,
+			c = this._columns.length,
+			dial,
+			listBox,
+			addItem,
+			columnsSupport = 'columns' in ListBox; // CS3 doesn't support multicolumn ListBox
+			
+		dial = reportDialog('Summary');
+		
+		if (columnsSupport) {
+			listBox = dial.add("group {alignment: ['fill', 'fill'], properties: {name: 'report'}}") // InDesing CS6 on Windows 10: ListBox must be inside a Group or Panel
+				.add ("listbox {alignment: ['fill', 'fill'], "
+				+ "properties: {numberOfColumns: " + (c + 2) + ", showHeaders: true, "
+				+ "columnTitles: ['Type','" + this._columns.join("','") + "','< difference >']}}");		
+		}
+		else {
+			listBox = dial.add("group {alignment: ['fill', 'fill'], properties: {name: 'report'}}") // InDesing CS6 on Windows 10: ListBox must be inside a Group or Panel
+				.add ("listbox {alignment: ['fill', 'fill'], minimumSize: [400, 500]}");
+		}
+		
+		addItem = (function(listBox) {
+			if (columnsSupport) {
+				return function (name, values, number) {
+						var item = listBox.add('item', name),
+							i = 0,
+							dif;
+						for ( ; i < number; i++) {
+							item.subItems[i].text = values[i] || '-';
+						}
+						if (number > 1) {
+							dif = (values[number - 1] || 0) - (values[0] || 0);
+							item.subItems[number].text = (dif > 0) ? '+' + dif : dif;
+						}
+					};
+			}
+			else {
+				return function (name, values, number) {
+						var s = name + ': ',
+							i = 1;
+							
+						if (number)
+							s += values[0] || '0';
+							
+						for ( ; i < number; i++) {
+							s += ' - ' + (values[i] || '0');
+						}
+						listBox.add('item', s);
+					};
+			}
+		})(listBox);
+		
+		this._objects.sort(function(a, b) {return a.name.toLowerCase().localeCompare(b.name.toLowerCase());});
+		
+		for ( ; i < n; i++) {
+			o = this._objects[i];
+			addItem(o.name, o.counts, c);
+		}
+		addItem('< SUM >', this._totals, c);
+		
+		dial.show();
+		
+		if (thenClear)
+			this.clear();
+	};
+	
+	/**
+	* Clears all records.
+	* 
+	*/
+	Summary.prototype.clear = function() {
+		this._columns = [];
+		this._objects = [];
+		this._totals = [];
+	};
+	
+	
+	return {
+		/** 
+		* Summary class.
+		* @memberOf module:'brixy.debug.Summary'
+		* @type {module:'brixy.debug.Summary'~Summary}
+		*/
+		Me: Summary
+	};
+});
+
+/**
+* @module 'brixy.debug.Timer'
+*/
+BX.module.define('brixy.debug.Timer', function() {
+	var reportDialog = BX.module('brixy.debug.helpers').reportDialog;
+
+	/*
+	* TimerRecord object.
+	* 
+	* @class
+	* @alias module:'brixy.debug.Timer'~TimerRecord
+	* 
+	* @property {int} _start - Start time. Private property.
+	* @property {int} _end - End time. Private property.
+	* @property {int} _count - Number of measurements. Private property.
+	*/
+	function TimerRecord() {
+		this._start = this._end = (new Date()).getTime();
+		this._count = 0;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* 
+	* @method
+	* @return {string}
+	*/
+	TimerRecord.prototype.toString = BX.toString;
+	
+	/*
+	* Records a time moment.
+	* 
+	*/
+	TimerRecord.prototype.storeTime = function() {
+		this._end = (new Date()).getTime();
+		this._count++;
+	};
+	
+	/*
+	* Returns a total time in milliseconds.
+	* 
+	* @return {int} total time in milliseconds
+	*/
+	TimerRecord.prototype.getTime = function() {
+		return this._end - this._start;
+	};
+	
+	/*
+	* Returns a number of time intervals.
+	* 
+	* @return {int} number of time intervals
+	*/
+	TimerRecord.prototype.countIntervals = function() {
+		return this._count;
+	};
+	
+	/**
+	* Timer object.
+	* 
+	* @class
+	* @alias module:'brixy.debug.Timer'~Timer
+	*/
+	function Timer() {
+		this._timers = {};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* 
+	* @method
+	* @return {string}
+	*/
+	Timer.prototype.toString = BX.toString;
+	
+	/**
+	* Records a time interval into named timer.
+	* 
+	* @param {string} name - Timer's name.
+	*/
+	Timer.prototype.shot = function(name) {
+		if (this._timers[name]) {
+			this._timers[name].storeTime();
+		}
+		else
+			this._timers[name] = new TimerRecord();
+	};
+	
+	/**
+	* Shows a report window with timer records.
+	* 
+	* @param {boolean} [thenClear=false] - Clear records after closing window. (optional)
+	*/
+	Timer.prototype.report = function(thenClear) {
+		var name,
+			t,
+			s,
+			c,
+			a,
+			dial,
+			listBox,
+			addItem,
+			columnsSupport = 'columns' in ListBox; // CS3 doesn't support multicolumn ListBox
+			
+		dial = reportDialog('Timers');
+		
+		if (columnsSupport) {
+			listBox = dial.add ("group {alignment: ['fill', 'fill'], properties: {name: 'report'}}") // InDesing CS6 on Windows 10: ListBox must be inside a Group or Panel
+				.add ("listbox {alignment: ['fill', 'fill'], "
+				+ "properties: {numberOfColumns: 4, showHeaders: true, "
+				+ "columnTitles: ['Timer', 'Total time (s)', 'Average (s)', 'Intervals']}}");		
+		}
+		else {
+			listBox = dial.add ("treeview {alignment: ['fill', 'fill'], minimumSize: [400, 500], properties: {name: 'report'}}");
+		}
+		
+		addItem = (function(listBox) {
+			if (columnsSupport) {
+				return function (name, total, average, count) {
+						var item = listBox.add('item', name);
+						item.subItems[0].text = total;
+						item.subItems[1].text = average;
+						item.subItems[2].text = count;
+					};
+			}
+			else {
+				return function (name, total, average, count) {
+						var item = listBox.add('node', name);
+						item.add('item', 'Total time: ' + total + ' s');
+						item.add('item', 'Average: ' + average + ' s');
+						item.add('item', 'Intervals: ' + count);
+					};
+			}
+		})(listBox);
+		
+		for (name in this._timers) {
+			t = this._timers[name];
+			s = t.getTime();
+			c = t.countIntervals();
+			a = c ? Math.round(s / c) : 0;
+			addItem(name, s / 1000, a / 1000, c);
+		}
+		
+		dial.show();
+		
+		if (thenClear)
+			this.clear();
+	};
+	
+	/**
+	* Clears all records.
+	* 
+	*/
+	Timer.prototype.clear = function() {
+		this._timers = {};
+	};
+
+	
+	return {
+		/** 
+		* Timer class.
+		* @memberOf module:'brixy.debug.Timer'
+		* @type {module:'brixy.debug.Timer'~Timer}
+		*/
+		Me: Timer
+	};
+});
+/**
+* @module 'brixy.debug.systemInfo'
+*/
+BX.module.define('brixy.debug.systemInfo', function() {
+	
+	/**
+	* Gets array of system information, e.g. application name, version, locale, target engine...
+	* 
+	* @memberOf module:'brixy.debug.systemInfo'
+	* @return {Array}
+	*/
+	function systemInfo() {
+		var sysInfo = [],
+			n;
+		
+		if ('activeScript' in app)
+			sysInfo.push('Script: ' + app.activeScript.displayName);
+		else {
+			n = File($.fileName).displayName;
+			if (n !== 'systemInfo.jsxinc')
+				sysInfo.push('Script: ' + n);
+		}
+		
+		sysInfo.push('OS: ' + $.os);
+		sysInfo.push('Application: ' + app.name + ' ' + app.version);
+		if ('scriptPreferences' in app && 'version' in app.scriptPreferences)
+			sysInfo.push('Application scripting version: ' + app.scriptPreferences.version);
+		sysInfo.push('Locale: ' + $.locale);
+		if ('appEncoding' in $)
+			sysInfo.push('Application\'s default character encoding: ' + $.appEncoding);
+		sysInfo.push('Extended localization of the toString(): ' + $.localize);
+		sysInfo.push('ExtendScript: ' + $.version + ' (build ' + $.build + ')');
+		sysInfo.push('Target engine: ' + $.engineName);
+		sysInfo.push('Strict mode: ' + $.strict);
+		sysInfo.push('Debugging level: ' + $.level + ' (' + (['no debugging', 'break on runtime errors', 'full debug mode'][$.level] || 'unknown') + ')');
+		n = [];
+		$.flags & 0x0002 && n.push('2');
+		$.flags & 0x0040 && n.push('64');
+		$.flags & 0x0080 && n.push('128');
+		$.flags & 0x0100 && n.push('256');
+		$.flags & 0x0200 && n.push('512');
+		sysInfo.push('Debug output flags: ' + $.flags + (n.length > 1 ? ' (' + n.join(' + ') + ')' : ''));
+		sysInfo.push('ExtendScript memory cache: ' + $.memCache + ' bytes');
+		sysInfo.push('Date: ' + (new Date()).toString());
+		
+		return sysInfo;
+	}
+	
+	/**
+	* Shows system information, e.g. application name, version, locale, target engine...
+	* 
+	* @memberOf module:'brixy.debug.systemInfo'
+	*/
+	function showSystemInfo() {
+		alert(systemInfo().join('\n'));
+	}
+
+	// publish
+	return {
+		systemInfo: systemInfo,
+		showSystemInfo: showSystemInfo
+	};
+});
+
+
+/*
+* 
+*/
+BX.debug || (function() {
+	
+	/**
+	* Namespace BX.debug brings together all debugging tools: [callStack]{@link module:'brixy.debug.callStack'}, [dump]{@link module:'brixy.debug.dump'}, [Summary]{@link module:'brixy.debug.Summary'} instance, [Timer]{@link module:'brixy.debug.Timer'} instance.
+	* 
+	* @namespace BX.debug
+	* @borrows module:'brixy.debug.callStack'.callStack as callStack
+	* @borrows module:'brixy.debug.dump'.dump as dump
+	* @borrows module:'brixy.debug.systemInfo'.showSystemInfo as showSystemInfo
+	*/
+	BX.debug = {
+		callStack: BX.module('brixy.debug.callStack').callStack,
+		dump: BX.module('brixy.debug.dump').dump,
+		showSystemInfo: BX.module('brixy.debug.systemInfo').showSystemInfo
+	};
+	
+	/**
+	* Instance of the [Summary]{@link module:'brixy.debug.Summary'} class.
+	*/
+	BX.debug.summary = new (BX.module.Me('brixy.debug.Summary'))();
+	
+	/**
+	* Instance of the [Timer]{@link module:'brixy.debug.Timer'} class.
+	*/
+	BX.debug.timer = new (BX.module.Me('brixy.debug.Timer'))();
+	
+})();
+
+/**
+* @module 'brixy.tester.JobLoader'
+*/
+BX.module.define('brixy.tester.JobLoader', function() {
+	
+	var FileLoader = BX.module.Me('brixy.fs.FileLoader');
+
+	/**
+	* JobLoader object.
+	* 
+	* @class
+	* @alias module:'brixy.tester.JobLoader'~JobLoader
+	* @extends {module:'brixy.fs.FileLoader'~FileLoader}
+	* @param {module:'brixy.tester.Tester'~Tester} tester
+	* @param {Function} [fileFilter] - Callback filters the files in the job folders: `function(path){return boolean;}`. By default, accepts all files whose name ends with **job.jsx** / **job.jsxinc** / **job.js**. (optional)
+	* @param {Function} [folderFilter] - Callback filters the job folders: `function(path){return boolean;}`. By default, accepts all folders and subfolders. (optional)
+	*/
+	function JobLoader(tester, fileFilter, folderFilter) {
+		FileLoader.call(this); // parent constructor
+		
+		this._tester = tester;
+		
+		if (typeof fileFilter === 'function')
+			this.isAllowedFile = fileFilter;
+			
+		if (typeof folderFilter === 'function')
+			this.isAllowedFolder = folderFilter;
+	}
+	
+	BX.subclass(JobLoader, FileLoader); // subclassing
+	
+	/**
+	* Filters the file.
+	* 
+	* @param {string} path - Full path of the file.
+	* @return {boolean}
+	*/
+	JobLoader.prototype.isAllowedFile = function(path) {
+		return /.*job\.(jsx|jsxinc|js)$/i.test(path);
+	};
+
+	/**
+	* Runs job files.
+	* @param {File} file
+	* @throws Exception
+	*/
+	JobLoader.prototype.onLoadFile = function(file) {
+		var AbortException = BX.module('brixy.tester.Job').AbortException,
+			debug = BX.debug,
+			tester = this._tester;
+	
+		tester.addJob('File: ' + file.displayName);
+		
+		try {
+			runJobFile(file, tester, debug);
+		}
+		catch (e) {
+			throw (e instanceof AbortException) ? e : BX.error('brixy.tester.JobLoader.onLoadFile()', Error('File: ' + file), e);
+		}
+	};
+	
+	function runJobFile(file, tester, debug) {
+		var BX = undefined, // hide global variable (but $.global.BX could be available)
+			JobLoader = undefined,
+			job = tester.currentJob(),
+			it = job.it;
+
+		// test file can use variables: file, tester, debug, job, it
+		$.evalFile(file);
+	}
+	
+	
+	return {
+		/** 
+		* JobLoader class.
+		* @memberOf module:'brixy.tester.JobLoader'
+		* @type {module:'brixy.tester.JobLoader'~JobLoader}
+		*/
+		Me: JobLoader
+	};
+});
+
+// error reporter
+/**
+* @module 'brixy.fs.filesystem'
+*/
+BX.module.define('brixy.fs.filesystem', function() {
+	
+
+	/**
+	* Opens the file-browsing dialog.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {string} prompt - Prompt text of the dialog window.
+	* @param {string} [filterString] - Filter of the showed files. String of Windows type is converted to a filter function on the OSX. (optional)
+	* @param {boolean} [multiselect=false] - Allows selecting of multiple files. Default is false. (optional)
+	* @return {File|Array|null} - Selected file or files.
+	*/
+	function openDialog(prompt, filterString, multiselect) {
+		var ft;
+		
+		if (File.fs === 'Macintosh')
+			ft = macFilterFunction(filterStringToReg(filterString));
+		else
+			ft = filterString;
+		
+		return File.openDialog(prompt, ft, multiselect);
+	}
+
+	/**
+	* Opens the file-browsing dialog.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {string} prompt - Prompt text of the dialog window.
+	* @param {string} [filterString] - Filter of the showed files. String of Windows type is converted to a filter function on the OSX. (optional)
+	* @param {File} [file] - If is presented, the dialog shows the file. (optional)
+	* @return {File|null} - Selected file.
+	*/
+	function saveDialog(prompt, filterString, file) {
+		var ft;
+		
+		if (File.fs === 'Macintosh')
+			ft = macFilterFunction(filterStringToReg(filterString));
+		else
+			ft = filterString;
+		
+		if (file)
+			return file.saveDlg(prompt, ft);
+			
+		return File.saveDialog(prompt, ft);
+	}
+
+	/**
+	* Returns array of File.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {Folder} folder - Folder.
+	* @param {string|RegExp} [filter] - Filter of the selected files. Eg. "\*.jsx;\*.jsxinc;\*.js" (optional)
+	* @param {boolean} [filesOnly=false] - If true, it skips folders. (optional)
+	* @return {Array} - Array of selected files.
+	*/
+	function fileList(folder, filter, filesOnly) {
+		var list,
+			reg;
+		
+		reg = (filter instanceof RegExp) ? filter : filterStringToReg(filter || '');
+		
+		list = folder.getFiles(function (f) { 
+			return (!filesOnly || (f instanceof File)) && reg.test(f.name);
+		});
+		
+		if (!list)
+			return [];
+		
+		return list;
+	}
+
+	/**
+	* Returns array of Folders.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {Folder} folder - Parent folder.
+	* @return {Array} - Array of folders.
+	*/
+	function folderList(folder) {
+		var list;
+		
+		list = folder.getFiles(function (f) { 
+			return f instanceof Folder;
+		});
+		
+		if (!list)
+			return [];
+		
+		return list;
+	}
+
+	function macFilterFunction(regFilter) {
+		
+		return function (file) {
+			while (file.alias) {
+				file = file.resolve();
+				if (file == null)
+					return false;
+			}
+			
+			return (file instanceof Folder) || regFilter.test(file.name);
+		};
+	}
+	
+	function filterStringToReg(filterString) {
+		var r,
+			reg;
+		
+		r = filterString.match(/[^:]*$/);
+		if (r && r[0]) {
+			reg = r[0].replace(/(\.)/g, '\\.').replace(/(\*)/g, '.*').replace(/(;)/g, '|');
+		}
+		else
+			reg = '.*';
+		
+		return RegExp("^(" + reg + ")$", 'i');
+	}
+
+	
+	// publish
+	return {
+		openDialog: openDialog,
+		saveDialog: saveDialog,
+		fileList: fileList,
+		folderList: folderList
+	};
+});
+
+
+/**
+* @module 'brixy.err.helpers'
+*/
+BX.module.define('brixy.err.helpers', function() {
+	
+	/**
+	* Save error and system information into a text file.
+	* 
+	* @memberOf module:'brixy.err.helpers'
+	* @param {BX.error.ErrorChain} err
+	* @param {string} description
+	*/
+	function saveErrorReport(err, description) {
+		var filesystem = BX.module('brixy.fs.filesystem'),
+			sysInfo = BX.module('brixy.debug.systemInfo').systemInfo().join('\n'),
+			tx,
+			cs = '',
+			file;
+		
+		file = filesystem.saveDialog('Save error report', 'Text file:*.txt');
+		
+		if (!file)
+			return;
+			
+		if (!(err instanceof BX.error.ErrorChain))
+			err = new BX.error.ErrorChain('', err);
+		
+		if (typeof err.getCallStack === 'function')
+			cs = err.getCallStack();
+			
+		tx = '========== System information: ==========\n\n' + sysInfo;
+		if (cs)
+			tx += '\n\n========== Call Stack: ==========\n\n' + cs;
+		tx += '\n\n========== Errors: ==========\n\n' + err;
+		if (description)
+			tx += '\n\n========== Description: ==========\n\n' + description;
+		
+		file.open('w');
+		file.writeln(tx);
+		file.close();
+	}
+	
+	
+	// publish
+	return {
+		saveErrorReport: saveErrorReport
+	};
+});
+
+
+/**
+* @module 'brixy.err.DebugReporter'
+*/
+BX.module.define('brixy.err.DebugReporter', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me;
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* DebugReporter class.
+	* @class
+	* @alias module:'brixy.err.DebugReporter'~DebugReporter
+	*/
+	function DebugReporter() {
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	DebugReporter.prototype.toString = BX.toString;
+
+	/**
+	* Shows report window.
+	* 
+	* @param {BX.error.ErrorChain|Error|string} err
+	*/
+	DebugReporter.prototype.report = function(err) {
+		if (!(err instanceof BX.error.ErrorChain))
+			err = new BX.error.ErrorChain('', err);
+			
+		var b = new Sui(),
+			cs = (typeof err.getCallStack === 'function') ? err.getCallStack() : '',
+			errs = (typeof err.getErrors === 'function') ? err.getErrors() : [];
+		
+		b.addComponents(components);
+		
+		b.window('dialog', 'Error report')
+			.column().alignChildren('fill')
+				.columnPanel().alignChildren('left').backgroundColor([1.0, 1.0, 1.0])
+					.mainError(errs, cs)
+					.end()
+				.columnPanel().alignChildren('left').set('spacing', 4)
+					.errorList(errs)
+					.end()
+				.row()
+					.button('Save report...').set('helpTip', 'Error report and system information will be saved.').set('onClick', saveFile)
+					.button('System info...').set('helpTip', 'Shows system information.').set('onClick', showSystemInfo)
+					.end()
+		.showWindow();
+		
+		function saveFile() {
+			BX.module('brixy.err.helpers').saveErrorReport(err, '');
+		}
+		
+		function showSystemInfo() {
+			BX.module('brixy.debug.systemInfo').showSystemInfo();
+		}
+	};
+	
+	// define SuiBuilder components
+	var components = {
+		
+		mainError: function (errors, callStack) {
+			if (errors.length <= 0) {
+				this.builder.staticLines('NO ERROR FOUND');
+				return;
+			}
+			
+			var er = errors[0];
+			
+			this.builder
+				.staticLines(er.location, '-> ')
+				.column().alignChildren('fill').set('spacing', 2)
+					.staticLines(er.message, '', [1.0, 0.0, 0.0])
+					.end()
+				.row()
+					.buttonsRow(er.fileName, er.line, callStack)
+					.end();
+		},
+
+		errorList: function (errors) {
+			var er,
+				i,
+				n = errors.length;
+			
+			for (i = 1; i < n; i++) {
+				if (i > 1)
+					this.builder.rowPanel().align('fill').end(); // separator line
+				
+				er = errors[i];
+				
+				this.builder
+					.staticLines(er.location, '-> ')
+					.staticLines(er.message)
+					.row()
+						.buttonsRow(er.fileName, er.line)
+						.end();
+			}
+		},
+	
+		staticLines: function (str, prefix, color) {
+			if (!str)
+				return;
+			
+			if (!prefix)
+				prefix = '';
+				
+			var lines = str.toString().split('\n'),
+				i,
+				n = lines.length;
+			
+			for (i = 0; i < n; i++) {
+				if (lines[i] == '')
+					continue;
+				this.builder.staticText(prefix + lines[i]).doubleAmps();
+				if (color)
+					this.builder.foregroundColor(color);
+			}
+		},
+		
+		buttonsRow: function (file, line, callStack) {
+			var f = file ? decodeURI(file) : '',
+				fname = f ? f.substr(f.lastIndexOf('/') + 1) : '';
+			
+			if (/.+\.(jsxbin)$/i.test(file)) { // compiled file
+				if (f)
+					this.builder.staticText('File: ' + fname).doubleAmps()
+					.set('helpTip', f);
+				
+				if (line)
+					this.builder.staticText('Line: ' + line);
+			}
+			else {
+				if (f)
+					this.builder.button('File: ' + fname).doubleAmps()
+					.set('helpTip', f)
+					.set('fileName', file)
+					.set('onClick', openFile);
+					
+				if (line)
+					this.builder.button('Line: ' + line)
+					.set('helpTip', 'Show code snippet.')
+					.set('fileName', file)
+					.set('line', line)
+					.set('onClick', showCode);
+			}
+			
+			if (callStack) {
+				this.builder.button('Call stack')
+				.set('helpTip', 'Show a call stack.')
+				.set('callStack', callStack)
+				.set('onClick', showCallStack);
+			}
+		},
+		
+		fileButton: function (file) {
+			var f = file ? decodeURI(file) : '';
+			if (f)  {
+				this.builder.button('File: ' + f.substr(f.lastIndexOf('/') + 1)).doubleAmps()
+					.set('helpTip', f)
+					.set('fileName', file)
+					.set('onClick', openFile);
+			}
+		}
+		
+	};
+	
+	function showCode() {
+		var l = this.line,
+			lmin = l - 10,
+			lmax = l + 10,
+			ch,
+			i = 0,
+			f,
+			line;
+		
+		f = new File(this.fileName);
+		if (!f.open('r')) {
+			alert('File not found.');
+			f.close();
+			return;
+		}
+			
+		var b = new Sui();
+		
+		b.addComponent('fileButton', components.fileButton);
+		
+		b.window('dialog', 'Code snippet - ' + f.displayName)
+			.column().alignChildren('left')
+				.columnPanel().alignChildren('left').set('spacing', 2).backgroundColor([1.0, 1.0, 1.0]);
+					
+				while (!f.eof) {
+					i++;
+					line = f.readln();
+					if (i < lmin)
+						continue;
+					if (i > lmax)
+						break;
+					
+					line = line.replace(/(\t)/g, '  ');
+					ch = -1;
+					while (line.charAt(++ch) === ' ');
+					line = line.slice(ch);
+					
+					b.row().set('spacing', ch * 10 + 10)
+						.staticText(i + ':').foregroundColor(i == l ? [1.0, 0.0, 0.0] : [0.6, 0.6, 0.6])				
+						.staticText(line).doubleAmps().foregroundColor(i == l ? [1.0, 0.0, 0.0] : [0.2, 0.2, 0.5])
+						.end();
+				}
+		
+					b.end()
+				.fileButton(this.fileName);
+		b.showWindow();
+		
+		f.close();
+	}
+	
+	function showCallStack() {
+		BX.module('brixy.debug.callStack').callStack(this.callStack);
+	}
+	
+	function openFile() {
+		var f = new File(this.fileName);
+		if (!f.execute())
+			alert('File not found.');
+	}
+	
+	
+	// publish the class
+	return {
+		/** 
+		* DebugReporter class.
+		* @memberOf module:'brixy.err.DebugReporter'
+		* @type {module:'brixy.err.DebugReporter'~DebugReporter}
+		*/
+		Me: DebugReporter
+	};
+});
+
+BX.error.addReporter('brixy.err.DebugReporter');
+
+/**
+* @module 'brixy.tester.Tester'
+*/
+BX.module.define('brixy.tester.Tester', function() {
+	var Job = BX.module('brixy.tester.Job').Me,
+		AbortException = BX.module('brixy.tester.Job').AbortException,
+		JobLoader = BX.module('brixy.tester.JobLoader').Me,
+		types = BX.module('brixy.es.types');
+	
+	/**
+	* Tester object. Default behavior is defined by the `setConfig()` and `getConfig()` methods.  
+	* 
+	* | Predefined values | Default | Description |
+	* | --- | --- | --- |
+	* | dialogOnFailure | true | Shows the report dialog when test fails. |
+	* | comparisonDepth | 10 | Default nesting level of the comparison of the objects. Used by the job assert methods. |
+	* | assertLibrary | 'brixy.tester.It' | Default assert library is specified by the constructor or module name. |
+	* 
+	* @class
+	* @alias module:'brixy.tester.Tester'~Tester
+	*/
+	function Tester() {
+		this._currentJob = null;
+		this._jobs = [];
+		
+		// common config
+		this._config = {
+			dialogOnFailure: true, // show report dialog when test fails
+			comparisonDepth: 10, // default job comparison depth
+			assertLibrary: 'brixy.tester.It' // default assert library
+		};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Tester.prototype.toString = BX.toString;
+	
+	/**
+	* Changes default config options or adds custom values.  
+	* All options are available in job files via `tester.getConfig('something')`.
+	* @param {string|object} nameOrObject - Name of the config option. If object is given, all key/value pairs are set to config and `value` parameter is ignored.
+	* @param {*} [value] - Value of the config option. (optional)
+	* @throws Exception
+	*/
+	Tester.prototype.setConfig = function(nameOrObject, value) {
+		if (types.isString(nameOrObject)) {
+			this._config[nameOrObject] = value;
+		}
+		else if (nameOrObject != null && typeof nameOrObject === 'object') {
+			for (var n in nameOrObject) {
+				if (nameOrObject.hasOwnProperty(n))
+					this._config[n] = nameOrObject[n];
+			}
+		}
+		else
+			throw BX.error('brixy.tester.Tester.setConfig()', Error('Name of the option should be a string or object; ' + nameOrObject + ' given.'));
+	};
+	
+	/**
+	* Gets the config value.
+	* @param {string} name - Name of the option.
+	* @return {*} Config value or undefined.
+	*/
+	Tester.prototype.getConfig = function(name) {
+		if (this._config.hasOwnProperty(name)) {
+			return this._config[name];
+		}
+		return undefined;
+	};
+	
+	/**
+	* Creates new job.
+	* @param {string} [name] - Job name.
+	* @return {module:'brixy.tester.Job'~Job} New job.
+	*/
+	Tester.prototype.addJob = function(name) {
+		var c = this._config;
+		this._currentJob = new Job(name, c.dialogOnFailure, c.assertLibrary, c.comparisonDepth);
+		this._jobs.push(this._currentJob);
+		
+		return this._currentJob;
+	};
+	
+	/**
+	* Removes all jobs.
+	*/
+	Tester.prototype.clearJobs = function() {
+		this._currentJob = null;
+		this._jobs = [];
+	};
+
+	/**
+	* Gets current job.
+	* @return {module:'brixy.tester.Job'~Job}
+	*/
+	Tester.prototype.currentJob = function() {
+		if (!this._currentJob)
+			this.addJob();
+		
+		return this._currentJob;
+	};
+	
+	/**
+	* Runs all test files in the folder. Default allowed file names: *job.(jsx|jsxinc|js).  
+	* 
+	* @param {string|Folder} folder - Full path to a job file or folder with job files.
+	* @param {Function} [fileFilter] - Callback filters the files in the job folders: `function(path){return boolean;}`. By default, accepts all files whose name ends with **job.jsx** / **job.jsxinc** / **job.js**. (optional)
+	* @param {Function} [folderFilter] - Callback filters the job folders: `function(path){return boolean;}`. By default, accepts all folders and subfolders. (optional)
+	* @throws Exception on error.
+	*/
+	Tester.prototype.runJobFiles = function(folder, fileFilter, folderFilter) {
+		try {
+			var loader = new JobLoader(this, fileFilter, folderFilter);
+			loader.loadFile(Folder(folder));
+		}
+		catch (e) {
+			throw (e instanceof AbortException) ? e : BX.error('brixy.tester.Tester.runJobFiles()', Error('File: ' + Folder(folder)), e);
+		}
+	};
+	
+	/**
+	* Shows a dialog with tester result.
+	*/
+	Tester.prototype.report = function() {
+		BX.module('brixy.tester.report').showResult(this._jobs);
+	};
+	
+	/**
+	* Shows a dialog with error report.
+	* @param {*} e - Error object or message.
+	*/
+	Tester.prototype.errorReport = function(e) {
+		if (e instanceof AbortException) {
+			this.currentJob().addSection('Testing aborted by user.');
+		}
+		else {
+			var err = BX.error('brixy.tester.Tester', Error('An unexpected error.'), e);
+			this.currentJob().addSection('An unexpected error terminated the testing.');
+			this.currentJob().addSkippedResult('Error', err.getPrimeError() + '');
+			
+			BX.error.report(err); // report error
+		}
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Tester class.
+		* @memberOf module:'brixy.tester.Tester'
+		* @type {module:'brixy.tester.Tester'~Tester}
+		*/
+		Me: Tester
+	};
+});
+
+
+
+	var t = new (BX.module('brixy.tester.Tester').Me)();
+
+	/**
+	 * Run jobs.
+	 * @param {string|Folder} jobFolder - Folder with job files.
+	 * @param {Object} [config] - Tester's configuration (optional).
+	 */
+	function run(jobFolder, config) {
+		try {
+			if (!jobFolder)
+				throw Error('Tester-launcher requires the "jobFolder" as a path to folder with job files.');
+
+			t.clearJobs();
+			config && t.setConfig(config);
+			t.runJobFiles(jobFolder);
+		}
+		catch (e) {
+			t.errorReport(e);
+		}
+
+		// show result
+		t.report();
+	}
+
+	// publish
+	return {
+		run: run
+	};
+})();

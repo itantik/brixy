@@ -1,0 +1,186 @@
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* @module 'brixy.mvc.Controller'
+*/
+BX.module.define('brixy.mvc.Controller', function() {
+	var types = BX.module('brixy.es.types');
+	
+	/**
+	* Base Controller object.
+	* @class
+	* @alias module:'brixy.mvc.Controller'~Controller
+	*/
+	function Controller() {
+		this._renderConfig = {
+			view: null,
+			params: null
+		};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Controller.prototype.toString = BX.toString;
+
+	/**
+	* Sets the view and params.
+	* @param {View|string} view
+	* @param {...*} [arg1, arg2, ...] - Parameters will be passed to `view.render()` method. (optional)
+	*/
+	Controller.prototype.setView = function(view /*, arg1, arg2, ... */) {
+		if (!view) {
+			this._renderConfig.view = null;
+			this._renderConfig.params = null;
+			return;
+		}
+
+		this._renderConfig.view = view;
+		this._renderConfig.params = (arguments.length > 1) ? [].slice.call(arguments, 1) : null;
+	};
+	
+	/**
+	* Returns controller's view.
+	* @return {Object}
+	*/
+	Controller.prototype.getView = function() {
+		var c = this._renderConfig;
+		if (types.isString(c.view))
+			c.view = new (BX.module.Me(c.view))();
+			
+		return c.view;
+	};
+	
+	/**
+	* Returns parameters that will be passed to the view.
+	* @return {Array}
+	*/
+	Controller.prototype.getRenderParams = function() {
+		return this._renderConfig.params;
+	};
+	
+	/**
+	* Renders the view.  
+	* View class has to define a render method:  
+	* `View.prototype.render = function(arg1, ar2, ...) {...; return 'nextControllerHandlerName';}`
+	* 
+	* @return {string} - Returns the name of next handler method as a result of the view.render() method.
+	* @throws Exception
+	*/
+	Controller.prototype.renderView = function() {
+		var r,
+			view;
+		
+		try {
+			view = this.getView();
+			if (!view)
+				return '';
+			
+			r = view.render.apply(view, this.getRenderParams());
+		}
+		catch (e) {
+			if (view) {
+				if (!('render' in view))
+					r = 'View ' + view + '.render() method is not defined.';
+				else
+					r = 'View ' + view + '.render() error.';
+			}
+			else
+				r = 'Cannot create a view.';
+			throw BX.error('brixy.mvc.Controller.renderView()', Error(r), e);
+		}
+		
+		return r;
+	};
+	
+	/**
+	* Runs the action.  
+	* Subclass has to define a method for each action:  
+	* `Ctrl.prototype.actionName = function(data) {...};`
+	* 
+	* @param {string} [action='Default'] - Controller's action. (optional)
+	* @param {*} [data] - Action data. (optional)
+	* @return {string|Object} - Next application request.
+	* @throws Exception
+	*/
+	Controller.prototype.run = function(action, data) {
+		var h,
+			v,
+			act = (action ? 'action' + action : 'actionDefault'),
+			next = '';
+		
+		try {
+			try {
+				// process action
+				next = this[act](data);
+			}
+			catch (e) {
+				var er;
+				if (act in this)
+					er = 'Action ' + this.toString() + '.' + act + '() failed.';
+				else
+					er = this.toString() + '.' + act + '() method is not defined.';
+				throw BX.error('brixy.mvc.Controller.run()', Error(er), e);
+			}
+			
+			// show view
+			v = this.getView();
+			if (v) {
+				h = this.renderView();
+				if (h) {
+					// process handler
+					// (we have to pass the same view as rendered (prevent accidental change of the view in render method))
+					next = this.processHandler(h, v) || next;
+				}
+			}
+			this.setView(null); // clear a render config (view and params)
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Controller.run()', Error('Controller ' + this.toString() + ' failed. '), e);
+		}
+		
+		return next;
+	};
+	
+	/**
+	* Runs the controller's handler.  
+	* Subclass has to define a method for each handler:  
+	* `Ctrl.prototype.handleName = function(view) {...};`
+	* 
+	* @param {string} handler - Handler name.
+	* @param {Object} view
+	* @return {string} - Result of handler.
+	* @throws Exception
+	*/
+	Controller.prototype.processHandler = function(handler, view) {
+		if (!handler)
+			return '';
+			
+		handler = 'handle' + handler;
+		
+		try {
+			return this[handler](view);
+		}
+		catch (e) {
+			var er;
+			if (handler in this)
+				er = 'Handler ' + this.toString() + '.' + handler + '() failed.';
+			else
+				er = handler + '() method is not defined.';
+			throw BX.error('brixy.mvc.Controller.' + handler + '()', Error(er), e);
+		}
+	};
+	
+
+	// publish the class
+	return {
+		/** 
+		* Base controller class.
+		* @memberOf module:'brixy.mvc.Controller'
+		* @type {module:'brixy.mvc.Controller'~Controller}
+		*/
+		Me: Controller
+	};
+});

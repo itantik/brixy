@@ -1,0 +1,37 @@
+/**
+* 
+*/
+BX.module.define('app.model.fileHelpers', function() {
+	
+	/**
+	* Returns the file name without extension.
+	* @param {File} file
+	* @return {string}
+	*/
+	function nakedName(file) {
+		if (!file || !('displayName' in file))
+			return '';
+			
+		return file.displayName.replace(/^(.*)\.[^\.]*$/, '$1');
+	}
+
+	/**
+	* Returns the content of the file.
+	* @param {File} file
+	* @return {string}
+	*/
+	function fileContent(file) {
+		if (!file || !file.exists || !file.open('r'))
+			return false;
+			
+		var s = file.read();
+		file.close();
+		return s;
+	}
+
+
+	return {
+		nakedName: nakedName,
+		fileContent: fileContent
+	};
+});

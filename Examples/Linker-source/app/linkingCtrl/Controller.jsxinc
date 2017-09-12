@@ -1,0 +1,52 @@
+BX.use('brixy', 'modules/err/DebugReporter.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.linking.Controller', function() {
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(settings, linker) {
+		MvcController.call(this); // parent constructor
+		
+		this.settings = settings; // service 'settings'
+		this.linker = linker; // module 'app.model.Linker'
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	Controller.injection = ['settings', 'app.model.Linker'];
+	
+	/**
+	* First action of this controller.
+	*/
+	Controller.prototype.actionDefault = function () {
+		var s = this.settings.getSetting();
+		try {
+			this.linker.link(s.sourceFile, s);
+		}
+		catch (e) {
+			var r = new (BX.module.Me('brixy.err.DebugReporter'))();
+			r.report(e);
+			return 'app.settings.Controller';
+		}
+		
+		this.setView('app.linking.View', s.sourceFile);
+	};
+	
+	Controller.prototype.handleOK = function (view) {
+		var file = view.targetFile;
+		if (!file)
+			return;
+			
+		file.encoding = this.settings.getSetting().targetEncoding;
+		file.open('w');
+		file.writeln(this.linker.getCode());
+		file.close();
+	};
+	
+	
+	return {
+		Me: Controller
+	};
+});

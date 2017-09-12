@@ -1,0 +1,15 @@
+{
+  "name": "brixy-user-guide",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": {
+    "handlebars": "^4.0.5",
+    "metalsmith": "^2.1.0",
+    "metalsmith-collections": "^0.7.0",
+    "metalsmith-navigation": "^0.2.5",
+    "metalsmith-layouts": "^1.4.2",
+    "metalsmith-markdown": "^0.2.1",
+    "metalsmith-register-helpers": "^0.1.2",
+    "metalsmith-watch": "^1.0.1"
+  }
+}

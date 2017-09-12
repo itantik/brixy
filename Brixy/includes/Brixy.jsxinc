@@ -1,0 +1,4 @@
+// Brixy core library. Loads `BX`, `BX.use` namespaces and `'brixy.fs.FileLoader'` module.
+#include '../BX.jsxinc'
+#include '../modules/fs/FileLoader.jsxinc' // note: 'brixy.fs.FileLoader' module definition works in 'skip' rewrite mode
+#include '../BX.use.jsxinc'

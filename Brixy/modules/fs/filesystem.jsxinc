@@ -1,0 +1,131 @@
+/**
+* @module 'brixy.fs.filesystem'
+*/
+BX.module.define('brixy.fs.filesystem', function() {
+	
+
+	/**
+	* Opens the file-browsing dialog.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {string} prompt - Prompt text of the dialog window.
+	* @param {string} [filterString] - Filter of the showed files. String of Windows type is converted to a filter function on the OSX. (optional)
+	* @param {boolean} [multiselect=false] - Allows selecting of multiple files. Default is false. (optional)
+	* @return {File|Array|null} - Selected file or files.
+	*/
+	function openDialog(prompt, filterString, multiselect) {
+		var ft;
+		
+		if (File.fs === 'Macintosh')
+			ft = macFilterFunction(filterStringToReg(filterString));
+		else
+			ft = filterString;
+		
+		return File.openDialog(prompt, ft, multiselect);
+	}
+
+	/**
+	* Opens the file-browsing dialog.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {string} prompt - Prompt text of the dialog window.
+	* @param {string} [filterString] - Filter of the showed files. String of Windows type is converted to a filter function on the OSX. (optional)
+	* @param {File} [file] - If is presented, the dialog shows the file. (optional)
+	* @return {File|null} - Selected file.
+	*/
+	function saveDialog(prompt, filterString, file) {
+		var ft;
+		
+		if (File.fs === 'Macintosh')
+			ft = macFilterFunction(filterStringToReg(filterString));
+		else
+			ft = filterString;
+		
+		if (file)
+			return file.saveDlg(prompt, ft);
+			
+		return File.saveDialog(prompt, ft);
+	}
+
+	/**
+	* Returns array of File.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {Folder} folder - Folder.
+	* @param {string|RegExp} [filter] - Filter of the selected files. Eg. "\*.jsx;\*.jsxinc;\*.js" (optional)
+	* @param {boolean} [filesOnly=false] - If true, it skips folders. (optional)
+	* @return {Array} - Array of selected files.
+	*/
+	function fileList(folder, filter, filesOnly) {
+		var list,
+			reg;
+		
+		reg = (filter instanceof RegExp) ? filter : filterStringToReg(filter || '');
+		
+		list = folder.getFiles(function (f) { 
+			return (!filesOnly || (f instanceof File)) && reg.test(f.name);
+		});
+		
+		if (!list)
+			return [];
+		
+		return list;
+	}
+
+	/**
+	* Returns array of Folders.
+	* 
+	* @memberOf module:'brixy.fs.filesystem'
+	* @param {Folder} folder - Parent folder.
+	* @return {Array} - Array of folders.
+	*/
+	function folderList(folder) {
+		var list;
+		
+		list = folder.getFiles(function (f) { 
+			return f instanceof Folder;
+		});
+		
+		if (!list)
+			return [];
+		
+		return list;
+	}
+
+	function macFilterFunction(regFilter) {
+		
+		return function (file) {
+			while (file.alias) {
+				file = file.resolve();
+				if (file == null)
+					return false;
+			}
+			
+			return (file instanceof Folder) || regFilter.test(file.name);
+		};
+	}
+	
+	function filterStringToReg(filterString) {
+		var r,
+			reg;
+		
+		r = filterString.match(/[^:]*$/);
+		if (r && r[0]) {
+			reg = r[0].replace(/(\.)/g, '\\.').replace(/(\*)/g, '.*').replace(/(;)/g, '|');
+		}
+		else
+			reg = '.*';
+		
+		return RegExp("^(" + reg + ")$", 'i');
+	}
+
+	
+	// publish
+	return {
+		openDialog: openDialog,
+		saveDialog: saveDialog,
+		fileList: fileList,
+		folderList: folderList
+	};
+});
+

@@ -1,0 +1,45 @@
+/**
+* 
+*/
+BX.module.define('app.presets.Controller', function() {
+	
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(presets) {
+		MvcController.call(this); // parent constructor
+		
+		this.presets = presets; // service 'presets'
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	Controller.injection = ['presets'];
+	
+	Controller.prototype.actionDefault = function () {
+		this.setView('app.presets.View', this.presets.read());
+	};
+	
+	Controller.prototype.actionAdd = function (data) {
+		for (var v in data) {
+			if (data[v]) { // exists not empty value
+				this.setView('app.presets.SelectView', data);
+				return;
+			}
+		}
+		alert('No value is filled.');
+	};
+	
+	Controller.prototype.handleSave = function (view) {
+		this.presets.save(view.defaultsObj);
+	};
+	
+	Controller.prototype.handleSaveChanges = function (view) {
+		this.presets.saveChanges(view.defaultsObj);
+	};
+	
+	
+	return {
+		Me: Controller
+	};
+});
+

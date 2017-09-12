@@ -1,0 +1,5 @@
+A module containing the model class or methods.
+
+Model is the heart of your application logic. Create as many model modules as you need.
+
+You may insert model classes into controller classes or other model classes via the dependency injection.

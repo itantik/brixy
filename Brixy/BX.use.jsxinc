@@ -1,0 +1,89 @@
+/**
+* File loading.  
+* Requires `BX.jsxinc` and `modules/fs/FileLoader.jsxinc`.  
+* Defines 'brixy' as alias to the core Brixy folder (i.e. parent folder of this file).
+* @namespace BX.use
+*/
+BX.use || (function () {
+	
+	var _loader = new (BX.module('brixy.fs.FileLoader').Me)();
+	
+	_loader.onLoadFile = function(file) {
+		try {
+			BX.evalFile(file);
+		}
+		catch (e) {
+			throw new BX.error('BX.evalFile()', Error('Loading of the "' + File(file).displayName + '" failed.'), e);
+		}
+	};
+	
+	/**
+	* Includes jsx|jsxinc|js|jsxbin file. Folders are traversed recursively.
+	* Each file is included only once.  
+	* There is available method `BX.use()` as a shortcut to `BX.use.use()`.
+	* @memberOf BX.use
+	* @param {string} [alias=''] - Folder shortcut. (optional)
+	* @param {string} path - File or folder path.
+	* @throws Exception if alias or file doesn't exist.
+	*/
+	function use(alias, path) {
+		if (arguments.length === 1)
+			_loader.load('', alias);
+		else
+			_loader.load(alias, path);
+	}
+	
+	/**
+	* Creates the alias of the Folder path.
+	* @memberOf BX.use
+	* @method alias
+	* @param {string} [alias=''] - Folder shortcut. (optional)
+	* @param {string} path - Folder path relative to the active script.
+	* @throws Exception if folder doesn't exist.
+	* @throws Exception if alias already exists for a different path.
+	*/
+	use.alias = function(alias, path) {
+		if (arguments.length === 1)
+			_loader.alias('', alias);
+		else
+			_loader.alias(alias, path);
+	};
+	
+	/**
+	* Returns full path of the alias.
+	* @memberOf BX.use
+	* @method aliasPath
+	* @param {string} alias
+	* @throws Exception if alias doesn't exist.
+	*/
+	use.aliasPath = function(alias) {
+		return _loader.aliasPath(alias);
+	};
+	
+	/**
+	* Stores path to the included list to prevent the further loading.
+	* Does't test if file exists.
+	* @memberOf BX.use
+	* @method ignore
+	* @param {string} [alias=''] - Folder shortcut. (optional)
+	* @param {string} path - File or folder path.
+	* @throws Exception if alias doesn't exist.
+	*/
+	use.ignore = function(alias, path) {
+		if (arguments.length === 1)
+			_loader.ignore('', alias);
+		else
+			_loader.ignore(alias, path);
+	};
+	
+	BX.use.use = BX.use = use;
+	
+	// define core alias
+	BX.use.alias('brixy', $.fileName);
+	
+	// prevents to multiple including
+	BX.use.ignore('brixy', 'BX.jsxinc');
+	BX.use.ignore('brixy', 'BX.use.jsxinc');
+	BX.use.ignore('brixy', 'modules/fs/FileLoader.jsxinc');
+	
+})();

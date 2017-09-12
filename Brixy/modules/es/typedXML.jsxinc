@@ -1,0 +1,315 @@
+BX.use('brixy', 'modules/es/types.jsxinc');
+BX.use('brixy', 'modules/es/reflection.jsxinc');
+
+/**
+* Methods for converting ExtendScript value to typed XML and vice versa.
+* 
+* Typed XML uses a special set of the tags. Optional "name" attribute defines the name of the equivalent ExtendScript Object's property.
+* 
+* Supported ES types and equivalent XML tags:  
+* 
+* | ExtendScript type | Typed XML tag |
+* | ------------------ | -------------- |
+* | string | string |
+* | number | number |
+* | boolean | boolean |
+* | Object | object |
+* | Array | array |
+* | XML | objectXml |
+* | undefined | undefined |
+* 
+* Note: This module doesn't use E4X because E4X doesn't use a pure javascript syntax. This improves compatibility with other javascript tools, eg. minifiers.  
+* 
+* **Example:**  
+* 
+* *It will convert this object:*
+* ```
+* {
+* 	city: {
+* 		name: 'Prague',
+* 		GPS: {N: 50.0904317, E: 14.4000508},
+* 		population: 1250000,
+* 		beautiful: true,
+* 		disneyland: undefined
+* 	},
+* 	colors: ['red', 'green', 'blue', ['black', 'white']],
+* 	myXml: new XML('<abc><a>A</a><b>B</b><c>C</c></abc>')
+* }
+* ```
+* *to this XML:*
+* ```
+* <object>
+* 	<object name="city">
+* 		<string name="name">Prague</string>
+* 		<object name="GPS">
+* 			<number name="N">50.0904317</number>
+* 			<number name="E">14.4000508</number>
+* 		</object>
+* 		<number name="population">1250000</number>
+* 		<boolean name="beautiful">true</boolean>
+* 		<undefined name="disneyland"></undefined>
+* 	</object>
+* 	<array name="colors">
+* 		<string>red</string>
+* 		<string>green</string>
+* 		<string>blue</string>
+* 		<array>
+* 			<string>black</string>
+* 			<string>white</string>
+* 		</array>
+* 	</array>
+* 	<objectXml name="myXml">
+* 		<abc>
+* 			<a>A</a>
+* 			<b>B</b>
+* 			<c>C</c>
+* 		</abc>
+* 	</objectXml>
+* </object>
+* ```
+* *and vice versa.*
+* 
+* @module 'brixy.es.typedXML'
+*/
+BX.module.define('brixy.es.typedXML', function() {
+	
+	var types = BX.module('brixy.es.types'),
+		reflection = BX.module('brixy.es.reflection');
+	
+	/* ***** XML to Object ***** */
+	
+	/**
+	* Converts a typed XML to ExtendScript value.
+	* @memberOf module:'brixy.es.typedXML'
+	* @param {XML} xml - Typed XML object.
+	* @return {*}
+	*/
+	function xmlToValue(xml) {
+		if (!(xml instanceof XML))
+			throw new BX.error('brixy.es.typedXML.xmlToValue()', Error('XML object is expected.'));
+			
+		if (xml.length() > 1) {
+			var wrap = new XML(hasNames(xml) ? '<object/>' : '<array/>');
+			xml = wrap.appendChild(xml);
+		}
+		
+		return toValue(xml);
+	}
+	
+	/*
+	* Converts a typed XML to ExtendScript value.
+	* @param {XML} xml - Typed XML object.
+	* @return {*}
+	*/
+	function toValue(xml) {
+		var val,
+			type = xml.name().localName;
+		
+		switch (type) {
+		case 'number':
+			val = Number(xml);
+			if (isNaN(val))
+				val = 0;
+			break;
+		case 'boolean':
+			val = xml.toString();
+			val = (val !== '') && (val !== '0') && (val.toLowerCase() !== 'false');
+			break;
+		case 'object':
+			val = {};
+			toObjProperties(xml, val);
+			break;
+		case 'array':
+			val = [];
+			toArrItems(xml, val);
+			break;
+		case 'undefined':
+			val = undefined;
+			break;
+		case 'objectXml':
+			val = new XML(xml.elements());
+			break;
+		// functions are not supported due to security risc
+		/*case 'function':
+			try {
+				val = (new Function('return (' + xml.toString() + ');'))();
+			}
+			catch (e) {
+				throw 'Reading of the typed XML failed. Invalid function definition. ' + e;
+			}
+			break;*/
+		default:
+			val = xml.toString();
+		}
+		
+		return val;
+	}
+	
+	/*
+	* Adds values of XML elements to the object as a new properties.
+	* @param {XML} xml - Source XML.
+	* @param {Object} obj - Target object.
+	*/
+	function toObjProperties(xml, obj) {
+		var els = xml.elements(),
+			n = els.length(),
+			i = 0,
+			el,
+			name;
+			
+		for ( ; i < n; i++) {
+			el = els[i];
+			
+			name = getAttribute(el, 'name');			
+			if (!name)
+				throw new BX.error('brixy.es.typedXML.toObjProperties()', Error('Invalid format of the typed XML. The name of the object property is missing.'));
+				
+			obj[name] = toValue(el);
+		}
+	}
+
+	/*
+	* Appends values of XML elements to the array.
+	* @param {XML} xml - Source XML.
+	* @param {Array} arr - Target array.
+	*/
+	function toArrItems(xml, arr) {
+		var els = xml.elements(),
+			n = els.length(),
+			i = 0;
+			
+		for ( ; i < n; i++) {
+			arr.push(toValue(els[i]));
+		}
+	}
+
+	/*
+	* Returns the value of the XML attribute.
+	* @param {XML} xmlElement - XML element.
+	* @param {string} name - Name of the attribute.
+	* @return {string} - Value of the attribute.
+	*/
+	function getAttribute(xmlElement, name) {
+		var a = xmlElement.attribute(name);
+		return a.length() ? a[0] : '';
+	}
+
+	/*
+	* Checks if all elements have its name attribute.
+	* @param {XML} xmlList - XML list.
+	* @return {boolean}
+	*/
+	function hasNames(xmlList) {
+		for (var i = 0, n = xmlList.length(); i < n; i++) {
+			if (!getAttribute(xmlList[i], 'name'))
+				return false;
+		}
+		return true;
+	}
+	
+	/* ***** Object to XML ***** */
+	
+	/**
+	* Converts ExtendScript value to typed XML.
+	* @memberOf module:'brixy.es.typedXML'
+	* @param {*} val - Value.
+	* @param {string} [name] - Name attribute of the XML element. (optional)
+	* @param {string} [depth] - Level of nesting. (optional)
+	* @return {XML}
+	*/
+	function valueToXml(val, name, depth) {
+		var type = types.baseType(val),
+			v = '',
+			xml;
+		
+		if (name)
+			name = ' name="' + name.replace(/[&]/g, '&amp;').replace(/[<]/g, '&lt;').replace(/["]/g, '&quot;') + '"';
+		else
+			name = '';
+		
+		switch (type) {
+		case 'number':
+			v = val.toString(10); break;
+		case 'boolean':
+			v = val.toString(); break;
+		case 'string':
+			v = val.toString().replace(/[&]/g, '&amp;').replace(/[<]/g, '&lt;').replace(/(]]>)/g, ']]&gt;').replace(/["]/g, '&quot;'); break;
+		case 'xml':
+			type = 'objectXml'; // XML element names cannot start 'xml'
+			v = val.toXMLString(); break;
+		case 'object':
+		case 'array':
+		case 'undefined':
+			break;
+		default:
+			type = 'unknown';
+		}
+		
+		xml = new XML('<' + type + name + '>' + v + '</' + type + '>');
+		
+		if (depth == undefined || depth > 0) {
+			if (depth)
+				depth--;
+			
+			if (type === 'object')
+				propertiesToXml(val, xml, depth);
+			else if (type === 'array')
+				itemsToXml(val, xml, depth);
+		}
+		
+		return xml;
+	}
+	
+	/*
+	* Adds own object properties to the XML as a new elements.
+	* @param {Object} obj - Source object.
+	* @param {XML} xml - Target XML.
+	* @param {string} [depth] - Level of the nesting. (optional)
+	*/
+	function propertiesToXml(obj, xml, depth) {
+		var pr = reflection.getOwnProperties(obj).sort(),
+			i = 0,
+			n = pr.length,
+			p;
+		
+		for ( ; i < n; i++) {
+			p = pr[i];
+			xml.appendChild(valueToXml(applicableValue(obj, p), p, depth));
+		}
+	}
+
+	/*
+	* Adds the array items to the XML as a new elements.
+	* @param {Array} arr - Source array.
+	* @param {XML} xml - Target XML.
+	* @param {string} [depth] - Level of the nesting. (optional)
+	*/
+	function itemsToXml(arr, xml, depth) {
+		for (var i = 0, n = arr.length; i < n; i++) {
+			xml.appendChild(valueToXml(applicableValue(arr, i), '', depth));
+		}
+	}
+
+	/*
+	* Returns the value of the obj property. 
+	* Returns undefined if it is not applicable property, eg. InDesign Document.filePath of the unsaved document.
+	* @param {Array|Object} obj - Source object.
+	* @param {string} property - Property name.
+	* @return {*} - Value of the property.
+	*/
+	function applicableValue(obj, property) {
+		try {
+			return obj[property];
+		}
+		catch (e) { // not applicable property, eg. InDesign Document.filePath of the unsaved document
+			return undefined;
+		}
+	}
+
+	
+	// publish
+	return {
+		xmlToValue: xmlToValue,
+		valueToXml : valueToXml
+	};
+});

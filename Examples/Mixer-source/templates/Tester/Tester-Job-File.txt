@@ -1,0 +1,9 @@
+This file contains a set of test jobs.
+
+Each Job-File is independent of the other job files. It doesn't share any variables or modules.
+
+This is not a standalone script, it is launched automatically by the Tester-Launcher script.
+
+Save it as "*job.jsxinc" or "*job.jsx" or "*job.js".
+
+By default, save inside the folder containing Tester-Launcher.jsx file, or any of its subfolders.

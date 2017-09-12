@@ -1,0 +1,45 @@
+
+BX.module.define('app.model.Linker', function() {
+
+	/**
+	* Linker constructor.
+	* 
+	* @class Linker
+	*/
+	function Linker(loader){
+		this._loader = loader;
+	}
+	
+	Linker.injection = ['app.model.JsxLoader'];
+	
+	/**
+	* Returns a string representation of the object.
+	* @return {string}
+	*/
+	Linker.prototype.toString = BX.toString;
+	
+	Linker.prototype.link = function(file, options) {
+		var loader = this._loader;
+		
+		try {
+			if (!(file instanceof File) || !file.exists)
+				throw Error('File not found.');
+			
+			loader.setOptions(options);
+			loader.link(file);
+		}
+		catch (e) {
+			throw new BX.error('app.model.Linker.link()', Error('Linker error.'), e);
+		}
+	};
+	
+	Linker.prototype.getCode = function() {
+		return this._loader.getCode();
+	};
+	
+	
+	return {
+		Me: Linker
+	};
+	
+});

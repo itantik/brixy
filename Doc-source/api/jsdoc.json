@@ -1,0 +1,29 @@
+{
+	"brixy": {
+		"shortname": "Brixy API",
+		"longname": "Brixy API Reference",
+		"version": "1.0.0"
+	},
+	"source": {
+		"include": [
+			"../../Brixy/BX.jsxinc",
+			"../../Brixy/BX.use.jsxinc",
+			"../../Brixy/modules",
+			"../../Brixy/extras"
+		],
+		"includePattern": ".+\\.jsx(inc)?$"
+	},
+	"opts": {
+		"template": "brixytemplate",
+		"readme": "brixytemplate/API-HOME.md",
+		"destination": "../../docs/API",
+		"recurse": true,
+		"encoding": "utf8"
+	},
+	"plugins": ["plugins/markdown"],
+	"templates": {
+		"default": {
+			"includeDate": false
+		}
+	}
+}

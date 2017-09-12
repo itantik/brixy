@@ -1,0 +1,52 @@
+/**
+* 
+*/
+BX.module.define('app.editor.Controller', function() {
+	
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(template, parser, presets) {
+		MvcController.call(this); // parent constructor
+		
+		this.template = template; // service 'template'
+		this.parser = parser; // service 'parser'
+		this.presets = presets; // service 'presets'
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	Controller.injection = ['template', 'parser', 'presets'];
+	
+	/**
+	*/
+	Controller.prototype.actionDefault = function () {
+		if (!this.template.getTemplate()) {
+			alert('Please select a template file.');
+			return 'Selector';
+		}
+		
+		var p = this.parser;
+		p.parse(this.template.readSource());
+		p.assignValues(this.presets.read());
+		
+		this.setView('app.editor.View', p.getValues(), p.getComments(), this.template.nakedTemplateName());
+		return '';
+	};
+	
+	Controller.prototype.handleSave = function (view) {
+		var p = this.parser;
+		
+		p.assignValues(view.macroValues);
+		p.compile();
+		this.template.saveResult(p.guessName(), p.getResult());
+	};
+	
+	Controller.prototype.handleBack = function (view) {
+		return 'Selector';
+	};
+	
+	
+	return {
+		Me: Controller
+	};
+});

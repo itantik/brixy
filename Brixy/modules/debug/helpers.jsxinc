@@ -1,0 +1,45 @@
+
+/**
+* @module 'brixy.debug.helpers'
+*/
+BX.module.define('brixy.debug.helpers', function() {
+	
+	/**
+	* Creates resizeable dialog window for reports.
+	* 
+	* @memberOf module:'brixy.debug.helpers'
+	* @param {string} title - Window title.
+	* @return {Window} - New ScriptUI Window instance.
+	*/
+	function reportDialog(title) {
+		var dial = new Window ('dialog', title, undefined, {resizeable: true});
+		
+		/*
+		* Resizeable dialog window.
+		*/
+		dial.onResizing = dial.onResize = function() {
+			this.layout.resize();
+		};
+		
+		/*
+		* Sets minimumSize of window to fit its content.
+		*/
+		dial.onShow = function () {
+			//this.layout.layout();
+			this.minimumSize = this.preferredSize;
+			this.layout.resize();
+			
+			var report = this.findElement('report');
+			if (report)
+				report.minimumSize = report.size;
+		};
+		
+		return dial;
+	}
+	
+	// publish methods
+	return {
+		reportDialog: reportDialog
+	};
+});
+

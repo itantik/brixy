@@ -1,0 +1,42 @@
+/**
+ * Include this file into your main script file. You should pass the main script file to launch() method, e.g. `launch($.fileName)`.
+ */
+
+//LINKER-ADD var launch = launch || function (appFile) {
+
+// core library
+#include "../../Brixy/includes/Brixy.jsxinc";
+
+// disposable launcher
+/*LINKER-DEL*/ var launch = launch || function (appFile) {
+
+	// self-destruction
+	launch = undefined;
+
+	try {
+		// Brixy Linker assign the main script file to the _LINKER_SCRIPT_FILE_ variable
+		var _LINKER_SCRIPT_FILE_ = appFile;
+
+		//LINKER-DEL set paths
+		BX.use.ignore(_LINKER_SCRIPT_FILE_); // prevent to include itself
+		BX.use.alias('', _LINKER_SCRIPT_FILE_); // the root folder of the main script file (i.e. this file)
+
+		// load MVC framework
+		BX.use('brixy', 'includes/application.jsxinc');
+
+		// init application
+		BX.use('config.jsxinc');
+	}
+	catch (e) {
+		// report errors
+		BX.error.report(e);
+	}
+
+	// public interface
+	return {
+		processEvent: function (event, data) {
+			BX.apps.processEvent(event, data);
+		}
+	};
+
+};

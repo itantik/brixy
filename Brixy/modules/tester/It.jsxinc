@@ -1,0 +1,255 @@
+BX.use('brixy', 'modules/tester/Result.jsxinc');
+BX.use('brixy', 'modules/tester/Assert.jsxinc');
+BX.use('brixy', 'modules/tester/Specials.jsxinc');
+
+/**
+* @module 'brixy.tester.It'
+*/
+BX.module.define('brixy.tester.It', function() {
+	var Asserts = BX.module('brixy.tester.Assert').Asserts,
+		Specials = BX.module('brixy.tester.Specials').Me,
+		Result = BX.module('brixy.tester.Result').Me,
+		STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* It object.
+	* @class
+	* @alias module:'brixy.tester.It'~It
+	* @param {module:'brixy.tester.Job'~Job} job - Reference to the job instance.
+	* @param {int} [comparisonDepth=10] - Nesting level of the comparison of the objects.
+	*/
+	function It(job, comparisonDepth) {
+		this._specials = null;
+		this._job = job;
+		comparisonDepth = parseInt(comparisonDepth);
+		this._comparisonDepth = isNaN(comparisonDepth) ? 10 : comparisonDepth;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	It.prototype.toString = BX.toString;
+	
+	/**
+	* Adds new special type definition. Methods `isLike()` and `notLike()` compares own properties of tested objects. 
+	* Special types allows to define own values to be used in testing.
+	* 
+	* @example
+	* // Before using a special type definition:
+	* // test passed because Date doesn't have own properties,
+	* // but dates are different
+	* it.isLike('', new Date(), new Date(1000));
+	* 
+	* // Let's define Date as a special type:
+	* it.addSpecialType(
+	* 	Date, 
+	* 	function(val) { return val.getTime(); }, 
+	* 	function(val) { return 'Date("' + val.toLocaleString() + '")'; }
+	* );
+	* it.notLike('', new Date(), new Date(1000));
+	* it.isLike('', new Date(1000), new Date(1000));
+	* // and that we wished
+	* 
+	* @param {Function} Type - Object's constructor.
+	* @param {Function} valueCallback - `function(val){ return val.something; }` returns a value for testing.
+	* @param {Function} captionCallback - `function(val){ return val.toString(); }` returns a string to show in report dialog.
+	*/
+	It.prototype.addSpecialType = function(Type, valueCallback, captionCallback) {
+		if (!this._specials)
+			this._specials = new Specials();
+		
+		this._specials.addType(Type, valueCallback, captionCallback);
+	};
+	
+	/**
+	* Adds new special type definition.
+	* @param {Object} def - `{constr: Type, value: Function, caption: Function}`
+	* @throws Exception
+	*/
+	It.prototype.addSpecialTypeDef = function(def) {
+		try {
+			this.addSpecialType(def.constr, def.value, def.caption);
+		}
+		catch (e) {
+			throw BX.error('brixy.tester.It.addSpecialTypeDef()', Error('Cannot add new special type definition.'), e);
+		}
+	};
+	
+	/*
+	* Creates a result of the test, sends it to the job.
+	* @param {module:'brixy.tester.Assert'~Rating} rating
+	* @param {string} testName
+	* @param {string} descO - Description of the successful test.
+	* @param {string} descF - Description of the failed test.
+	*/
+	It.prototype._evaluate = function(rating, testName, descO, descF) {
+		var description = '';
+		
+		switch (rating.status) {
+		case STATUS.OK:
+			description = (descO + '') || 'OK';
+			break;
+		case STATUS.FAILED:
+			description = (descF + '') || 'Failed';
+			break;
+		case STATUS.SKIPPED:
+			description = 'Incomplete test.';
+			break;
+		}
+		
+		if (rating.note)
+			description = description + ' ' + rating.note;
+		description = description.replace('%a', rating.actual.caption).replace('%e', rating.expected.caption);
+		
+		var result = new Result(rating.status, testName, description);
+		this._job.onResult(result, rating.actual, rating.expected, rating.depth);
+	};
+	
+
+	/* Test methods */
+	
+	/**
+	* Tests if values are identical.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.is = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.is(actual, expected), 
+			name || 'is',
+			'%a is %e.',
+			'%a should be %e.'
+		);
+	};
+	
+	/**
+	* Tests if values are not identical.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.isNot = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isNot(actual, expected), 
+			name || 'isNot',
+			'%a is not %e.',
+			'%a should not be %e.'
+		);
+	};
+	
+	/**
+	* Tests if actual value is member of the expected value.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.isMember = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isMember(actual, expected), 
+			name || 'is a member',
+			'%a is a member of the %e.',
+			'%a should be a member of the %e.'
+		);
+	};
+	
+	/**
+	* Tests if actual value is not member of the expected value.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.notMember = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.notMember(actual, expected), 
+			name || 'is not a member',
+			'%a is not a member of the %e.',
+			'%a should not be a member of the %e.'
+		);
+	};
+	
+	/**
+	* Tests if values are equal.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} [depth=10] - Nesting level of the comparison of the objects.
+	*/
+	It.prototype.isLike = function(name, actual, expected, depth) {
+		depth = toDepth(depth, this._comparisonDepth);
+		this._evaluate(
+			Asserts.isLike(actual, expected, depth, this._specials), 
+			name || 'isLike',
+			'%a is like a %e. Max comparison depth: ' + depth + '.',
+			'%a should be like a %e. Max comparison depth: ' + depth + '.'
+		);
+	};
+	
+	/**
+	* Tests if values are not equal.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} [depth=10] - Nesting level of the comparison of the objects.
+	*/
+	It.prototype.notLike = function(name, actual, expected, depth) {
+		depth = toDepth(depth, this._comparisonDepth);
+		this._evaluate(
+			Asserts.notLike(actual, expected, depth, this._specials), 
+			name || 'notLike',
+			'%a is not like a %e. Max comparison depth: ' + depth + '.',
+			'%a should not be like a %e. Max comparison depth: ' + depth + '.'
+		);
+	};
+	
+	/**
+	* Tests if actual function throws exception.
+	* @param {string} name
+	* @param {function} actual
+	* @param {*} [expected]
+	*/
+	It.prototype.isThrown = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isThrown(actual, expected), 
+			name || 'isThrown',
+			'%a throws exception' + (expected ? ': ' + expected : '.'),
+			'%a should throw exception' + (expected ? ': ' + expected : '.')
+		);
+	};
+	
+	/**
+	* Tests if actual function doesn't throw exception.
+	* @param {string} name
+	* @param {function} actual
+	* @param {*} [expected]
+	*/
+	It.prototype.notThrown = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.notThrown(actual, expected), 
+			name || 'notThrown',
+			'%a does not throw exception' + (expected ? ': ' + expected : '.'),
+			'%a should not throw exception' + (expected ? ': ' + expected : '.')
+		);
+	};
+
+	function toDepth(depth, defDepth) {
+		depth = parseInt(depth);
+		if (isNaN(depth)) {
+			depth = defDepth;
+		}
+		return (depth < 0) ? 0 : depth;
+	}
+	
+	
+	// publish
+	return {
+		/** 
+		* It class.
+		* @memberOf module:'brixy.tester.It'
+		* @type {module:'brixy.tester.It'~It}
+		*/
+		Me: It
+	};
+});

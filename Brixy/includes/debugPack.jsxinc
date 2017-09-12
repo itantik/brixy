@@ -1,0 +1,2 @@
+// BX.debug methods
+BX.use('brixy', 'extras/debug.jsxinc');

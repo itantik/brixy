@@ -1,0 +1,106 @@
+/**
+* @module 'brixy.tester.Result'
+*/
+BX.module.define('brixy.tester.Result', function() {
+	
+	/** 
+	* Status of the test result.
+	* @memberOf module:'brixy.tester.Result'
+	* @readonly
+	* @enum {string}
+	*/
+	var STATUS = {OK: '*', FAILED: 'F', SKIPPED: '?'};
+	
+	/**
+	* Test value.
+	* 
+	* @class
+	* @alias module:'brixy.tester.Result'~Value
+	* @property {*} value - Tested value.
+	* @property {string} caption - String representation of the value.
+	*/
+	function Value(value, caption) {
+		this.value = value;
+		this.caption = caption + '';
+	}
+	
+	/**
+	* Result object.
+	* 
+	* @class
+	* @alias module:'brixy.tester.Result'~Result
+	* @param {module:'brixy.tester.Result'.STATUS} status
+	* @param {string} name
+	* @param {string} description
+	*/
+	function Result(status, name, description) {
+		this._status = status;
+		this._name = name;
+		this._description = description;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Result.prototype.toString = BX.toString;
+	
+	/**
+	* Returns true if result is OK.
+	* @return {boolean}
+	*/
+	Result.prototype.passed = function() {
+		return this._status === STATUS.OK;
+	};
+	
+	/**
+	* Name of the result.
+	* @return {string}
+	*/
+	Result.prototype.getName = function() {
+		return this._name;
+	};
+	
+	/**
+	* Returns a status of the result.
+	* @return {module:'brixy.tester.Result'.STATUS}
+	*/
+	Result.prototype.getStatus = function() {
+		return this._status;
+	};
+	
+	/**
+	* Description of the result.
+	* @return {string}
+	*/
+	Result.prototype.getDescription = function() {
+		return this._description;
+	};
+	
+	/**
+	* Long description of the result (i.e. name and description).
+	* @return {string}
+	*/
+	Result.prototype.getLongDescription = function() {
+		return this._name + ': ' + this._description;
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Result class.
+		* @memberOf module:'brixy.tester.Result'
+		* @type {module:'brixy.tester.Result'~Result}
+		*/
+		Me: Result,
+		/** 
+		* Value class.
+		* @memberOf module:'brixy.tester.Result'
+		* @type {module:'brixy.tester.Result'~Value}
+		*/
+		Value: Value,
+		STATUS: STATUS
+	};
+});

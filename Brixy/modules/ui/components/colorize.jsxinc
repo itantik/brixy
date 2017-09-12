@@ -1,0 +1,47 @@
+/**
+* Defines components for {@link module:'brixy.ui.SuiBuilder'~SuiBuilder}.
+* 
+* @module 'brixy.ui.components.colorize'
+*/
+BX.module.define('brixy.ui.components.colorize', function() {
+
+	// publish
+	return {
+
+		/**
+		* Sets foreground colors of the element.
+		* 
+		* @memberOf module:'brixy.ui.components.colorize'
+		* @param {Array} enabled - Color for element when enabled or active.
+		* @param {Array} disabled - Color for element when disabled or inactive.
+		*/
+		foregroundColor: function(enabled, disabled) {
+			var gr = this.element.graphics,
+				type = gr.PenType.SOLID_COLOR;
+			
+			disabled || (disabled = enabled);
+			
+			gr.foregroundColor = gr.newPen(type, enabled, 1);
+			gr.disabledForegroundColor = gr.newPen(type, disabled, 1);
+		},
+		
+		/**
+		* Sets background colors of the element.
+		* 
+		* @memberOf module:'brixy.ui.components.colorize'
+		* @param {Array} enabled - Color for element when enabled or active.
+		* @param {Array} disabled - Color for element when disabled or inactive.
+		*/
+		backgroundColor: function(enabled, disabled) {
+			var gr = this.element.graphics,
+				type = gr.BrushType.SOLID_COLOR;
+			
+			disabled || (disabled = enabled);
+			
+			gr.backgroundColor = gr.newBrush(type, enabled);
+			gr.disabledBackgroundColor = gr.newBrush(type, disabled);
+		}
+		
+	};
+
+});

@@ -1,0 +1,168 @@
+BX.use('brixy', 'modules/tester/report.jsxinc');
+BX.use('brixy', 'modules/tester/Job.jsxinc');
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+BX.use('brixy', 'modules/tester/JobLoader.jsxinc');
+
+// error reporter
+BX.use('brixy', 'modules/err/DebugReporter.jsxinc');
+BX.error.addReporter('brixy.err.DebugReporter');
+
+/**
+* @module 'brixy.tester.Tester'
+*/
+BX.module.define('brixy.tester.Tester', function() {
+	var Job = BX.module('brixy.tester.Job').Me,
+		AbortException = BX.module('brixy.tester.Job').AbortException,
+		JobLoader = BX.module('brixy.tester.JobLoader').Me,
+		types = BX.module('brixy.es.types');
+	
+	/**
+	* Tester object. Default behavior is defined by the `setConfig()` and `getConfig()` methods.  
+	* 
+	* | Predefined values | Default | Description |
+	* | --- | --- | --- |
+	* | dialogOnFailure | true | Shows the report dialog when test fails. |
+	* | comparisonDepth | 10 | Default nesting level of the comparison of the objects. Used by the job assert methods. |
+	* | assertLibrary | 'brixy.tester.It' | Default assert library is specified by the constructor or module name. |
+	* 
+	* @class
+	* @alias module:'brixy.tester.Tester'~Tester
+	*/
+	function Tester() {
+		this._currentJob = null;
+		this._jobs = [];
+		
+		// common config
+		this._config = {
+			dialogOnFailure: true, // show report dialog when test fails
+			comparisonDepth: 10, // default job comparison depth
+			assertLibrary: 'brixy.tester.It' // default assert library
+		};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Tester.prototype.toString = BX.toString;
+	
+	/**
+	* Changes default config options or adds custom values.  
+	* All options are available in job files via `tester.getConfig('something')`.
+	* @param {string|object} nameOrObject - Name of the config option. If object is given, all key/value pairs are set to config and `value` parameter is ignored.
+	* @param {*} [value] - Value of the config option. (optional)
+	* @throws Exception
+	*/
+	Tester.prototype.setConfig = function(nameOrObject, value) {
+		if (types.isString(nameOrObject)) {
+			this._config[nameOrObject] = value;
+		}
+		else if (nameOrObject != null && typeof nameOrObject === 'object') {
+			for (var n in nameOrObject) {
+				if (nameOrObject.hasOwnProperty(n))
+					this._config[n] = nameOrObject[n];
+			}
+		}
+		else
+			throw BX.error('brixy.tester.Tester.setConfig()', Error('Name of the option should be a string or object; ' + nameOrObject + ' given.'));
+	};
+	
+	/**
+	* Gets the config value.
+	* @param {string} name - Name of the option.
+	* @return {*} Config value or undefined.
+	*/
+	Tester.prototype.getConfig = function(name) {
+		if (this._config.hasOwnProperty(name)) {
+			return this._config[name];
+		}
+		return undefined;
+	};
+	
+	/**
+	* Creates new job.
+	* @param {string} [name] - Job name.
+	* @return {module:'brixy.tester.Job'~Job} New job.
+	*/
+	Tester.prototype.addJob = function(name) {
+		var c = this._config;
+		this._currentJob = new Job(name, c.dialogOnFailure, c.assertLibrary, c.comparisonDepth);
+		this._jobs.push(this._currentJob);
+		
+		return this._currentJob;
+	};
+	
+	/**
+	* Removes all jobs.
+	*/
+	Tester.prototype.clearJobs = function() {
+		this._currentJob = null;
+		this._jobs = [];
+	};
+
+	/**
+	* Gets current job.
+	* @return {module:'brixy.tester.Job'~Job}
+	*/
+	Tester.prototype.currentJob = function() {
+		if (!this._currentJob)
+			this.addJob();
+		
+		return this._currentJob;
+	};
+	
+	/**
+	* Runs all test files in the folder. Default allowed file names: *job.(jsx|jsxinc|js).  
+	* 
+	* @param {string|Folder} folder - Full path to a job file or folder with job files.
+	* @param {Function} [fileFilter] - Callback filters the files in the job folders: `function(path){return boolean;}`. By default, accepts all files whose name ends with **job.jsx** / **job.jsxinc** / **job.js**. (optional)
+	* @param {Function} [folderFilter] - Callback filters the job folders: `function(path){return boolean;}`. By default, accepts all folders and subfolders. (optional)
+	* @throws Exception on error.
+	*/
+	Tester.prototype.runJobFiles = function(folder, fileFilter, folderFilter) {
+		try {
+			var loader = new JobLoader(this, fileFilter, folderFilter);
+			loader.loadFile(Folder(folder));
+		}
+		catch (e) {
+			throw (e instanceof AbortException) ? e : BX.error('brixy.tester.Tester.runJobFiles()', Error('File: ' + Folder(folder)), e);
+		}
+	};
+	
+	/**
+	* Shows a dialog with tester result.
+	*/
+	Tester.prototype.report = function() {
+		BX.module('brixy.tester.report').showResult(this._jobs);
+	};
+	
+	/**
+	* Shows a dialog with error report.
+	* @param {*} e - Error object or message.
+	*/
+	Tester.prototype.errorReport = function(e) {
+		if (e instanceof AbortException) {
+			this.currentJob().addSection('Testing aborted by user.');
+		}
+		else {
+			var err = BX.error('brixy.tester.Tester', Error('An unexpected error.'), e);
+			this.currentJob().addSection('An unexpected error terminated the testing.');
+			this.currentJob().addSkippedResult('Error', err.getPrimeError() + '');
+			
+			BX.error.report(err); // report error
+		}
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Tester class.
+		* @memberOf module:'brixy.tester.Tester'
+		* @type {module:'brixy.tester.Tester'~Tester}
+		*/
+		Me: Tester
+	};
+});

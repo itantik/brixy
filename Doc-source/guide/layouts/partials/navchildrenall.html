@@ -1,0 +1,14 @@
+<li{{#if children}} class="has-children"{{/if}}>
+	{{#if file}}
+		<a href="{{relativePath @root.navPath path}}">{{file.title}}</a>
+	{{else}}
+		{{name}}
+	{{/if}}
+	{{#if children}}
+		<ul class="subtree">
+		{{#each children}}
+			{{> navchildrenall}}
+		{{/each}}
+		</ul>
+	{{/if}}
+</li>

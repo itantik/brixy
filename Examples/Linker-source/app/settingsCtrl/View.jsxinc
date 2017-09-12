@@ -1,0 +1,84 @@
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'modules/fs/filesystem.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.settings.View', function() {
+	
+	var MvcView = BX.module.Me('brixy.mvc.View'),
+		Sui = BX.module('brixy.ui.SuiBuilder').Me;
+	
+	function View() {
+		MvcView.call(this); // parent constructor
+		
+		this.settings = {};
+	}
+	
+	BX.subclass(View, MvcView); // subclassing
+	
+	View.prototype.render = function (settings) {
+		var filesystem = BX.module('brixy.fs.filesystem'),
+			b = new Sui('Linker'),
+			file = settings.sourceFile ? settings.sourceFile : null;
+		
+		// dialog
+		b.window('dialog', 'Brixy Linker')
+			.row().alignChildren('top')
+				.columnPanel().alignChildren('left').set('spacing', 20)
+					.row()
+						.staticText('Source file:')
+						.editText('{characters: 35, properties: {readonly: true}}').id('source').set('text', file ? file.displayName : '').validator('required', 'text', 'Please choose a source script file.')
+						.button('Browse...').set('onClick', selectSource)
+						.end()
+					.checkbox('Do not insert BX.use namespace to the linked file').id('replaceCoreLib').set('value', settings.replaceCoreLib).set('helpTip', 'It will include the "BrixyCore.jsxinc" file instead of the "Brixy.jsxinc" into the linked file.')
+					.row()
+						.staticText('Target encoding:').labelFor('targetEncoding')
+						.editText('{characters: 15}').id('targetEncoding').set('text', settings.targetEncoding).set('helpTip', 'Encoding of linked file. Leave empty for automatic encoding.')
+							.validator(function(){
+								var text = this.text;
+								
+								if (text === '' || text === 'automatic')
+									return;
+								if (!File.isEncodingAvailable(text))
+									throw 'Encoding "' + text + '" is not available on this machine.';
+							})
+						.dropDownList(settings.encodingList).set('selection', 0).set('helpTip', 'The list of available encodings.').set('onChange', function() {
+								var t = this.selection.text;
+								this.selection = 0;
+								b.get('targetEncoding').text = t;
+							})
+							.end()
+						.end()
+					.end()
+				.column()
+					.button('{text: "OK", properties: {name: "ok"}}').closeOnClick(true, 1)
+		.showWindow();
+
+		if (b.result() != 1 || !file)
+			return;
+		
+		this.settings = {
+			sourceFile: file,
+			replaceCoreLib: b.get('replaceCoreLib').value,
+			targetEncoding: b.get('targetEncoding').text
+		};
+		
+		return 'OK';
+		
+		/*
+		* Select source file.
+		*/
+		function selectSource() {
+			file = filesystem.openDialog('Open a script file', 'ExtendScript files:*.jsx;*.jsxinc;*.js;*.jsxbin', false);
+			b.get('source').text = file ? file.displayName : '';
+		}
+
+	};	
+
+	
+	return {
+		Me: View
+	};
+});

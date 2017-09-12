@@ -1,0 +1,263 @@
+BX.use('brixy', 'modules/fs/FileLoader.jsxinc');
+
+BX.module.define('app.model.JsxLoader', function() {
+	
+	var FileLoader = BX.module.Me('brixy.fs.FileLoader');
+
+/** JsxLoader:
+* 
+* #include:
+* - include always
+* - absolute path or relative to this file
+* - parameters are double quoted / single quoted / not quoted
+* - #include *.jsxbin -> app.doScript("jsxbin code"); (InDesign supports it)
+* 
+* BX.use / BX.use.use:
+* - includes each file only once
+* - parameters are double quoted / single quoted, not allowed character ')', allowed $.fileName as the second parameter
+* - absolute path or relative to the home folder (alias = '')
+* 
+* BX.use.alias / BX.use.ignore:
+* - parameters are double quoted / single quoted, not allowed character ')', allowed $.fileName as the second parameter
+* - used only in Linker
+* - not copied to the target file
+* 
+* Note:
+* - does not recognize multiline form of calls like #include\n"file" or BX\n.use()
+* - line can start with whitespace only
+* 
+* Linker comment directives:
+* - only one directive on the line
+* - line can start with whitespace only
+* LINKER-DEL - not executed by the Linker, not copied to the target file
+* LINKER-ADD - not executed by the Linker, but is copied to the target file
+* LINKER-KEEP - is copied to the target file, also is executed by the Linker
+* LINKER-APPLY - is executed by the Linker, but not copied to the target file
+*/
+
+	/**
+	* JsxLoader constructor.
+	* 
+	* @class JsxLoader
+	*/
+	function JsxLoader(){
+		FileLoader.call(this); // parent constructor
+		
+		this._sourcePath = ''; // full path to the main source file
+		this._code = ''; // linked code
+
+		this.options = {
+			replaceCoreLib: false, // replace the "Brixy.jsxinc" with "BrixyCore.jsxinc" file in #include directives
+			sourceEncoding: '' // '' automatic detection, UTF-8, ...
+		};
+		
+	}
+	
+	BX.subclass(JsxLoader, FileLoader);
+	
+	/**
+	* Returns linked code.
+	* @return {string}
+	*/
+	JsxLoader.prototype.getCode = function() {
+		return this._code;
+	};
+	
+	/**
+	* Removes aliases, loaded paths and linked code.
+	*/
+	JsxLoader.prototype.clear = function() {
+		this._sourcePath = '';
+		this._code = '';
+		this._aliases = {};
+		this._loaded = [];
+	};
+	
+	/**
+	* Sets loader options.
+	* @param {Object} options
+	*/
+	JsxLoader.prototype.setOptions = function(options) {
+		for (var p in options) {
+			if (p in this.options)
+				this.options[p] = options[p];
+		}
+		
+		if (!File.isEncodingAvailable(this.options.sourceEncoding))
+			this.options.sourceEncoding = '';
+	};
+
+	/**
+	 * Makes the linking.
+	 * @param {File} file
+	 */
+	JsxLoader.prototype.link = function(file) {
+		this.clear();
+		this._sourcePath = file.fullName;
+		this.addPath(this._sourcePath);
+		this.onLoadFile(file);
+	};
+
+	JsxLoader.regulars = {
+		liDel: /^\s*(\/\*\s*LINKER-DEL\s*\*\/|\/\/\s*LINKER-DEL)/i,
+		liKeep: /^\s*(\/\*\s*LINKER-KEEP\s*\*\/|\/\/\s*LINKER-KEEP)(.*)$/i,
+		liAdd: /^\s*\/\/\s*LINKER-ADD(.*)$/i,
+		liApply: /^\s*\/\/\s*LINKER-APPLY(.*)$/i,
+		incl: /^\s*#include(?:\s*"([^"]*)"|\s*'([^']*)'|\s+([^\s;]+))/,
+		use: /^\s*BX\s*\.\s*(?:(use)|use\s*\.\s*(use|alias|ignore))\s*\((.+?)\)/,
+		useArg2: /^\s*("(.*)"|'(.*)')\s*,\s*("(.*)"|'(.*)'|(\$\s*\.\s*fileName)|(_LINKER_SCRIPT_FILE_))\s*$/,
+		useArg1: /^\s*("(.*)"|'(.*)'|(\$\s*\.\s*fileName)|(_LINKER_SCRIPT_FILE_))\s*$/
+	};
+	
+	/**
+	* Copy contents of the file and included files to resulted code.
+	* @param {File} file
+	* @return {string}
+	*/
+	JsxLoader.prototype.onLoadFile = function(file) {
+		try {
+			this.openFile(file);
+			
+			if (/.+\.jsxbin$/i.test(file.name)) { // *.jsxbin file
+				this._code += '\napp.doScript("' + file.read().replace(/(\n|\r)/g, '') + '");';
+				
+				file.close();
+				return;
+			}
+
+			this.readFile(file);
+			file.close();
+		}
+		catch (e) {
+			throw new BX.error('app.model.JsxLoader.onLoadFile()', Error('Failed linking of the file: "' + file + '"'), e);
+		}
+	};
+	
+	/**
+	* Reads the file.
+	* @param {File} file
+	* @return {string}
+	*/
+	JsxLoader.prototype.readFile = function(file) {
+		var regs = JsxLoader.regulars,
+			line,
+			res,
+			resKeep,
+			s,
+			f,
+			p1,
+			p2;
+		
+		while (!file.eof) {
+			line = file.readln();
+			
+			if (line === '' || regs.liDel.test(line)) { // empty line or /*LINKER-DEL*/ or //LINKER-DEL
+				this._code += '\n';
+				continue;
+			}
+			
+			res = line.match(regs.liAdd); // //LINKER-ADD
+			if (res) {
+				this._code += '\n' + res[1];
+				continue;
+			}
+			
+			resKeep = line.match(regs.liKeep); // /*LINKER-KEEP*/ or //LINKER-KEEP
+			if (resKeep) {
+				this._code += '\n' + resKeep[2];
+				line = resKeep[2];
+			}
+			else {
+				res = line.match(regs.liApply); // //LINKER-APPLY
+				if (res) {
+					line = res[1];
+				}
+			}
+			
+			res = line.match(regs.incl); // #include directive
+			if (res) { // always loads the file
+				f = createFile(file.parent, res[1] || res[2] || res[3]);
+				if (this.options.replaceCoreLib && f.name === 'Brixy.jsxinc') { // replace core library
+					f = createFile(f.parent, '/BrixyCore.jsxinc');
+				}
+				this.onLoadFile(f);
+			}
+			else {
+				// BX.use, BX.use.use, BX.use.alias, BX.use.ignore
+				res = line.match(regs.use);
+				if (res) {
+					s = res[3].match(regs.useArg2); // version with two arguments
+					if (s) {
+						p1 = s[2] || s[3];
+						p2 = s[7] ? file.fullName : (s[8] ? this._sourcePath : s[5] || s[6]);
+					}
+					else {
+						s = res[3].match(regs.useArg1); // version with single argument
+						if (s) {
+							p1 = '';
+							p2 = s[4] ? file.fullName : (s[5] ? this._sourcePath : s[2] || s[3]);
+						}
+					}
+				}
+				
+				if (res && s) {
+					switch (res[2] || res[1]) {
+					case 'use':
+						this.load(p1, p2);
+						break;
+						
+					case 'alias':
+						this.alias(p1, p2);
+						break;
+						
+					case 'ignore':
+						this.ignore(p1, p2);
+						break;
+					}
+				}
+				else { // any other line
+					if (!resKeep) // LINKER_KEEP line has already been added
+						this._code += '\n' + line;
+				}
+			}	
+		}
+	};
+	
+	/**
+	* Opens the file.
+	* @param {File} file
+	*/
+	JsxLoader.prototype.openFile = function(file) {
+		if (this.options.sourceEncoding)
+			file.encoding = this.options.sourceEncoding;
+		
+		if (!file.open('r'))
+			throw new BX.error('app.model.JsxLoader.openFile()', '', Error('Cannot open file "' + file + '"'));
+	};
+	
+	/**
+	* Creates File object.
+	* @param {string|Folder} parent - Parent folder.
+	* @param {string} path - File path.
+	* @return {File}
+	*/
+	function createFile(parent, path) {
+		var file = File(parent + '/' + path); // relative
+		
+		if (!file.exists)
+			file = File(path); // absolute
+
+		if (!file.exists)
+			throw Error('File "' + path + '" doesn\'t exists.');
+
+		if (file instanceof Folder)
+			throw Error('Cannot link folder "' + path + '". File is expected.');
+		
+		return file;
+	}
+	
+	
+	return {
+		Me: JsxLoader
+	};
+});

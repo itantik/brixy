@@ -1,0 +1,12 @@
+{{#if breadcrumbPath.length}}
+	<div id="breadcrumbs">
+	{{#each breadcrumbPath}}
+	    {{#if file}}
+	        <a href="{{relativePath @root.navPath path}}" class="button">{{file.title}}</a> /
+	    {{else}}
+	        {{name}} /
+	    {{/if}}
+	{{/each}}
+	{{title}}
+	</div>
+{{/if}}

@@ -1,0 +1,117 @@
+/**
+* Available variables:
+* tester - tester object
+* job - current job
+* it - shortcut to job.it
+* file - full path to this file
+* debug - BX.debug object
+*/
+
+// assets
+$.evalFile(tester.getConfig('brixyPath') + '/includes/Brixy.jsxinc');
+BX.use('brixy', 'modules/mvc/Router.jsxinc');
+var router = new (BX.module('brixy.mvc.Router').Me)(); // tested object
+var Route = BX.module('brixy.mvc.Router').Route; // tested object
+
+// run tests
+var t,
+	i,
+	n,
+	c,
+	cases;
+
+job.setName('Router');
+
+
+// ----- parseRequestString() -----
+job.addSection('Route.parseRequestString(request)');
+
+cases = [ // [tested request, required result]
+	[0, 							{controller: '0', action: '', data: null}],
+	[undefined, 					{controller: 'undefined', action: '', data: null}],
+	[{a: 'hello'}, 					{controller: String({}), action: '', data: null}],
+	['app.route1', 					{controller: 'app.route1', action: '', data: null}],
+	['app.Controller', 				{controller: 'app.Controller', action: '', data: null}],
+	['app.Controller:Save', 		{controller: 'app.Controller', action: 'Save', data: null}],
+	['Controller:Save?', 			{controller: 'Controller', action: 'Save', data: null}],
+	['Controller:Save?hello', 		{controller: 'Controller', action: 'Save', data: {'hello': undefined}}],
+	['Controller:Save?hello&bye', 	{controller: 'Controller', action: 'Save', data: {'hello': undefined, 'bye': undefined}}],
+	['Controller:Save?en=', 		{controller: 'Controller', action: 'Save', data: {'en': ''}}],
+	['Controller:Save?en=hello', 	{controller: 'Controller', action: 'Save', data: {'en': 'hello'}}],
+	['Controller:Save?en=hello&', 	{controller: 'Controller', action: 'Save', data: {'en': 'hello'}}],
+	['Controller:Save?en=hello&es=hola&de=hallo', 
+									{controller: 'Controller', action: 'Save', data: {'en': 'hello', 'es': 'hola', 'de': 'hallo'}}],
+	['Controller?en=hello&es=hola&de=hallo', 
+									{controller: 'Controller', action: '', data: {'en': 'hello', 'es': 'hola', 'de': 'hallo'}}],
+];
+
+for (i = 0, n = cases.length; i < n; i++) {
+	c = cases[i];
+	t = Route.parseRequestString(c[0]);
+	it.isLike(c[0], t, c[1]);
+}
+
+
+// ----- setRoutes() -----
+job.addSection('router.setRoutes(routes)');
+
+// helper method for testing
+function setRoutesCall() {
+	router.setRoutes(t);
+}
+
+t = 'app.Controller';
+it.isThrown(t, setRoutesCall);
+
+t = ['controller1', 'controller2'];
+it.notThrown(t.toSource(), setRoutesCall);
+
+t = {route: 'app.Controller'};
+it.notThrown(t.toSource(), setRoutesCall);
+
+t = {route: {ctrl: 'app.Controller'}};
+it.isThrown(t.toSource(), setRoutesCall);
+
+t = {route: {controller: 'app.Controller'}};
+it.notThrown(t.toSource(), setRoutesCall);
+
+t = {route: {forward: 'app.Controller'}};
+it.notThrown(t.toSource(), setRoutesCall);
+
+t = {route1: {controller: 'app.Controller'}, route2: {forward: 'app.Controller'}, route3: 'app.Controller'};
+it.notThrown(t.toSource(), setRoutesCall);
+
+
+// ----- createRoute() -----
+job.addSection('router.createRoute(request)');
+
+t = {
+	route1: 'app.Controller',
+	route2: {controller: 'app.Controller', action: 'Alert', data: {color: 'blue'}},
+	route3: {controller: 'app.Controller', forward: 'app.Forward'}
+};
+router.setRoutes(t);
+cases = [ // [tested request, required route]
+	['route1', 							{controller: '', forward: 'app.Controller', action: '', data: null}],
+	['route2:Open', 					{controller: 'app.Controller', forward: '', action: 'Open', data: {color: 'blue'}}],
+	['route2?color=red', 				{controller: 'app.Controller', forward: '', action: 'Alert', data: {color: 'red'}}],
+	['route2?weight=200', 				{controller: 'app.Controller', forward: '', action: 'Alert', data: {color: 'blue', weight: '200'}}],
+	['route3', 							{controller: 'app.Controller', forward: 'app.Forward', action: '', data: null}],
+	['app.Controller', 					{controller: 'app.Controller', forward: '', action: '', data: null}],
+	[{controller: 'app.Controller'}, 	{controller: 'app.Controller', forward: '', action: '', data: null}],
+	[{forward: 'app.Controller'}, 		{controller: '', forward: 'app.Controller', action: '', data: null}],
+	[{controller: 'app.Controller', forward: 'app.Forward', action: 'Default', data: null}, 
+										{controller: 'app.Controller', forward: 'app.Forward', action: 'Default', data: null}],
+];
+
+for (i = 0, n = cases.length; i < n; i++) {
+	c = cases[i];
+	t = router.createRoute(c[0]);
+	it.isLike(c[0], t, c[1]);
+}
+
+t = {ctrl: 'app.Controller'};
+it.isThrown(t.toSource(), function(){router.createRoute(t);});
+
+t = ['app.Controller'];
+it.isThrown(t.toSource(), function(){router.createRoute(t);});

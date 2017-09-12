@@ -1,0 +1,76 @@
+/**
+* @module 'brixy.debug.callStack'
+*/
+BX.module.define('brixy.debug.callStack', function() {
+
+	/**
+	* Shows a stack of method calls.
+	* @memberOf module:'brixy.debug.callStack'
+	* @param {string} [stack=$.stack] - Call stack. If not given, $.stack is used. (optional)
+	*/
+	function callStack(stack) {
+		if (stack == undefined)
+			stack = $.stack;
+			
+		var row,
+			dial = new Window('dialog', 'Call stack'),
+			panel = dial.add("panel {alignChildren: 'left', spacing: 2}"),
+			gr = panel.graphics;
+			
+		gr.backgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, [1.0, 1.0, 1.0]);
+		gr.disabledBackgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, [1.0, 1.0, 1.0]);
+
+		var lines = (stack + '').split(/[\r\n]/),
+			line,
+			r,
+			i = 0,
+			n = lines.length;
+		
+		for ( ; i < n; i++) {
+			line = lines[i];
+			if (!line)
+				continue;
+				
+			r = line.match(/^\[(.*)\]$/);
+			if (r) {
+				row = addFileRow(panel);
+				addText(row, 'File: ' + r[1], [1.0, 0.0, 0.0]);
+			}
+			else {
+				row = addMethodRow(panel);
+				r = line.match(/^([^\(]*)(\(.*\))$/);
+				if (r) {
+					addText(row, r[1], [0.2, 0.2, 0.5]);
+					addText(row, r[2], [0.5, 0.5, 0.5]);
+				}
+				else {
+					addText(row, line, [0.2, 0.2, 0.5]);
+				}
+			}
+		}
+		
+		dial.show();
+	}
+	
+	function addFileRow(panel) {
+		return panel.add('group {orientation: "row"}');
+	}
+	
+	function addMethodRow(panel) {
+		return panel.add('group {orientation: "row", indent: 10, spacing: 10}');
+	}
+	
+	function addText(row, text, color) {
+		var el = row.add('statictext');
+		el.text = text.replace(/(&)/g, '&&');
+		
+		var gr = el.graphics;
+		gr.foregroundColor = gr.newPen(gr.PenType.SOLID_COLOR, color, 1);
+		gr.disabledForegroundColor = gr.newPen(gr.PenType.SOLID_COLOR, color, 1);
+	}
+
+
+	return {
+		callStack: callStack
+	};
+});

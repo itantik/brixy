@@ -1,0 +1,38 @@
+
+// release exception reporter
+BX.use('brixy', 'includes/releaseErrorReporter.jsxinc');
+
+// application modules
+BX.use('app'); // includes all files in 'app' folder
+
+// palette application
+BX.apps.add({
+
+	routes: {
+		'palette': 'paletteCtrl'
+	},
+
+	events: {
+		'showPalette': 'palette' // redirect to the route
+	},
+
+	services: {
+		'paletteCtrl': 'app.palette.Controller' // keep alive the palette instance
+	}
+});
+
+// second application
+BX.apps.add({
+
+	id: 'second-application',
+
+	routes: {
+		'main': 'app.main.Controller'
+	},
+
+	events: {
+	},
+
+	services: {
+	}
+});

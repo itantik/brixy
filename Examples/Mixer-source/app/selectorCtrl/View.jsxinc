@@ -1,0 +1,109 @@
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.selector.View', function() {
+	var MvcView = BX.module.Me('brixy.mvc.View'),
+		sui = BX.module('brixy.ui.SuiBuilder');
+	
+	function SelectorView() {
+		MvcView.call(this); // parent constructor
+		
+		this.templateFile = ''; // selected template file
+	}
+	
+	BX.subclass(SelectorView, MvcView); // subclassing
+	
+	SelectorView.prototype.render = function (templateList, readInfoCb) {
+		var b = new sui.Me('Selection View'),
+			selection = null;
+		
+		this.templateFile = '';
+		
+		b.addComponents(components);
+		
+		b.window('dialog', 'Brixy Mixer - select template')
+			.row().alignChildren('fill')
+				.columnPanel().alignChildren('left').validator(function() { if (!selection) throw 'Please select a template file.';})
+					.folderList(templateList, onClickTemplate)
+					.end()
+				.editText('{properties: {multiline: true, scrolling: true, readonly: true}, minimumSize: [300, 200]}').id('info')
+				.column().alignChildren('fill')
+					.button('OK').closeOnClick(true, 1)
+		.showWindow();
+		
+		switch (b.result()) {
+		case 1:
+			if (selection)
+				this.templateFile = selection.file;
+			return 'Selected';
+		}
+		
+		
+		function onClickTemplate() {
+			if (selection === this)
+				return;
+				
+			if (selection)
+				selection.value = false;
+			
+			selection = this;
+			
+			if (this.info === undefined) {
+				this.info = readInfoCb(this.file);
+			}
+			b.get('info').text = this.info;
+		}
+
+	};	
+
+	// SuiBuilder components
+	var components = {
+		
+		folderList: function (list, clickHandler) {
+			var i = 0,
+				n = list.length,
+				width = 0,
+				d;
+			
+			var gr = this.element.graphics;
+			
+			// get label dimension
+			for ( ; i < n; i++) {
+				d = gr.measureString(list[i].name + ':');
+				width = Math.max(width, d.width);
+			}
+			
+			for (i = 0; i < n; i++) {
+				if (!list[i].files.length) // empty folder
+					continue;
+					
+				this.builder.row().alignChildren('top')
+					.staticText(list[i].name + ':').doubleAmps().set('preferredSize', [width, d.height])
+					.column().alignChildren('left').set('spacing', 4)
+						.fileList(list[i].files, clickHandler)
+						.end()
+					.end();
+			}
+		},
+		
+		fileList: function (list, clickHandler) {
+			var i = 0,
+				n = list.length;
+			
+			for ( ; i < n; i++) {
+				this.element = this.container.add('radiobutton', undefined, list[i].name); // keep the possibility of ampersand shortcuts
+				this.element.file = list[i].file;
+				this.element.onClick = clickHandler;
+			}
+		}
+		
+	};
+
+	
+	return {
+		Me: SelectorView
+	};
+});

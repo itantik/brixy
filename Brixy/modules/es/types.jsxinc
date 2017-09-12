@@ -1,0 +1,151 @@
+/**
+* Additional methods for work with Extend Script types.
+* 
+* @module 'brixy.es.types'
+*/
+BX.module.define('brixy.es.types', function() {
+	
+	/**
+	* Tests if the value is a type of string.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {boolean}
+	*/
+	function isString(value) {
+		var t = typeof value;
+		
+		return (t === 'string' || (t === 'object' && value instanceof String));
+	}
+	
+	/**
+	* Tests if the value is a type of number.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {boolean}
+	*/
+	function isNumber(value) {
+		var t = typeof value;
+		
+		return (t === 'number' || (t === 'object' && value instanceof Number));
+	}
+	
+	/**
+	* Tests if the value is a type of boolean.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {boolean}
+	*/
+	function isBoolean(value) {
+		var t = typeof value;
+		
+		return (t === 'boolean' || (t === 'object' && value instanceof Boolean));
+	}
+	
+	/**
+	* Returns the base type of the value.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {string}
+	*/
+	function baseType(value) {
+		var t = typeof value,
+			c = '';
+		
+		if (value == undefined) // undefined or null
+			return 'undefined';
+			
+		if (t === 'object')
+			c = value.constructor.name;
+			
+		if (t === 'string' || c === 'String')
+			return 'string';
+		if (t === 'number' || c === 'Number')
+			return 'number';
+		if (t === 'boolean' || c === 'Boolean')
+			return 'boolean';
+		if (c === 'Array') // doesn't check 'Array like' objects
+			return 'array';
+		if (value instanceof RegExp) // duality: (typeof /reguar/ === 'function') versus (/regular/ instanceof RegExp === true)
+			return 'object';
+		
+		return t; // function or object or xml
+	}
+	
+	/**
+	* Returns class name of the value.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value to check.
+	* @return {string}
+	*/
+	function className(value) {
+		
+		if (value === undefined)
+			return 'undefined';
+			
+		if (value === null)
+			return 'null';
+		
+		switch (typeof value) {
+			case 'string': return 'String';
+			case 'number': return 'Number';
+			case 'boolean': return 'Boolean';
+			case 'function': return (value instanceof RegExp) ? 'RegExp' : 'Function';
+			case 'xml': return 'XML';
+			case 'object': return value.constructor.name;
+			default: return typeof value; // unknown
+		}
+	}
+	
+	/**
+	* Returns string representation of the value.
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {*} value - Value.
+	* @param {string} [asClass] - If applied, the result string is decorated as if it were a given class. (optional)
+	* @return {string}
+	*/
+	function valueString(value, asClass) {
+		
+		var c = asClass || className(value);
+		switch (c) {
+			case 'undefined':
+			case 'null': return c;
+			case 'String': return '"' + value + '"';
+			case 'Number': return value;
+			case 'Boolean': return value ? 'true' : 'false';
+			case 'Function': return 'function' + (value.name === 'anonymous' ? '' : ' ' + value.name) + '()';
+			case 'XML': return value.toXMLString();
+			default: return value.toString();
+		}
+	}
+	
+	/**
+	* Escapes the special regular expression characters. Prepares a string for use within a regular expression.  
+	* Thanks to [Mozilla Developer Network](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
+	* 
+	* @memberOf module:'brixy.es.types'
+	* @param {string} str - Source string.
+	* @return {string} - Escaped string.
+	*/
+	function escapeRegexpStr(str) {
+		// return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
+		return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	}
+	
+	
+	// publish
+	return {
+		isString: isString,
+		isNumber: isNumber,
+		isBoolean: isBoolean,
+		baseType: baseType,
+		className: className,
+		valueString: valueString,
+		escapeRegexpStr: escapeRegexpStr
+	};	
+});

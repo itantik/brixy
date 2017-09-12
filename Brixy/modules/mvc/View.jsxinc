@@ -1,0 +1,40 @@
+/**
+* @module 'brixy.mvc.View'
+*/
+BX.module.define('brixy.mvc.View', function() {
+	
+	/**
+	* Base View object.
+	* @class
+	* @alias module:'brixy.mvc.View'~View
+	*/
+	function View() {
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	View.prototype.toString = BX.toString;
+	
+	/**
+	* Subclass must override this method.
+	* @param {...*} [arg1, arg2, ...] - Arguments passed from controller. (optional)
+	* @return {string} - Name of the controller handler.
+	*/
+	View.prototype.render = function (/* arg1, arg2, ... */) {
+		throw BX.error('brixy.mvc.View.render()', Error(this + '.render() method is not defined.'));
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* Base View class.
+		* @memberOf module:'brixy.mvc.View'
+		* @type {module:'brixy.mvc.View'~View}
+		*/
+		Me: View
+	};
+});

@@ -1,0 +1,335 @@
+BX.use('brixy', 'modules/tester/Result.jsxinc');
+BX.use('brixy', 'modules/es/types.jsxinc');
+BX.use('brixy', 'modules/es/reflection.jsxinc');
+
+/**
+* @module 'brixy.tester.Assert'
+*/
+BX.module.define('brixy.tester.Assert', function() {
+	var STATUS = BX.module('brixy.tester.Result').STATUS,
+		Value = BX.module('brixy.tester.Result').Value,
+		types = BX.module('brixy.es.types'),
+		reflection = BX.module('brixy.es.reflection');
+		
+	/**
+	* Asserts namespace.
+	* @namespace
+	* @memberOf module:'brixy.tester.Assert'
+	*/
+	var Asserts = {};
+	
+	/**
+	* Test rating.
+	* 
+	* @class
+	* @alias module:'brixy.tester.Assert'~Rating
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} depth
+	* @param {module:'brixy.tester.Result'.STATUS} status
+	* @param {module:'brixy.tester.Specials'~Specials} specs
+	*
+	* @property {module:'brixy.tester.Assert'~Value} actual
+	* @property {module:'brixy.tester.Assert'~Value} expected
+	* @property {int} depth
+	* @property {module:'brixy.tester.Result'.STATUS} status
+	* @property {string} note
+	*/
+	function Rating(actual, expected, depth, status, specs) {
+		this.actual = createValue(actual, specs);
+		this.expected = createValue(expected, specs);
+		this.depth = depth;
+		if (status === STATUS.OK || status === STATUS.FAILED) {
+			this.status = status;
+			this.note = '';
+		}
+		else {
+			this.status = STATUS.SKIPPED;
+			this.note = status;
+		}
+	}
+	
+	/*
+	* Create value.
+	* @property {*} value
+	* @property {string} caption
+	* @return {module:'brixy.tester.Result'~Value}
+	*/
+	function createValue(val, specs) {
+		var s,
+			value,
+			caption;
+			
+		if (specs && (s = specs.get(val))) {
+			value = s.value(val);
+			caption = s.caption(val) + '';
+		} else {
+			value = val;
+			caption = types.valueString(val);
+		}
+		
+		if (caption.length > 70) // trim a long string
+			caption = caption.substr(0, 70) + '...';
+		
+		return new Value(value, caption);
+	}
+	
+	/**
+	* Tests if objects are identical.
+	* @param {*} actual
+	* @param {*} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.is = function(actual, expected) {
+		var s = (actual === expected) ? STATUS.OK : STATUS.FAILED;
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if objects are not identical.
+	* @param {*} actual
+	* @param {*} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isNot = function(actual, expected) {
+		var s = (actual !== expected) ? STATUS.OK : STATUS.FAILED;
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if value is a member of the object.
+	* @param {*} actual
+	* @param {Array|Object} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isMember = function(actual, expected) {
+		var s = contains(actual, expected);
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if value is not a member of the object.
+	* @param {*} actual
+	* @param {Array|Object} expected
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.notMember = function(actual, expected) {
+		var s = contains(actual, expected);
+		return new Rating(actual, expected, 1, revertStatus(s));
+	};
+	
+	/**
+	* Tests if objects are equal.
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} depth
+	* @param {module:'brixy.tester.Specials'~Specials} [specs] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isLike = function(actual, expected, depth, specs) {
+		var s = compare(actual, expected, depth, specs);
+		return new Rating(actual, expected, depth, s, specs);
+	};
+	
+	/**
+	* Tests if objects are not equal.
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} depth
+	* @param {module:'brixy.tester.Specials'~Specials} [specs] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.notLike = function(actual, expected, depth, specs) {
+		var s = compare(actual, expected, depth, specs);
+		return new Rating(actual, expected, depth, revertStatus(s), specs);
+	};
+	
+	/**
+	* Tests if a callback throws an exception. Compares the thrown error only when argument `expected` is given.  
+	* Note: Error messages are localised ("Error: message" vs. "Chyba: message").
+	* @param {function} actual
+	* @param {*} [expected] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.isThrown = function(actual, expected) {
+		var s = simulateCall(actual, expected);
+		return new Rating(actual, expected, 1, s);
+	};
+	
+	/**
+	* Tests if a callback doesn't throw an exception. Compares the thrown error only when argument `expected` is given.  
+	* Note: Error messages are localised ("Error: message" vs. "Chyba: message").
+	* @param {function} actual
+	* @param {*} [expected] (optional)
+	* @return {module:'brixy.tester.Assert'~Rating}
+	*/
+	Asserts.notThrown = function(actual, expected) {
+		var s = simulateCall(actual, expected);
+		return new Rating(actual, expected, 1, revertStatus(s));
+	};
+	
+	
+	/* helpers */
+	
+	function revertStatus(status) {
+		switch (status) {
+			case STATUS.OK: return STATUS.FAILED;
+			case STATUS.FAILED: return STATUS.OK;
+		}
+		return status;
+	}
+	
+	function simulateCall(actual, expected) {
+		var s = STATUS.FAILED;
+		
+		if (types.className(actual) !== 'Function')
+			return 'Actual parameter should be a function.';
+			
+		try {
+			actual();
+		}
+		catch (err) {
+			if (expected)
+				s = (expected == err) ? STATUS.OK : STATUS.FAILED;
+			else
+				s = STATUS.OK;
+		}
+		
+		return s;
+	}
+	
+	/*
+	* Compare two values.
+	*/
+	function compare(actual, expected, depth, specs) {
+		if (actual === expected)
+			return STATUS.OK;
+		
+		var a = (specs && specs.getValue(actual)) || actual,
+			e = (specs && specs.getValue(expected)) || expected,
+			t = types.baseType(a) + types.baseType(e),
+			s;
+		
+		switch (t) {
+			case 'objectobject':
+				s = compareObjects(a, e, depth, specs);
+				break;
+			case 'arrayarray':
+				s = compareArrays(a, e, depth, specs);
+				break;
+			default:
+				if (/.*(object|array).*/.test(t)) // array-any OR object-any
+					s = STATUS.FAILED;
+				else
+					s = (a == e) ? STATUS.OK : STATUS.FAILED;
+		}
+		
+		return s;
+	}
+	
+	/*
+	* Compare arrays.
+	* Note: Compares items of the array. If nesting limit occured, it only compares the sum of items.
+	*/
+	function compareArrays(a, b, depth, specs) {
+		var n = a.length,
+			i = 0,
+			s;
+		
+		// check number of items
+		if (n !== b.length)
+			return STATUS.FAILED;
+		
+		// nesting limit
+		if (depth === 0)
+			return (n > 0) ? 'Nesting level is too low to compare arrays.' : STATUS.OK;
+		
+		// check values of items
+		for ( ; i < n; i++) {
+			if (i in a !== i in b) // both or none has to contain index
+				return STATUS.FAILED;
+				
+			s = compare(a[i], b[i], depth--, specs);
+			if (s !== STATUS.OK)
+				return s;
+		}
+		
+		return STATUS.OK;
+	}
+	
+	/*
+	* Compare objects.
+	* Note: Compares properties of the objects (constructors are NOT compared). If nesting limit occured, it only compares the sum of properties.
+	*/
+	function compareObjects(a, b, depth, specs) {
+		var arr,
+			pr,
+			s,
+			i,
+			n;
+		
+		n = reflection.getOwnProperties(b).length;
+		arr = reflection.getOwnProperties(a);
+		
+		// check number of properties
+		if (n !== arr.length)
+			return STATUS.FAILED;
+			
+		// nesting limit
+		if (depth === 0)
+			return (n > 0) ? 'Nesting level is too low to compare objects.' : STATUS.OK;
+		
+		// check values of properties
+		for (i = 0; i < n; i++) {
+			pr = arr[i];
+			
+			if (!(pr in b))
+				return STATUS.FAILED;
+				
+			s = compare(a[pr], b[pr], depth--, specs);
+			if (s !== STATUS.OK)
+				return s;
+		}
+		
+		return STATUS.OK;
+	}
+
+	/*
+	* Checks if a value is a member of the container.
+	*/
+	function contains(value, container) {
+		if (value === container)
+			return STATUS.FAILED;
+		
+		var t = types.baseType(container),
+			isOwn = Object.prototype.hasOwnProperty,
+			i,
+			n;
+		
+		if (t === 'array') {
+			for (i = 0, n = container.length; i < n; i++) {
+				if (isOwn.call(container, i) && value === container[i])
+					return STATUS.OK;
+			}
+		}
+		else if (t === 'object') {
+			for (i in container) {
+				if (isOwn.call(container, i) && value === container[i])
+					return STATUS.OK;
+			}
+		}
+		
+		return STATUS.FAILED;
+	}
+	
+	
+	return {
+		Asserts: Asserts,
+		/** 
+		* Rating class.
+		* @memberOf module:'brixy.tester.Assert'
+		* @type {module:'brixy.tester.Assert'~Rating}
+		*/
+		Rating: Rating
+	};
+});

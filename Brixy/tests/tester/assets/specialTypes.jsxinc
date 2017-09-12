@@ -1,0 +1,28 @@
+/*
+* Set of special type definitions. Each defines a method for getting a test value and a method for getting a string representation of the value.
+* 
+* @example
+* // defining a Date object as a special object
+* {
+* 	constr: Date, // constructor method
+* 	value: function(val) { return val.getTime(); }, // returns a value for testing  
+* 	caption: function(val) { return 'Date("' + val.toLocaleString() + '")'; } // returns a text for reporting  
+* }
+* 
+*/
+BX.module.define('tests.tester.specialTypes', function() {
+	
+	// publish
+	return {
+		'Date': {
+			constr: Date,
+			value: function(val) { return val.getTime(); },
+			caption: function(val) { return 'Date("' + val.toLocaleString() + '")'; }
+		},
+		'RegExp': {
+			constr: RegExp,
+			value: function(val) { return val.toString(); },
+			caption: function(val) { return val.toString(); }
+		}
+	};
+});

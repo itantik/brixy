@@ -1,0 +1,7 @@
+Tester-Launcher configures Tester and automatically runs a set of separate Tester-Job files.
+
+Save it as *.jsx file.
+
+By default, automatically runs all files whose name ends with "job.jsxinc" or "job.jsx" or "job.js".
+
+It will search the job files in the Tester folder and its subfolders.

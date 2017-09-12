@@ -1,0 +1,247 @@
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/colorize.jsxinc');
+BX.use('brixy', 'modules/err/helpers.jsxinc');
+BX.use('brixy', 'modules/debug/callStack.jsxinc');
+BX.use('brixy', 'modules/debug/systemInfo.jsxinc');
+
+/**
+* @module 'brixy.err.DebugReporter'
+*/
+BX.module.define('brixy.err.DebugReporter', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me;
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* DebugReporter class.
+	* @class
+	* @alias module:'brixy.err.DebugReporter'~DebugReporter
+	*/
+	function DebugReporter() {
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	DebugReporter.prototype.toString = BX.toString;
+
+	/**
+	* Shows report window.
+	* 
+	* @param {BX.error.ErrorChain|Error|string} err
+	*/
+	DebugReporter.prototype.report = function(err) {
+		if (!(err instanceof BX.error.ErrorChain))
+			err = new BX.error.ErrorChain('', err);
+			
+		var b = new Sui(),
+			cs = (typeof err.getCallStack === 'function') ? err.getCallStack() : '',
+			errs = (typeof err.getErrors === 'function') ? err.getErrors() : [];
+		
+		b.addComponents(components);
+		
+		b.window('dialog', 'Error report')
+			.column().alignChildren('fill')
+				.columnPanel().alignChildren('left').backgroundColor([1.0, 1.0, 1.0])
+					.mainError(errs, cs)
+					.end()
+				.columnPanel().alignChildren('left').set('spacing', 4)
+					.errorList(errs)
+					.end()
+				.row()
+					.button('Save report...').set('helpTip', 'Error report and system information will be saved.').set('onClick', saveFile)
+					.button('System info...').set('helpTip', 'Shows system information.').set('onClick', showSystemInfo)
+					.end()
+		.showWindow();
+		
+		function saveFile() {
+			BX.module('brixy.err.helpers').saveErrorReport(err, '');
+		}
+		
+		function showSystemInfo() {
+			BX.module('brixy.debug.systemInfo').showSystemInfo();
+		}
+	};
+	
+	// define SuiBuilder components
+	var components = {
+		
+		mainError: function (errors, callStack) {
+			if (errors.length <= 0) {
+				this.builder.staticLines('NO ERROR FOUND');
+				return;
+			}
+			
+			var er = errors[0];
+			
+			this.builder
+				.staticLines(er.location, '-> ')
+				.column().alignChildren('fill').set('spacing', 2)
+					.staticLines(er.message, '', [1.0, 0.0, 0.0])
+					.end()
+				.row()
+					.buttonsRow(er.fileName, er.line, callStack)
+					.end();
+		},
+
+		errorList: function (errors) {
+			var er,
+				i,
+				n = errors.length;
+			
+			for (i = 1; i < n; i++) {
+				if (i > 1)
+					this.builder.rowPanel().align('fill').end(); // separator line
+				
+				er = errors[i];
+				
+				this.builder
+					.staticLines(er.location, '-> ')
+					.staticLines(er.message)
+					.row()
+						.buttonsRow(er.fileName, er.line)
+						.end();
+			}
+		},
+	
+		staticLines: function (str, prefix, color) {
+			if (!str)
+				return;
+			
+			if (!prefix)
+				prefix = '';
+				
+			var lines = str.toString().split('\n'),
+				i,
+				n = lines.length;
+			
+			for (i = 0; i < n; i++) {
+				if (lines[i] == '')
+					continue;
+				this.builder.staticText(prefix + lines[i]).doubleAmps();
+				if (color)
+					this.builder.foregroundColor(color);
+			}
+		},
+		
+		buttonsRow: function (file, line, callStack) {
+			var f = file ? decodeURI(file) : '',
+				fname = f ? f.substr(f.lastIndexOf('/') + 1) : '';
+			
+			if (/.+\.(jsxbin)$/i.test(file)) { // compiled file
+				if (f)
+					this.builder.staticText('File: ' + fname).doubleAmps()
+					.set('helpTip', f);
+				
+				if (line)
+					this.builder.staticText('Line: ' + line);
+			}
+			else {
+				if (f)
+					this.builder.button('File: ' + fname).doubleAmps()
+					.set('helpTip', f)
+					.set('fileName', file)
+					.set('onClick', openFile);
+					
+				if (line)
+					this.builder.button('Line: ' + line)
+					.set('helpTip', 'Show code snippet.')
+					.set('fileName', file)
+					.set('line', line)
+					.set('onClick', showCode);
+			}
+			
+			if (callStack) {
+				this.builder.button('Call stack')
+				.set('helpTip', 'Show a call stack.')
+				.set('callStack', callStack)
+				.set('onClick', showCallStack);
+			}
+		},
+		
+		fileButton: function (file) {
+			var f = file ? decodeURI(file) : '';
+			if (f)  {
+				this.builder.button('File: ' + f.substr(f.lastIndexOf('/') + 1)).doubleAmps()
+					.set('helpTip', f)
+					.set('fileName', file)
+					.set('onClick', openFile);
+			}
+		}
+		
+	};
+	
+	function showCode() {
+		var l = this.line,
+			lmin = l - 10,
+			lmax = l + 10,
+			ch,
+			i = 0,
+			f,
+			line;
+		
+		f = new File(this.fileName);
+		if (!f.open('r')) {
+			alert('File not found.');
+			f.close();
+			return;
+		}
+			
+		var b = new Sui();
+		
+		b.addComponent('fileButton', components.fileButton);
+		
+		b.window('dialog', 'Code snippet - ' + f.displayName)
+			.column().alignChildren('left')
+				.columnPanel().alignChildren('left').set('spacing', 2).backgroundColor([1.0, 1.0, 1.0]);
+					
+				while (!f.eof) {
+					i++;
+					line = f.readln();
+					if (i < lmin)
+						continue;
+					if (i > lmax)
+						break;
+					
+					line = line.replace(/(\t)/g, '  ');
+					ch = -1;
+					while (line.charAt(++ch) === ' ');
+					line = line.slice(ch);
+					
+					b.row().set('spacing', ch * 10 + 10)
+						.staticText(i + ':').foregroundColor(i == l ? [1.0, 0.0, 0.0] : [0.6, 0.6, 0.6])				
+						.staticText(line).doubleAmps().foregroundColor(i == l ? [1.0, 0.0, 0.0] : [0.2, 0.2, 0.5])
+						.end();
+				}
+		
+					b.end()
+				.fileButton(this.fileName);
+		b.showWindow();
+		
+		f.close();
+	}
+	
+	function showCallStack() {
+		BX.module('brixy.debug.callStack').callStack(this.callStack);
+	}
+	
+	function openFile() {
+		var f = new File(this.fileName);
+		if (!f.execute())
+			alert('File not found.');
+	}
+	
+	
+	// publish the class
+	return {
+		/** 
+		* DebugReporter class.
+		* @memberOf module:'brixy.err.DebugReporter'
+		* @type {module:'brixy.err.DebugReporter'~DebugReporter}
+		*/
+		Me: DebugReporter
+	};
+});
+

@@ -1,0 +1,155 @@
+BX.use('brixy', 'modules/debug/helpers.jsxinc');
+
+/**
+* @module 'brixy.debug.Summary'
+*/
+BX.module.define('brixy.debug.Summary', function() {
+	var reportDialog = BX.module('brixy.debug.helpers').reportDialog;
+
+	/**
+	* Summary object.
+	* 
+	* @class
+	* @alias module:'brixy.debug.Summary'~Summary
+	*/
+	function Summary() {
+		this._columns = [];
+		this._objects = [];
+		this._totals = [];
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Summary.prototype.toString = BX.toString;
+	
+	/**
+	* Records the $.summary() result.
+	* 
+	* @param {string} name
+	*/
+	Summary.prototype.shot = function(name) {
+		var total = 0,
+			index = this._columns.length,
+			objects = this._objects;
+		
+		$.summary().replace(/(\d+)\s+?(\S+)/g, function(source, count, oName) {
+			var i = 0,
+				n = objects.length,
+				o;
+			
+			total += Number(count);
+			
+			for ( ; i < n; i++) {
+				o = objects[i];
+					
+				if (o.name === oName) {
+					o.counts[index] = count;
+					return;
+				}
+			}
+			
+			o = {name: oName, counts: new Array(index + 1)};
+			o.counts[index] = count;
+			objects.push(o);
+		});
+		
+		this._columns[index] = name;
+		this._totals[index] = total;
+	};
+	
+	/**
+	* Shows a report window with records.
+	* 
+	* @param {boolean} [thenClear=false] - Clear all records after closing window. (optional)
+	*/
+	Summary.prototype.report = function(thenClear) {
+		var i = 0,
+			n = this._objects.length,
+			o,
+			c = this._columns.length,
+			dial,
+			listBox,
+			addItem,
+			columnsSupport = 'columns' in ListBox; // CS3 doesn't support multicolumn ListBox
+			
+		dial = reportDialog('Summary');
+		
+		if (columnsSupport) {
+			listBox = dial.add("group {alignment: ['fill', 'fill'], properties: {name: 'report'}}") // InDesing CS6 on Windows 10: ListBox must be inside a Group or Panel
+				.add ("listbox {alignment: ['fill', 'fill'], "
+				+ "properties: {numberOfColumns: " + (c + 2) + ", showHeaders: true, "
+				+ "columnTitles: ['Type','" + this._columns.join("','") + "','< difference >']}}");		
+		}
+		else {
+			listBox = dial.add("group {alignment: ['fill', 'fill'], properties: {name: 'report'}}") // InDesing CS6 on Windows 10: ListBox must be inside a Group or Panel
+				.add ("listbox {alignment: ['fill', 'fill'], minimumSize: [400, 500]}");
+		}
+		
+		addItem = (function(listBox) {
+			if (columnsSupport) {
+				return function (name, values, number) {
+						var item = listBox.add('item', name),
+							i = 0,
+							dif;
+						for ( ; i < number; i++) {
+							item.subItems[i].text = values[i] || '-';
+						}
+						if (number > 1) {
+							dif = (values[number - 1] || 0) - (values[0] || 0);
+							item.subItems[number].text = (dif > 0) ? '+' + dif : dif;
+						}
+					};
+			}
+			else {
+				return function (name, values, number) {
+						var s = name + ': ',
+							i = 1;
+							
+						if (number)
+							s += values[0] || '0';
+							
+						for ( ; i < number; i++) {
+							s += ' - ' + (values[i] || '0');
+						}
+						listBox.add('item', s);
+					};
+			}
+		})(listBox);
+		
+		this._objects.sort(function(a, b) {return a.name.toLowerCase().localeCompare(b.name.toLowerCase());});
+		
+		for ( ; i < n; i++) {
+			o = this._objects[i];
+			addItem(o.name, o.counts, c);
+		}
+		addItem('< SUM >', this._totals, c);
+		
+		dial.show();
+		
+		if (thenClear)
+			this.clear();
+	};
+	
+	/**
+	* Clears all records.
+	* 
+	*/
+	Summary.prototype.clear = function() {
+		this._columns = [];
+		this._objects = [];
+		this._totals = [];
+	};
+	
+	
+	return {
+		/** 
+		* Summary class.
+		* @memberOf module:'brixy.debug.Summary'
+		* @type {module:'brixy.debug.Summary'~Summary}
+		*/
+		Me: Summary
+	};
+});

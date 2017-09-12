@@ -1,0 +1,3 @@
+Closure is a self-executing anonymous function.
+
+It allows to move the code from a global to local scope.

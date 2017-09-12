@@ -1,4 +1,4 @@
-## Brixy framework
+# Brixy framework
 
 Brixy framework is Extend Script module system and object oriented MVC (model - view - controller) framework bundled with useful development tools.
 
@@ -6,7 +6,7 @@ Brixy framework is Extend Script module system and object oriented MVC (model - 
 
 ## Documentation
 
-User guide and API reference included in the `docs` folder. Thanks to GitHub Pages also available [online](https://itantik.github.io/brixy).
+User guide and API reference included in the `docs` folder. Also available [online](https://itantik.github.io/brixy), thanks to GitHub Pages.
 
 ## License
 

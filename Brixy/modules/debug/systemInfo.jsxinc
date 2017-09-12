@@ -1,0 +1,64 @@
+/**
+* @module 'brixy.debug.systemInfo'
+*/
+BX.module.define('brixy.debug.systemInfo', function() {
+	
+	/**
+	* Gets array of system information, e.g. application name, version, locale, target engine...
+	* 
+	* @memberOf module:'brixy.debug.systemInfo'
+	* @return {Array}
+	*/
+	function systemInfo() {
+		var sysInfo = [],
+			n;
+		
+		if ('activeScript' in app)
+			sysInfo.push('Script: ' + app.activeScript.displayName);
+		else {
+			n = File($.fileName).displayName;
+			if (n !== 'systemInfo.jsxinc')
+				sysInfo.push('Script: ' + n);
+		}
+		
+		sysInfo.push('OS: ' + $.os);
+		sysInfo.push('Application: ' + app.name + ' ' + app.version);
+		if ('scriptPreferences' in app && 'version' in app.scriptPreferences)
+			sysInfo.push('Application scripting version: ' + app.scriptPreferences.version);
+		sysInfo.push('Locale: ' + $.locale);
+		if ('appEncoding' in $)
+			sysInfo.push('Application\'s default character encoding: ' + $.appEncoding);
+		sysInfo.push('Extended localization of the toString(): ' + $.localize);
+		sysInfo.push('ExtendScript: ' + $.version + ' (build ' + $.build + ')');
+		sysInfo.push('Target engine: ' + $.engineName);
+		sysInfo.push('Strict mode: ' + $.strict);
+		sysInfo.push('Debugging level: ' + $.level + ' (' + (['no debugging', 'break on runtime errors', 'full debug mode'][$.level] || 'unknown') + ')');
+		n = [];
+		$.flags & 0x0002 && n.push('2');
+		$.flags & 0x0040 && n.push('64');
+		$.flags & 0x0080 && n.push('128');
+		$.flags & 0x0100 && n.push('256');
+		$.flags & 0x0200 && n.push('512');
+		sysInfo.push('Debug output flags: ' + $.flags + (n.length > 1 ? ' (' + n.join(' + ') + ')' : ''));
+		sysInfo.push('ExtendScript memory cache: ' + $.memCache + ' bytes');
+		sysInfo.push('Date: ' + (new Date()).toString());
+		
+		return sysInfo;
+	}
+	
+	/**
+	* Shows system information, e.g. application name, version, locale, target engine...
+	* 
+	* @memberOf module:'brixy.debug.systemInfo'
+	*/
+	function showSystemInfo() {
+		alert(systemInfo().join('\n'));
+	}
+
+	// publish
+	return {
+		systemInfo: systemInfo,
+		showSystemInfo: showSystemInfo
+	};
+});
+

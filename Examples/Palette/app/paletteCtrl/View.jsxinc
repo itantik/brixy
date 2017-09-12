@@ -1,0 +1,50 @@
+
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/safeHandlers.jsxinc');
+
+/**
+* Module 'app.palette.View'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.palette.View', function() {
+	var MvcView = BX.module.Me('brixy.mvc.View');
+	
+	function View() {
+		MvcView.call(this); // parent constructor
+
+		var Sui = BX.module.Me('brixy.ui.SuiBuilder'),
+			b = new Sui(),
+			safeHandlers = BX.module('brixy.ui.components.safeHandlers');
+
+		// required components for safe error handling of new requests
+		b.addComponents(safeHandlers);
+
+		// palette window
+		b.window('palette', 'My palette')
+			.row()
+			.staticText('This is palette view.')
+			.button('Test').safeRequestOnClick('second-application', 'main');
+
+		// do not create new palette instance on each render
+		this.palette = b;
+	}
+	
+	BX.subclass(View, MvcView); // subclassing
+	
+	/**
+	* Renders the view.
+	* @return {string} - Next controller handler.
+	*/
+	View.prototype.render = function() {
+		this.palette.showWindow();
+	};
+	
+	
+	// publish
+	return {
+		Me: View
+	};
+});
+

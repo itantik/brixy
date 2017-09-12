@@ -1,0 +1,32 @@
+/*
+* Available variables:
+* tester - tester object
+* job - current job
+* it - shortcut to job.it
+* file - full path to this file
+* debug - BX.debug object
+*/
+
+#include "../../../../Brixy/includes/Brixy.jsxinc"; // core Brixy library
+BX.use.alias('', tester.getConfig('appPath')); // set alias to root application folder
+
+job.setName('AppData class');
+
+// load tested module
+BX.use('app/model/AppData.jsxinc');
+
+// tested class
+var AppData = BX.module.Me('app.AppData');
+var data = new AppData();
+
+// tests
+job.addSection('Set / get name');
+
+it.is('', data.getName(), '');
+
+data.setName('Jim');
+it.is('', data.getName(), 'Jim');
+
+data.setName('Jane');
+it.isNot('', data.getName(), 'Jim');
+it.is('', data.getName(), 'Jane');

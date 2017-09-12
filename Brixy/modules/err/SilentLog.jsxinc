@@ -1,0 +1,95 @@
+BX.use('brixy', 'modules/debug/systemInfo.jsxinc');
+
+/**
+* Appends an error message to a log file. It doesn't show an error alert.
+* @module 'brixy.err.SilentLog'
+*/
+BX.module.define('brixy.err.SilentLog', function() {
+	
+	/**
+	* SilentLog class. Saves an error report into a file. Doesn't show a dialog window.  
+	*   
+	* Default log file: *(myDocuments)/Error-log.txt*  
+	*  
+	* Available symbolic names of the root folder (case-sensitive):  
+	* 
+	* | Symbolic name | Target folder |
+	* | --- | --- |
+	* | `'appData'` | `Folder.appData` |
+	* | `'commonFiles'` | `Folder.commonFiles` |
+	* | `'desktop'` | `Folder.desktop` |
+	* | `'myDocuments'` | `Folder.myDocuments` |
+	* | `'userData'` | `Folder.userData` |
+	* 
+	* @class
+	* @alias module:'brixy.err.SilentLog'~SilentLog
+	* @param {string} rootFolder - Full path or symbolic name of the root folder.
+	* @param {string} filePath - File name with path relative to the root folder.
+	*/
+	function SilentLog(rootFolder, filePath) {
+		this._rootFolder = (rootFolder == undefined) ? 'myDocuments' : rootFolder + '';
+		this._filePath = (filePath == undefined) ? '' : filePath + '';
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	SilentLog.prototype.toString = BX.toString;
+
+	/**
+	* Saves an error to a log file. It doesn't show alert window.
+	* 
+	* @param {BX.error.ErrorChain|Error|string} err
+	*/
+	SilentLog.prototype.report = function(err) {
+		if (!(err instanceof BX.error.ErrorChain))
+			err = new BX.error.ErrorChain('', err);
+			
+		var file,
+			tx,
+			cs = (typeof err.getCallStack === 'function') ? err.getCallStack() : '',
+			root = this._rootFolder,
+			path = this._filePath || '/Error-log.txt';
+		
+		switch (root) {
+			case 'appData':
+			case 'commonFiles':
+			case 'desktop':
+			case 'myDocuments':
+			case 'userData':
+				root = Folder[root];
+				break;
+		}
+		
+		file = File(root + '/' + path);
+		if (file instanceof Folder)
+			return;
+		
+		if (!file.parent.exists)
+			file.parent.create();
+		
+		tx = '\n\n========== Error report: =========='
+			+ '\n' + BX.module('brixy.debug.systemInfo').systemInfo().join('\n')
+			+ (cs ? '\n\nCall Stack:\n' + cs : '')
+			+ '\n\Errors:\n' + err
+			+ '\n\n================================\n';
+		
+		file.open('a');
+		file.write(tx);
+		file.close();
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* SilentLog class.
+		* @memberOf module:'brixy.err.SilentLog'
+		* @type {module:'brixy.err.SilentLog'~SilentLog}
+		*/
+		Me: SilentLog
+	};
+});
+

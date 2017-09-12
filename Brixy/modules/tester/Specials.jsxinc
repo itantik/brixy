@@ -1,0 +1,106 @@
+/**
+* Set of special type definitions. Each defines a method for getting a test value and a method for getting a string representation of the value.
+* 
+* @example
+* // special Date type may looks like
+* {
+* 	constr: Date, // constructor method
+* 	value: function(val) { return val.getTime(); }, // returns a value for testing instead of original value
+* 	caption: function(val) { return 'Date("' + val.toLocaleString() + '")'; } // returns a text for reporting
+* }
+* 
+* @module 'brixy.tester.Specials'
+*/
+BX.module.define('brixy.tester.Specials', function() {
+	
+	/**
+	* Specials object.
+	* @class
+	* @alias module:'brixy.tester.Specials'~Specials
+	*/
+	function Specials() {
+		this._types = {};
+	}
+
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Specials.prototype.toString = BX.toString;
+
+	/**
+	* Adds new special type definition.
+	* 
+	* @param {Function} Type - Object's constructor.
+	* @param {Function} valueCallback - `function(val){ return val.something; }` returns a value for testing instead of original value.
+	* @param {Function} captionCallback - `function(val){ return val.toString(); }` returns a string to show in report dialog.
+	* @throws Exception
+	*/
+	Specials.prototype.addType = function(Type, valueCallback, captionCallback) {
+		try {
+			if (typeof Type !== 'function')
+				throw Error('New special type should be a function.');
+				
+			if (typeof valueCallback !== 'function' || typeof captionCallback !== 'function')
+				throw Error('Callback should be a function.');
+				
+			var n = Type.name;
+				
+			if (!this._types.hasOwnProperty(n)) {
+				this._types[n] = [];
+			}
+			
+			this._types[n].push({constr: Type, value: valueCallback, caption: captionCallback});
+		}
+		catch (e) {
+			throw BX.error('brixy.tester.Specials.addType()', Error('Cannot add new special type.'), e);
+		}
+	};
+
+	/**
+	* Gets a special type definition.
+	* 
+	* @param {Object} val
+	* @return {Object} Special type definition `{constr: Type, value: Function, caption: Function}`.
+	*/
+	Specials.prototype.get = function(val) {
+		try {
+			var c = val.constructor.name + '',
+				s;
+				
+			if (this._types.hasOwnProperty(c)) {
+				s = this._types[c];
+				for (var i = 0, n = s.length; i < n; i++) {
+					if (val.constructor === s[i].constr)
+						return s[i];
+				}
+			}
+		}
+		catch (e) {
+		}
+		return null;
+	};
+
+	/**
+	* Gets a special type value.
+	* 
+	* @param {Object} val
+	* @return {*}
+	*/
+	Specials.prototype.getValue = function(val) {
+		var s = this.get(val);
+		return s ? s.value(val) : null;
+	};
+
+	
+	// publish
+	return {
+		/** 
+		* Specials class.
+		* @memberOf module:'brixy.tester.Specials'
+		* @type {module:'brixy.tester.Specials'~Specials}
+		*/
+		Me: Specials
+	};
+});

@@ -1,0 +1,52 @@
+BX.use('brixy', 'modules/fs/filesystem.jsxinc');
+BX.use('brixy', 'modules/debug/systemInfo.jsxinc');
+
+/**
+* @module 'brixy.err.helpers'
+*/
+BX.module.define('brixy.err.helpers', function() {
+	
+	/**
+	* Save error and system information into a text file.
+	* 
+	* @memberOf module:'brixy.err.helpers'
+	* @param {BX.error.ErrorChain} err
+	* @param {string} description
+	*/
+	function saveErrorReport(err, description) {
+		var filesystem = BX.module('brixy.fs.filesystem'),
+			sysInfo = BX.module('brixy.debug.systemInfo').systemInfo().join('\n'),
+			tx,
+			cs = '',
+			file;
+		
+		file = filesystem.saveDialog('Save error report', 'Text file:*.txt');
+		
+		if (!file)
+			return;
+			
+		if (!(err instanceof BX.error.ErrorChain))
+			err = new BX.error.ErrorChain('', err);
+		
+		if (typeof err.getCallStack === 'function')
+			cs = err.getCallStack();
+			
+		tx = '========== System information: ==========\n\n' + sysInfo;
+		if (cs)
+			tx += '\n\n========== Call Stack: ==========\n\n' + cs;
+		tx += '\n\n========== Errors: ==========\n\n' + err;
+		if (description)
+			tx += '\n\n========== Description: ==========\n\n' + description;
+		
+		file.open('w');
+		file.writeln(tx);
+		file.close();
+	}
+	
+	
+	// publish
+	return {
+		saveErrorReport: saveErrorReport
+	};
+});
+

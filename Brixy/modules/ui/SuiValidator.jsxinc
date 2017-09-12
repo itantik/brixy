@@ -1,0 +1,518 @@
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* Validator object.
+* 
+* @module 'brixy.ui.SuiValidator'
+*/
+BX.module.define('brixy.ui.SuiValidator', function() {
+	var types = BX.module('brixy.es.types');
+	
+	/*
+	* Rule object holds settings for Validators methods.
+	* @class
+	* @param {ScriptUIcontrol} element - Tested element.
+	* @param {function} validator - Validator method.
+	* @param {boolean} negate - Negate the rule.
+	* @param {string} property - Tested property of the element.
+	* @param {Array} args - Additional parameters that will be passed to validator method. The last may be a custom error message.
+	*/
+	function Rule(element, validator, negate, property, args) {
+		this.element = element;
+		this.validator = validator;
+		this.negate = negate;
+		this.property = property;
+		this.args = args;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Rule.prototype.toString = BX.toString;
+	
+	/*
+	* Gets an array of arguments for validator callback.
+	* @return {Array}
+	*/
+	Rule.prototype.getArgs = function() {
+		return [].concat(this.negate, this.element[this.property], this.args);
+	};
+
+	
+	/*
+	* CustomRule object holds settings for custom validator method.
+	* @class
+	* @param {ScriptUIcontrol} element - Tested element.
+	* @param {function} validator - Validator method.
+	* @param {Array} args - Additional parameters that will be passed to validator method.
+	*/
+	function CustomRule(element, validator, args) {
+		this.element = element;
+		this.validator = validator;
+		this.args = args;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	CustomRule.prototype.toString = BX.toString;
+	
+	/*
+	* Gets an array of arguments for validator callback.
+	* @return {Array}
+	*/
+	CustomRule.prototype.getArgs = function() {
+		return this.args;
+	};
+	
+	/**
+	* SuiValidator object.
+	* @class
+	* @alias module:'brixy.ui.SuiValidator'~SuiValidator
+	*/
+	function SuiValidator() {
+		this._rules = [];
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	SuiValidator.prototype.toString = BX.toString;
+	
+	/**
+	* Validate all rules.
+	* @return {boolean} Result of the validation.
+	*/
+	SuiValidator.prototype.validate = function() {
+		try{
+			for (var i = 0, n = this._rules.length; i < n; i++) {
+				if (!this._validateRule(this._rules[i]))
+					return false;
+			}
+		}
+		catch(e){
+			alert('Validation failed. ' + e);
+			return false;
+		}
+		
+		return true;
+	};
+	
+	/*
+	* Validates a rule.
+	* @param {Rule} rule - Tested rule.
+	* @return {boolean} Result of the validation.
+	* @throws {string} Exception if validation failed.
+	*/
+	SuiValidator.prototype._validateRule = function(rule) {
+		try {
+			rule.validator.apply(rule.element, rule.getArgs());
+		}
+		catch (e) {
+			alert(e || 'Validation failed.');
+				
+			if (rule.element.visible && ('active' in rule.element))
+				rule.element.active = true;
+			
+			return false;
+		}
+	
+		return true;
+	};
+	
+	/**
+	* Adds new rule.
+	* @param {ScriptUIcontrol} element - Tested element.
+	* @param {string|function} validator - Validator method.
+	* @param {Array} [args] - Additional parameters will be passed to validator method. (optional)
+	* @throws {string} Exception if a validator rule cannot be set.
+	*/
+	SuiValidator.prototype.addRule = function(element, validator, args) {
+		// element
+		if (!element || typeof element !== 'object')
+			throw Error('Element is not defined.');
+			
+		var ctype = types.className(validator),
+			negate = false,
+			property = '';
+		
+		// validator is a string
+		if (ctype === 'String') {
+			validator = validator.toLowerCase();
+			
+			if (validator.length > 1) {
+				negate = validator[0] === '!';
+				if (negate)
+					validator = validator.substring(1);
+			}
+			
+			if (validator in Validators)
+				validator = Validators[validator];
+			else
+				throw Error('Validator "' + validator + '" was not found.');
+				
+			// tested property
+			if (!args || !args.length) { // not defined, try to find a 'text' or 'value' property
+				if ('text' in element)
+					property = 'text';
+				else if ('value' in element)
+					property = 'value';
+				else
+					throw Error('Tested property of the ' + element + ' is not defined.');
+			}
+			else
+				property = args[0];
+				
+			if (!(property in element))
+				throw Error('The tested property ' + element + '.' + property + ' is not defined. Please specify the property name as the second parameter.');
+			
+			// add rule
+			this._rules.push(new Rule(element, validator, negate, property, [].slice.call(args, 1)));
+		}
+		// validator is a function
+		else if (ctype === 'Function') {
+			// add rule
+			this._rules.push(new CustomRule(element, validator, [].concat(args)));
+		}
+		else
+			throw Error('Validator method should be a function.');
+	};
+	
+	
+	// Static validator methods:
+	
+	/**
+	* Validators namespace.
+	* @namespace
+	* @memberOf module:'brixy.ui.SuiValidator'
+	*/
+	var Validators = {
+		
+		/**
+		* Tests if the value equals to the required value.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {*} required - Required value.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		equal: function(negate, value, required, message) {
+			if (!!negate !== (value == required))
+				return;
+			
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'This field should not be equal to ' + required + '.';
+			
+			throw 'Please enter ' + required + '.';
+		},
+		
+		/**
+		* Tests if the value has the required length.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {int} [min=0] - Minimum length of the value. (optional)
+		* @param {int} [max=min] - Maximum length of the value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		haslength: function(negate, value, min, max, message) {
+			var n = (value != undefined && value.length != undefined) ? value.length : 0;
+			
+			min = (min == undefined) ? 0 : min - 0;
+			max = (max == undefined || max < min) ? min : max - 0;
+			
+			if (!!negate !== (n >= min && n <= max))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (min == max) {
+				if (negate)
+					throw 'A length should not be ' + min + '.';
+				else
+					throw 'A length should be ' + min + '.';
+			}
+			else {
+				if (negate)
+					throw 'A length should be less than ' + min + ' or greater than ' + max + '.';
+				else
+					throw 'A length should be between ' + min + ' and ' + max + '.';
+			}
+		},
+		
+		/**
+		* Tests if the value occurs in the array.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {Array} array - Array of values.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		inarray: function(negate, value, array, message) {
+			var arr = (array == undefined) ? [] : [].concat(array),
+				i = 0,
+				n = arr.length,
+				r = false;
+			
+			for ( ; i < n; i++) {
+				if (value == arr[i]) {
+					r = true;
+					break;
+				}
+			}
+			
+			if (!!negate !== r)
+				return;
+				
+			if (message)
+				throw message;
+				
+			throw 'Please fill in a suitable value.';
+		},
+		
+		/**
+		* Tests if the value is decimal. Exponential notation is not allowed (e.g. 1.2e+25).
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {string} [decimalPoint=$.decimalPoint] - Decimal separator. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		isdecimal: function(negate, value, decimalPoint, message) {
+			var dp = (!decimalPoint) ? $.decimalPoint : decimalPoint,
+				reg = RegExp('^\\s*[-+]?\\d+(?:' + types.escapeRegexpStr(dp) + '\\d*)?\\s*$');
+				
+			if (!!negate !== reg.test(value))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'Value should not be a decimal.';
+			
+			throw 'Please fill in a decimal value.';
+		},
+		
+		/**
+		* Tests if the value is integer. Exponential notation is not allowed (e.g. 1e+25).
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		isinteger: function(negate, value, message) {
+			if (!!negate !== /^\s*[-+]?\d+\s*$/.test(value))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'Value should not be an integer.';
+			
+			throw 'Please fill in an integer value.';
+		},
+		
+		/**
+		* Tests if the array contains a checked or selected item.
+		* 
+		* @example
+		* column().validator('itemselected', 'children')
+		* listBox().validator('itemselected', 'items')
+		* // or:
+		* listBox().validator('required', 'selection')
+		* 
+		* @param {boolean} negate - Negate the condition.
+		* @param {Array} value - Tested array.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		itemselected: function(negate, value, message) {
+			var i,
+				n,
+				v,
+				r = false;
+			
+			if (value != undefined && value.length) {
+				for (i = 0, n = value.length; i < n; i++) {
+					v = value[i];
+					if (v && (typeof v === 'object') && (v.value || v.selected)) {
+						r = true;
+						break;
+					}
+				}
+			}
+			
+			if (!!negate !== r)
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'Items should not be selected.';
+			
+			throw 'Please select an item.';
+		},
+
+		/**
+		 * Tests if the number is lesser than or equal to a given limit.
+		 * @param {boolean} negate - Negate the condition.
+		 * @param {*} value - Tested value.
+		 * @param {*} [max=0] - Maximum value. (optional)
+		 * @param {string} [message] - Custom error message. (optional)
+		 */
+		maximum: function(negate, value, max, message) {
+			max = (max == undefined) ? 0 : max - 0;
+
+			if (!!negate !== value <= max)
+				return;
+
+			if (message)
+				throw message;
+
+			if (negate)
+				throw 'Please enter a value greater than ' + max + '.';
+			else
+				throw 'Please enter a value less than or equal to ' + max + '.';
+		},
+
+		/**
+		* Tests if the value has maximum length.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {int} [max=0] - Maximum length of the value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		maxlength: function(negate, value, max, message) {
+			Validators.haslength.call(this, negate, value, Number.MIN_VALUE, max, message);
+		},
+
+		/**
+		 * Tests if the number is greater than or equal to a given limit.
+		 * @param {boolean} negate - Negate the condition.
+		 * @param {*} value - Tested value.
+		 * @param {*} [min=0] - Minimum value. (optional)
+		 * @param {string} [message] - Custom error message. (optional)
+		 */
+		minimum: function(negate, value, min, message) {
+			min = (min == undefined) ? 0 : min - 0;
+
+			if (!!negate !== value >= min)
+				return;
+
+			if (message)
+				throw message;
+
+			if (negate)
+				throw 'Please enter a value lesser than ' + min + '.';
+			else
+				throw 'Please enter a value greater than or equal to ' + min + '.';
+		},
+
+		/**
+		* Tests if the value has minimum length.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {int} [min=0] - Minimum length of the value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		minlength: function(negate, value, min, message) {
+			Validators.haslength.call(this, negate, value, min, Number.MAX_VALUE, message);
+		},
+		
+		/**
+		* Tests if value matches the regular expression. Uses the Extend Script RegExp object.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {RegExp|string} regexp - Regular expression or string. In case of string, the doubling of backslashles is necessary.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		pattern: function(negate, value, regexp, message) {
+			var reg = (regexp instanceof RegExp) ? regexp : RegExp(regexp);
+			
+			if (!!negate !== reg.test(value))
+				return;
+				
+			if (message)
+				throw message;
+				
+			throw 'Please fill in the suitable value.';
+		},
+		
+		/**
+		* Tests if the value is in required range.
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {*} [min=0] - Minimum value. (optional)
+		* @param {*} [max=min] - Maximum value. (optional)
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		range: function(negate, value, min, max, message) {
+			min = (min == undefined) ? 0 : min - 0;
+			max = (max == undefined || max < min) ? min : max - 0;
+
+			if (!!negate !== (value >= min && value <= max))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (min == max) {
+				if (negate)
+					throw 'A value should not be ' + min + '.';
+				else
+					throw 'Please enter ' + min + '.';
+			}
+			else {
+				if (negate)
+					throw 'Please enter a value less than ' + min + ' or greater than ' + max + '.';
+				else
+					throw 'Please enter a value between ' + min + ' and ' + max + '.';
+			}
+		},
+		
+		/**
+		* Tests if the value is defined and is not empty string. Boolean values (true or false) are both OK.
+		* 
+		* @example
+		* dropDownList().validator('required', 'selection')
+		* editText().validator('required') // tests 'text' property
+		* 
+		* @param {boolean} negate - Negate the condition.
+		* @param {*} value - Tested value.
+		* @param {string} [message] - Custom error message. (optional)
+		*/
+		required: function(negate, value, message) {
+			if (!!negate !== (value != undefined && value !== ''))
+				return;
+				
+			if (message)
+				throw message;
+				
+			if (negate)
+				throw 'This field should be empty.';
+				
+			throw 'Please fill in the required value.';
+		}
+		
+	};
+	
+	
+	// publish
+	return {
+		Validators: Validators,
+		/** 
+		* SuiValidator class.
+		* @memberOf module:'brixy.ui.SuiValidator'
+		* @type {module:'brixy.ui.SuiValidator'~SuiValidator}
+		*/
+		Me: SuiValidator
+	};
+});
+

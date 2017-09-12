@@ -1,0 +1,40 @@
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'modules/fs/filesystem.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.linking.View', function() {
+	
+	var MvcView = BX.module.Me('brixy.mvc.View');
+	
+	function View() {
+		MvcView.call(this); // parent constructor
+		
+		this.targetFile = null;
+	}
+	
+	BX.subclass(View, MvcView); // subclassing
+	
+	View.prototype.render = function (sourceFile) {
+		var filesystem = BX.module('brixy.fs.filesystem'),
+			i,
+			n;
+		
+		Folder.current = sourceFile.parent;
+		
+		i = sourceFile.displayName.lastIndexOf('.');
+		n = (i >= 0) ? sourceFile.displayName.substring(0, i) : sourceFile.displayName;
+		this.targetFile = File(Folder.current + '/' + n + '-linked.jsx');
+		
+		this.targetFile = filesystem.saveDialog('Save the linked file', 'ExtendScript file:*.jsx;*.jsxinc;*.js', this.targetFile);
+		
+		if (this.targetFile)
+			return 'OK';
+	};	
+
+	
+	return {
+		Me: View
+	};
+});

@@ -1,0 +1,64 @@
+
+BX.module.define('app.model.Settings', function() {
+
+	/**
+	* Settings constructor.
+	* 
+	* @class Settings
+	*/
+	function Settings(){
+		this._values = {
+			sourceFile: null,
+			replaceCoreLib: false,
+			sourceEncoding: '',
+			targetEncoding: 'UTF-8',
+			encodingList: getLocalEncodings()
+		};
+		
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @return {string}
+	*/
+	Settings.prototype.toString = BX.toString;
+	
+	Settings.prototype.getSetting = function() {
+		return this._values;
+	};
+	
+	Settings.prototype.setValues = function(values) {
+		for (var v in values) {
+			if (v in this._values)
+				this._values[v] = values[v];
+		}
+	};
+	
+	function getLocalEncodings () {
+		var encs = allEncodings,
+			e,
+			i = 0,
+			n = encs.length,
+			r = ['','automatic','UTF-8','-'],
+			av = File.isEncodingAvailable;
+			
+		for ( ; i < n; i++) {
+			e = encs[i];
+			if (av(e))
+				r.push(e);
+		}
+		return r;
+	}
+	
+	var allEncodings = ['UTF-8','UTF-16','UTF-16LE','UTF-16BE','CP1252','ISO-8859-1','MACINTOSH','ASCII','CP367','UCS2','UCS2LE','UCS2BE','UCS4','UCS4LE','UCS4BE','BINARY','UTF-7',
+'ISO-8859-2','ISO-8859-3','ISO-8859-4','ISO-8859-5','ISO-8859-6','ISO-8859-7','ISO-8859-8','ISO-8859-9','ISO-8859-10','ISO-8859-13','ISO-8859-14','ISO-8859-15','ISO-8859-16',
+'CP850','CP866','CP932','CP936','CP949','CP950','CP1250','CP1251','CP1252','CP1253','CP1254','CP1255','CP1256','CP1257','CP1258','CP1361','EUC-JP','EUC-KR','HZ',
+'X-MAC-JAPANESE','X-MAC-GREEK','X-MAC-CYRILLIC','X-MAC-LATIN','X-MAC-ICELANDIC','X-MAC-TURKISH','CP437','CP709','EBCDIC','KOI-8R','KOI-8U','ISO-2022-JP','ISO-2022-KR',
+'TIS-620','CP874','JP','JIS-X0201','JIS-X0208','JIS-X0212','CN','ISO-IR-16','KSC-5601','EUC-CN','EUC-TW'].sort();
+	
+	
+	return {
+		Me: Settings
+	};
+	
+});

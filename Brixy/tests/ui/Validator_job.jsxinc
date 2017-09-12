@@ -1,0 +1,148 @@
+/**
+* Available variables:
+* tester - tester object
+* job - current job
+* it - shortcut to job.it
+* file - full path to this file
+* debug - BX.debug object
+*/
+
+// assets
+$.evalFile(tester.getConfig('brixyPath') + '/includes/Brixy.jsxinc');
+BX.use('brixy', 'modules/ui/SuiValidator.jsxinc');
+var Validators = BX.module('brixy.ui.SuiValidator').Validators; // tested object
+
+// helper methods for testing
+var validator,
+	v,
+	p1,
+	p2;
+	
+function posValidator() {
+	Validators[validator](undefined, v, p1, p2);
+}
+function negValidator() {
+	Validators[validator](true, v, p1, p2);
+}
+
+function correct(value, par1, par2) {
+	v = value;
+	p1 = par1;
+	p2 = par2;
+	var t = value + (arguments.length > 1 ? ', ' + par1 : '') + (arguments.length > 2 ? ', ' + par2 : '');
+	it.notThrown(validator + '(' + t + ')', posValidator);
+	it.isThrown('!' + validator + '(' + t + ')', negValidator);
+}
+function incorrect(value, par1, par2) {
+	v = value;
+	p1 = par1;
+	p2 = par2;
+	var t = value + (arguments.length > 1 ? ', ' + par1 : '') + (arguments.length > 2 ? ', ' + par2 : '');
+	it.isThrown(validator + '(' + t + ')', posValidator);
+	it.notThrown('!' + validator + '(' + t + ')', negValidator);
+}
+
+// run tests
+job.setName('SuiValidator - static validators');
+
+validator = 'equal';
+job.addSection(validator + '()');
+correct('abc', 'abc');
+incorrect('abc', 'ABC');
+correct('12', 12);
+incorrect('12', 1);
+correct(undefined, null);
+
+validator = 'haslength';
+job.addSection(validator + '()');
+var arr = [1, 2, 3, 4, 5];
+incorrect(arr);
+correct(arr, 5, 8);
+correct(arr, 3, 5);
+correct(arr, 3, 8);
+correct(arr, 5);
+incorrect(arr, 2);
+incorrect(arr, 7);
+incorrect(arr, 7, 9);
+incorrect(arr, 7, 1);
+
+validator = 'inarray';
+job.addSection(validator + '()');
+correct(2, arr);
+incorrect(8, arr);
+
+validator = 'isdecimal';
+job.addSection(validator + '()');
+correct(0);
+correct(287);
+correct('-81');
+correct(81.8, '.');
+correct(-81.8, '.');
+incorrect(81.8, ',');
+incorrect('e818');
+incorrect('81a8');
+
+validator = 'isinteger';
+job.addSection(validator + '()');
+correct(0);
+correct(287);
+correct('-81');
+incorrect(8.18);
+incorrect('8,18');
+incorrect('81a8');
+incorrect('');
+
+validator = 'itemselected';
+job.addSection(validator + '()');
+correct([{value: 0}, {value: 1}, {value: 0}]);
+incorrect([{value: 0}, {value: 0}, {value: 0}]);
+correct([{value: 0}, {selected: 1}, {value: 0}]);
+incorrect([{value: 0}, {selected: 0}, {value: 0}]);
+
+validator = 'pattern';
+job.addSection(validator + '()');
+correct(5, /^\d$/);
+correct(5, "^\\d$");
+incorrect(55, /^\d$/);
+correct('abc', /a|g/);
+incorrect('ABC', /a|g/);
+correct('ABC', /a|g/i);
+
+validator = 'range';
+job.addSection(validator + '()');
+correct(0);
+correct(5, 5, 8);
+correct(5, 3, 5);
+correct(5.3, 3, 8);
+correct(5, 5);
+incorrect(5, 2);
+incorrect(5, 7);
+incorrect(5, 7, 9);
+incorrect(5, 7, 1);
+incorrect(-5, 3);
+correct(-5, -8, 4);
+
+validator = 'minimum';
+job.addSection(validator + '()');
+correct(0);
+correct(5, 5);
+correct(5, 3);
+correct(5.3, 3);
+incorrect(5, 8);
+incorrect(-5, 3);
+
+validator = 'maximum';
+job.addSection(validator + '()');
+correct(0);
+correct(5, 5);
+correct(5, 8);
+correct(5.3, 8);
+incorrect(5, 2);
+incorrect(-5, -8);
+
+validator = 'required';
+job.addSection(validator + '()');
+incorrect(undefined);
+incorrect('');
+correct('abc');
+

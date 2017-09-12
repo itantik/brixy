@@ -1,0 +1,3 @@
+A module containing the controller class as a subclass of the Controller.
+
+Each controller class should be in a separate module.

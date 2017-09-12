@@ -1,0 +1,21 @@
+<div id="footer">
+	<div class="pure-g">
+		<div class="pure-u-1-1 pure-u-md-1-2">
+			{{#if collections.latests.length }}
+				<h3>Recently edited chapters</h3>
+				<ul>
+				{{#each collections.latests }}
+					<li><span class="date">{{this.edited}}</span> <a href="{{relativePath @root.navPath navPath}}">{{#each breadcrumbPath }}{{#if @index}}{{#if file}}{{file.title}}{{else}}{{name}}{{/if}} / {{/if}}{{/each}}{{title}}</a></li>
+				{{/each}}
+				</ul>
+			{{/if}}
+		</div>
+		<div class="pure-u-1-1 pure-u-md-1-2">
+			<h3>Brixy</h3>
+			<p>Version {{version}}.</p>
+			<p>Extend Script module system and MVC framework.</p>
+			<p>&copy; {{copyYears}}, Stanislav Antos</p>
+			<p>Special thanks to <a href="http://www.metalsmith.io/" target="_blank">Metalsmith</a> - static site generator.</p>
+		</div>
+	</div>
+</div>

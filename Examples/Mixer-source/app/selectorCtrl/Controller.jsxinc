@@ -1,0 +1,45 @@
+/**
+* 
+*/
+BX.module.define('app.selector.Controller', function() {
+	
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	/**
+	* @param {module:'app.model.TemplateList'~TemplateList} templateList
+	* @param {module:'app.model.Template'~Template} template
+	*/
+	function Controller(templateList, template) {
+		MvcController.call(this); // parent constructor
+		
+		this.templateList = templateList; // service 'templateList'
+		this.template = template; // service 'template'
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	Controller.injection = ['templateList', 'template'];
+	
+	/**
+	* First action of this controller.
+	*/
+	Controller.prototype.actionDefault = function () {
+		this.template.setTemplate(null);
+		this.setView('app.selector.View', this.templateList.getList(), this.templateList.readInfo);
+	};
+	
+	Controller.prototype.handleSelected = function (view) {
+		if (!view.templateFile) {
+			alert('Please select a template file.');
+			return 'this';
+		}
+		
+		this.template.setTemplate(view.templateFile);
+		return 'Editor';
+	};
+	
+	
+	return {
+		Me: Controller
+	};
+});

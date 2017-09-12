@@ -1,0 +1,54 @@
+/**
+* @module 'brixy.es.reflection'
+*/
+BX.module.define('brixy.es.reflection', function() {
+	
+	/**
+	* Returns own properties of the object. It doesn't get built-in ExtendScript methods (value.reflect.methods).
+	* 
+	* @memberOf module:'brixy.es.reflection'
+	* @param {Object} value
+	* @return {Array} - Array of property names.
+	*/
+	function getOwnProperties(value) {
+		if (value == undefined)
+			return [];
+		
+		var props = value ? value.reflect.properties : [], // Array of ReflectionInfo
+			i = 0,
+			n = props.length,
+			pr,
+			arr = [],
+			used = {},
+			hasOwn = Object.prototype.hasOwnProperty,
+			isEnu = Object.prototype.propertyIsEnumerable;
+		
+		// Notes:
+		// 1. Reflection.properties doesn't contain properties, that refer to function, eg. {fun: function(){return true;}}. These are detected by for/in loop.
+		// 2. for/in loop doesn't retrieve some of the properties contained in the Reflection.properties, eg. InDesign document.filePath.*, ScriptUI button.layoutDirection.
+		// 3. Why there are duplicates (in both cases)? eg. InDesign rectangle.isValid
+		for ( ; i < n; i++) {
+			pr = props[i].toString();
+			if (hasOwn.call(used, pr) || !isEnu.call(value, pr)) // skip duplicates and non-enumerables
+				continue;
+				
+			used[pr] = true; // checked property cache
+			
+			if (hasOwn.call(value, pr))
+				arr.push(pr);
+		}
+		
+		for (pr in value) {
+			if (!hasOwn.call(used, pr) && hasOwn.call(value, pr)) // skip used
+				arr.push(pr);
+		}
+		
+		return arr;
+	}
+	
+	
+	// publish
+	return {
+		getOwnProperties: getOwnProperties
+	};	
+});

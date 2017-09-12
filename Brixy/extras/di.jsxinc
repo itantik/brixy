@@ -1,0 +1,25 @@
+BX.use('brixy', 'modules/di/Container.jsxinc');
+
+/*
+*
+*/
+BX.di || (function() {
+	
+	var dic = new (BX.module('brixy.di.Container').Me)();
+	
+	/**
+	* Namespace BX.di holds an instance of the [Container]{@link module:'brixy.di.Container'~Container} class.  
+	* This extension enables the use of the DI Container independently from the rest of Brixy framework. Brixy MVC framework already contains DI Container and doesn't need this file.
+	* 
+	* @namespace BX.di
+	* @borrows module:'brixy.di.Container'~Container#getInstance as getInstance
+	* @borrows module:'brixy.di.Container'~Container#registerService as registerService
+	* @borrows module:'brixy.di.Container'~Container#registerServices as registerServices
+	*/
+	BX.di = {
+		getInstance: function(subject, injection) { return dic.getInstance(subject, injection); },
+		registerService: function(name, service) { dic.registerService(name, service); },
+		registerServices: function(services) { dic.registerServices(services); }
+	};
+	
+})();

@@ -1,0 +1,55 @@
+
+/**
+* Module 'app.startup.Controller'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.startup.Controller', function() {
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(appData) {
+		MvcController.call(this); // parent constructor
+		
+		// injected dependencies
+		this.appData = appData;
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	// list of dependencies
+	Controller.injection = ['appData'];
+	
+	/**
+	* Default action of this controller.
+	* @param {Object|null} [data] - Action data. (optional)
+	* @return {string} - Next application request.
+	*/
+	Controller.prototype.actionDefault = function (data) {
+		// set view
+		this.setView('app.startup.View'/*, arguments */);
+		
+		
+		// next request
+		//return 'request';
+	};
+	
+	/**
+	* Handles the response of the view.
+	* @param {View} - View.
+	* @return {string} - Next application request.
+	*/
+	Controller.prototype.handleSubmit = function (view) {
+		
+		this.appData.setName(view.name);
+		
+		// next request
+		return 'app.result.Controller';
+	};
+	
+	
+	// publish the class
+	return {
+		Me: Controller
+	};
+});
+

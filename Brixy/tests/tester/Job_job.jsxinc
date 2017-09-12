@@ -1,0 +1,40 @@
+/**
+* Available variables:
+* tester - tester object
+* job - current job
+* it - shortcut to job.it
+* file - full path to this file
+* debug - BX.debug object
+*/
+
+// assets
+$.evalFile(tester.getConfig('brixyPath') + '/includes/Brixy.jsxinc');
+BX.use.alias('', $.fileName);
+BX.use('assets/specialTypes.jsxinc');
+var specs = BX.module('tests.tester.specialTypes');
+
+// run tests
+job.setName('Tester job');
+
+// ----- Comparison -----
+job.addSection('Comparison');
+
+it.notLike('', 10, 50);
+
+var x = {aha:32};
+var a = {a:1,b:2,c:x};
+it.isMember('member', x, a);
+it.notMember('not member', 3, a);
+
+
+// ----- Special types -----
+job.addSection('Special types');
+
+it.isLike('Wrong result', new Date(), new Date(1000)); // wrong result before using special type definition
+it.addSpecialType(Date, function(val) { return val.getTime(); }, function(val) { return 'Date("' + val.toLocaleString() + '")'; });
+it.isLike('', new Date(1000), new Date(1000));
+it.notLike('', new Date(), new Date(1000));
+
+it.isLike('Wrong result', new RegExp('abcd', 'g'), /abc/g); // wrong result before using special type definition
+it.addSpecialTypeDef(specs.RegExp);
+it.notLike('', new RegExp('abcd', 'g'), /abc/g);

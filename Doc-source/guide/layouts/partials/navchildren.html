@@ -1,0 +1,16 @@
+<li class="pure-menu-item{{#ifOnPath @root.navPath path}} {{#ifEqual @root.navPath path}}pure-menu-selected{{else}}selected-path{{/ifEqual}}{{/ifOnPath}}">
+	{{#if file}}
+		<a class="pure-menu-link{{#if children}} has-children{{/if}}" href="{{relativePath @root.navPath path}}">{{file.title}}</a>
+	{{else}}
+		{{name}}
+	{{/if}}
+	{{#if children}}
+		{{#ifOnPath @root.navPath path}}
+			<ul class="pure-menu-list">
+			{{#each children}}
+				{{> navchildren}}
+			{{/each}}
+			</ul>
+		{{/ifOnPath}}
+	{{/if}}
+</li>

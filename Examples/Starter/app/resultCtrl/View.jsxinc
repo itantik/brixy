@@ -1,0 +1,41 @@
+
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+
+/**
+* Module 'app.result.View'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.result.View', function() {
+	var MvcView = BX.module.Me('brixy.mvc.View');
+	
+	function View() {
+		MvcView.call(this); // parent constructor
+	}
+	
+	BX.subclass(View, MvcView); // subclassing
+	
+	/**
+	* Renders the view.
+	* @return {string} - Next controller handler.
+	*/
+	View.prototype.render = function(name) {
+		var Sui = BX.module.Me('brixy.ui.SuiBuilder'),
+			b = new Sui();
+		
+		b.window('dialog', 'Result')
+			.row()
+				.staticText('Your name is ' + name + '.')
+				.button('OK')
+		.showWindow();
+		
+	};
+	
+	
+	// publish
+	return {
+		Me: View
+	};
+});
+

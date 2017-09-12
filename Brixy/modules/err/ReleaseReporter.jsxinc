@@ -1,0 +1,62 @@
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/colorize.jsxinc');
+BX.use('brixy', 'modules/err/helpers.jsxinc');
+
+/**
+* @module 'brixy.err.ReleaseReporter'
+*/
+BX.module.define('brixy.err.ReleaseReporter', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me;
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* ReleaseReporter class.
+	* @class
+	* @alias module:'brixy.err.ReleaseReporter'~ReleaseReporter
+	*/
+	function ReleaseReporter() {
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	ReleaseReporter.prototype.toString = BX.toString;
+
+	/**
+	* Shows report window.
+	* 
+	* @param {BX.error.ErrorChain|Error|string} err
+	*/
+	ReleaseReporter.prototype.report = function(err) {
+		var b = new Sui();
+		
+		b.window('dialog', 'Error')
+			.row().alignChildren('fill')
+				.columnPanel().alignChildren('left')
+					.staticText('An unexpected error occurred.').foregroundColor([1.0, 0.0, 0.0])
+					.button('Save error report...').set('onClick', saveFile)
+					.end()
+				.column().alignChildren('fill')
+					.button('OK').closeOnClick()
+		.showWindow();
+		
+		function saveFile() {
+			BX.module('brixy.err.helpers').saveErrorReport(err, '');
+		}
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* ReleaseReporter class.
+		* @memberOf module:'brixy.err.ReleaseReporter'
+		* @type {module:'brixy.err.ReleaseReporter'~ReleaseReporter}
+		*/
+		Me: ReleaseReporter
+	};
+});
+

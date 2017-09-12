@@ -1,0 +1,15 @@
+// release error reporter
+BX.use('brixy', 'includes/releaseErrorReporter.jsxinc');
+
+// application modules
+BX.use('app'); // includes all files in ./app folder
+
+// create application
+BX.apps.add({
+	
+	autorun: 'app.settings.Controller',
+	
+	services: {
+		settings: 'app.model.Settings'
+	}
+});

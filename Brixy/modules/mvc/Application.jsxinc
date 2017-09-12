@@ -1,0 +1,191 @@
+/**
+* @module 'brixy.mvc.Application'
+*/
+BX.module.define('brixy.mvc.Application', function() {
+	
+	/**
+	* Application class.  
+	* Configuration object may either be empty or may override any default application settings.  
+	* - Dependency injection container = `config.container` or 'brixy.di.Container'  
+	* - Collection of services `config.services` is registered in the DI container
+	* - Request router = `config.requestRouter` or 'brixy.mvc.Router'  
+	* - Collection of routes `config.routes` is registered in the request router
+	* - Event router = `config.eventRouter` or 'brixy.mvc.Router'  
+	* - Collection of events `config.events` is registered in the event router
+	* 
+	* @class
+	* @alias module:'brixy.mvc.Application'~Application
+	* @param {Object} config - Configuration object.
+	*/
+	function Application(config) {
+		if (!config || typeof config !== 'object')
+			config = {};
+		
+		// DI container
+		var container = config.container || 'brixy.di.Container';
+		switch (typeof container) {
+			case 'string':
+				container = new (BX.module(container).Me)();
+				break;
+			case 'function':
+				container = new container();
+				break;
+		}
+		
+		if ('services' in config)
+			container.registerServices(config.services);
+		
+		this._requestRouter = container.getInstance(config.requestRouter || 'brixy.mvc.Router');
+		this._eventRouter = config.eventRouter || 'brixy.mvc.Router'; // lazy creating
+		this._eventRouterCreated = false;
+		this._container = container;
+		
+		if ('routes' in config)
+			this._requestRouter.setRoutes(config.routes);
+		
+		if ('events' in config)
+			this.getEventRouter().setRoutes(config.events);
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Application.prototype.toString = BX.toString;
+	
+	/**
+	* Returns dependency injection container.
+	* @return {Object}
+	*/
+	Application.prototype.getContainer = function() {
+		return this._container;
+	};
+	
+	/**
+	* Returns request router.
+	* @return {Object}
+	*/
+	Application.prototype.getRequestRouter = function() {
+		return this._requestRouter;
+	};
+	
+	/**
+	* Returns event router.
+	* @return {Object}
+	*/
+	Application.prototype.getEventRouter = function() {
+		if (!this._eventRouterCreated) {
+			this._eventRouter = this.getContainer().getInstance(this._eventRouter);
+			this._eventRouterCreated = true;
+		}
+		return this._eventRouter;
+	};
+	
+	/**
+	* Processes the request. Tries to convert any request to a request route.
+	* @param {string|Object} request - Request string or route object.
+	* @param {string|Object} [sender] - Controller that sent this request. (optional)
+	* @throws Exception
+	*/
+	Application.prototype.processRequest = function(request, sender) {
+		if (!request)
+			return;
+		
+		try {
+			var next = request,
+				route,
+				router = this.getRequestRouter(),
+				c;
+			
+			while (next) {
+				route = router.createRoute(next);
+				
+				if (route.controller) {
+					c = (route.controller === 'this') ? sender : route.controller;
+					c = sender = this.getContainer().getInstance(c);
+					
+					try {
+						next = c.run(route.action, route.data) || route.forward;
+					}
+					catch (ee) {
+						if (c && ('run' in c) && (typeof c.run === "function"))
+							throw ee;
+						else
+							throw Error('Controller\'s ' + c + '.run() method is not defined.');
+					}
+				}
+				else if (route.forward) {
+					next = router.createRoute(route.forward);
+					next.refine({action: route.action, data: route.data});
+				}
+				else
+					next = null;
+			}
+		}
+		catch (e) {
+			try {
+				next = next.toHumanString();
+			}
+			catch (ee) {
+			}
+			throw new BX.error('brixy.mvc.Application.processRequest()', Error('Processing of the request "' + next + '" failed.'), e);
+		}
+	};
+	
+	/**
+	* Gets event route and forwards it to `processRequest()` method. Only event routes, that are registered in the event router, are allowed. 
+	* `AppManager.processEvent()` uses this method as an entry point into the application.
+	* @param {string} event - Event name.
+	* @param {Object} [data] - Application can pass the data to the event handler. (optional)
+	* @throws Exception
+	*/
+	Application.prototype.processEvent = function(event, data) {
+		if (!event)
+			return;
+			
+		try {
+			var route = this.getEventRouter().getRoute(event);
+			
+			if (!route) // only saved routes are processed
+				return;
+				
+			if (!data || typeof data !== 'object')
+				data = {};
+			data.event = event + '';
+			
+			route.refine({data: data});
+			
+			// forward request
+			this.processRequest(route);
+		}
+		catch (e) {
+			throw new BX.error('brixy.mvc.Application.processEvent()', Error('Processing of the event "' + event + '" failed.'), e);
+		}
+	};
+	
+	/**
+	* Returns true if application can process the event. Only event routes, that are registered in the event router, are allowed.
+	* @param {string} event - Event name.
+	* @return {boolean}
+	*/
+	Application.prototype.listensEvent = function(event) {
+		try {
+			return this.getEventRouter().hasRoute(event);
+		}
+		catch (e) {
+			return false;
+		}
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Application class.
+		* @memberOf module:'brixy.mvc.Application'
+		* @type {module:'brixy.mvc.Application'~Application}
+		*/
+		Me: Application
+	};
+});

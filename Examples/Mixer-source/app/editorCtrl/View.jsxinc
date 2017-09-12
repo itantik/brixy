@@ -1,0 +1,199 @@
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/safeHandlers.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.editor.View', function() {
+	var MvcView = BX.module.Me('brixy.mvc.View');
+	
+	function EditorView() {
+		MvcView.call(this); // parent constructor
+		
+		this.macroValues = {};
+	}
+	
+	BX.subclass(EditorView, MvcView); // subclassing
+	
+	EditorView.prototype.render = function (macros, comments, fileName) {
+		var Sui = BX.module.Me('brixy.ui.SuiBuilder'),
+			b = new Sui('Input View'),
+			els,
+			i;
+			
+		b.addComponents(components, BX.module('brixy.ui.components.safeHandlers'));
+		
+		b.window('dialog', 'Brixy Mixer - template editor')
+			.row().alignChildren('top')
+				.column().alignChildren('fill')
+					.columnPanel().alignChildren('fill')
+						.staticText(fileName).doubleAmps().bold()
+						.commentFields(comments)
+						.end()
+						
+					.columnPanel().alignChildren('fill')
+						.variableFields(macros)
+						.eachFields(macros)
+						.ifFields(macros)
+						.end()
+					
+					.row().align('right')
+						.button('Add to preset values...').safeHandler('onClick', addPresets, b)
+						.button('Show presets...').safeRequestOnClick('Mixer', 'Presets')
+						.end()
+						
+					.end()
+				.column()
+					.button('OK').closeOnClick(true, 1)
+					.button('Back').closeOnClick(false, 3)
+		.showWindow();
+		
+		switch (b.result()) {
+		case 1:
+			this.macroValues = getMacros(b.getAll(), false);
+			return 'Save';
+			
+		case 3:
+			return 'Back';
+		}
+	};
+	
+	function getMacros(inputs, skipEmpty) {
+		var i,
+			m = {},
+			val;
+			
+		for (i in inputs) {
+			switch (inputs[i].macroType) {
+			case 'value':
+				val = inputs[i].text;
+				break;
+			case 'if':
+				val = inputs[i].value;
+				break;
+			case 'each':
+				val = inputs[i].text ? inputs[i].text.split(',') : '';
+				break;
+			}
+			
+			if (!skipEmpty || val)
+				m[i] = val;
+		}
+		return m;
+	}
+	
+	function addPresets(builder) {
+		var macros = getMacros(builder.getAll(), true);
+		BX.apps.processRequest('Mixer', {forward: 'AddPresets', data: macros});
+	}
+	
+	// define SuiBuilder components
+	var components = {
+		
+		commentFields: function (list) {
+			var i = 0,
+				n = list.length;
+
+			if (n) {
+				// add group as builder.element - do not need to close it by builder.end()
+				var g = this.element = this.container.add("group {orientation: 'column', alignChildren: 'left', spacing: 4}");
+				
+				for ( ; i < n; i++) {
+					g.add('statictext', undefined, list[i]);
+				}
+			}
+		},
+
+		variableFields: function (list) {
+			var i,
+				v,
+				first = true;
+			
+			this.builder.column().alignChildren('right')
+				.staticText('Variables:').align('left').bold();
+				
+			for (i in list) {
+				v = list[i];
+				if (v.type !== 'value')
+					continue;
+					
+				if (first)
+					first = false;
+					
+				this.builder.row()
+					.staticText((v.title || i) + ':' + (v.required ? '*' : '')).labelFor(i)
+					.editText(v.value).set('characters', 35).id(i).set('macroType', 'value');
+					if (v.required)
+						this.builder.validator('required', 'text', 'Please fill in the required values (marked with an asterisk).');
+					this.builder.end();
+			}
+			if (first)
+				this.builder.staticText('none').align('left').set('indent', 20);
+				
+			this.builder.end();
+		},
+		
+		eachFields: function (list) {
+			var i,
+				v,
+				first = true;
+				
+			for (i in list) {
+				v = list[i];
+				if (v.type !== 'each')
+					continue;
+					
+				if (first) {
+					first = false;
+					this.builder
+						.rowPanel().align('fill').end()
+						.column().alignChildren('right')
+						.staticText('Arrays (values separated by commas):').align('left').bold();
+				}
+
+				this.builder.row()
+					.staticText((v.title || i) + ':' + (v.required ? '*' : '')).labelFor(i)
+					.editText(v.value).set('characters', 35).id(i).set('macroType', 'each');
+					if (v.required)
+						this.builder.validator('required', 'text', 'Please fill in the required values (marked with an asterisk).');
+					this.builder.end();
+			}
+			if (!first)
+				this.builder.end();
+		},
+		
+		ifFields: function (list) {
+			var i,
+				v,
+				first = true;
+				
+			for (i in list) {
+				v = list[i];
+				if (v.type !== 'if')
+					continue;
+				
+				if (first) {
+					first = false;
+					this.builder
+						.rowPanel().align('fill').end()
+						.column().alignChildren('left')
+						.staticText('Options:').align('left').bold();
+				}
+				
+				this.builder.checkbox(v.title || i).set('value', !!v.value).set('indent', 20).id(i).set('macroType', 'if');
+			}
+			if (!first)
+				this.builder.end();
+		},
+		
+		bold: function () {
+			this.element.graphics.font = "dialog-Bold";
+		}
+	};
+	
+	
+	return {
+		Me: EditorView
+	};
+});

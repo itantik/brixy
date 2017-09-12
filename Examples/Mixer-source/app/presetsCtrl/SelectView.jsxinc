@@ -1,0 +1,62 @@
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.presets.SelectView', function() {
+	
+	var View = BX.module.Me('brixy.mvc.View');
+	
+	function SelectView() {
+		View.call(this); // parent constructor
+		
+		this.defaultsObj = null;
+	}
+	
+	BX.subclass(SelectView, View); // subclassing
+	
+	/**
+	* Shows dialog.
+	* 
+	* @param {Object} macros
+	*/
+	SelectView.prototype.render = function (macros) {
+		if (!macros)
+			return;
+		
+		var Sui = BX.module.Me('brixy.ui.SuiBuilder'),
+			b = new Sui('Select view'),
+			i,
+			all;
+			
+		b.window('dialog', 'Brixy Mixer - select values')
+			.row().alignChildren('top')
+				.columnPanel().alignChildren('left')
+					.staticText('Select values to save as presets:');
+					for (i in macros) {
+						b.checkbox(i).id(i).set('helpTip', macros[i]).set('value', true);
+					}
+					b.end()
+				.column()
+					.button('OK').closeOnClick(true, 1)
+		.showWindow();
+		
+		if (b.result() == 1) {
+			this.defaultsObj = {};
+			all = b.getAll();
+			for (i in macros) {
+				if (all[i].value)
+					this.defaultsObj[i] = macros[i];
+			}
+			return 'SaveChanges';
+		}
+		
+	};
+	
+
+	return {
+		Me: SelectView
+	};
+});
+

@@ -1,0 +1,3 @@
+//LINKER-DEL error reporter (Brixy Linker will load next file into a linked file)
+//LINKER-APPLY	BX.use('brixy', 'modules/err/ReleaseReporter.jsxinc');
+//LINKER-APPLY	BX.error.addReporter('brixy.err.ReleaseReporter');

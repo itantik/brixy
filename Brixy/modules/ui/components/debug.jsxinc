@@ -1,0 +1,116 @@
+BX.use('brixy', 'modules/debug/callStack.jsxinc');
+BX.use('brixy', 'modules/debug/dump.jsxinc');
+BX.use('brixy', 'modules/debug/Summary.jsxinc');
+BX.use('brixy', 'modules/debug/systemInfo.jsxinc');
+BX.use('brixy', 'modules/debug/Timer.jsxinc');
+
+/**
+* Defines debug methods for {@link module:'brixy.ui.SuiBuilder'~SuiBuilder}.
+* 
+* @module 'brixy.ui.components.debug'
+*/
+BX.module.define('brixy.ui.components.debug', function() {
+
+	// publish
+	return {
+		/**
+		* Shows a stack of method calls.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		* @param {string} [stack=$.stack] - Call stack. If not given, $.stack is used. (optional)
+		*/
+		callStack: function(stack) {
+			BX.module('brixy.debug.callStack').callStack(stack);
+		},
+
+		/**
+		* Shows dialog window with structured information about value.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		* @param {*} [value={@link module:'brixy.ui.SuiBuilder'~SuiBuilder}._builder.element] - Value to dump. Default is current component. (optional)
+		* @param {int} [depth=3] - Level of nesting. Default is 3. (optional)
+		* @param {string} [title='Dump'] - The title of the dialog window. Default is 'Dump'. (optional)
+		*/
+		dump: function(value, depth, title) {
+			if (value == undefined)
+				value = this.element;
+
+			BX.module('brixy.debug.dump').dump(value, depth, title);
+		},
+
+		/**
+		* Records a $.summary() result.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		* @param {string} name - Name of the Summary.
+		*/
+		summary: function(name) {
+			createSummary(this);
+			this.summary.shot(name);
+		},
+
+		/**
+		* Shows a report window.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		* @param {boolean} clear - Clear summary records.
+		*/
+		summaryReport: function(clear) {
+			createSummary(this);
+			this.summary.report(clear);
+		},
+
+		/**
+		* Shows system information.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		*/
+		showSystemInfo: function() {
+			BX.module('brixy.debug.systemInfo').showSystemInfo();
+		},
+
+		/**
+		* Records a time interval.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		* @param {string} name - Timer's name.
+		*/
+		timer: function(name) {
+			createTimer(this);
+			this.timer.shot(name);
+		},
+
+		/**
+		* Shows a report window with timer records.
+		* 
+		* @memberOf module:'brixy.ui.components.debug'
+		* @param {boolean} clear - Clear timer records.
+		*/
+		timerReport: function(clear) {
+			createTimer(this);
+			this.timer.report(clear);
+		}
+
+	};
+
+	/*
+	* Creates the timer if it doesn't exist.
+	* 
+	* @param {SuiBuilder.builder} builder
+	*/
+	function createTimer(builder) {
+		if (!builder.hasOwnProperty('timer'))
+			builder.timer = new (BX.module.Me('brixy.debug.Timer'))();
+	}
+
+	/*
+	* Creates the summary if it doesn't exist.
+	* 
+	* @param {SuiBuilder.builder} builder
+	*/
+	function createSummary(builder) {
+		if (!builder.hasOwnProperty('summary'))
+			builder.summary = new (BX.module.Me('brixy.debug.Summary'))();
+	}
+
+});

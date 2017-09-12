@@ -1,0 +1,253 @@
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* @module 'brixy.di.Container'
+*/
+BX.module.define('brixy.di.Container', function() {
+	var types = BX.module('brixy.es.types');
+	
+	/*
+	* Service object holds an instance.
+	* 
+	* @class
+	* @alias module:'brixy.di.Container'~Service
+	* @param {string|Object} service - Service name or module name or instance or config object {type: name, injection: []}.
+	*/
+	function Service(service) {
+		if (service != undefined && typeof service === 'object' && service.hasOwnProperty('type')) {
+			this._instance = service.type;
+			
+			if (service.hasOwnProperty('injection'))
+				this._injection = Array.prototype.concat(service.injection);
+		}
+		else
+			this._instance = service;
+	}
+	
+	/*
+	* Returns instance.
+	* 
+	* @param {module:'brixy.di.Container'~Container} container
+	* @return {Object}
+	*/
+	Service.prototype.get = function(container) {
+		if (this._locked)
+			throw Error('Too many attempts to create service. Try to check the circular reference.');
+		
+		this._locked = true; // object is in the building phase
+		this._instance = container.getInstance(this._instance, this._injection);
+		this._locked = undefined;
+		delete this._locked;
+		
+		if (this._injection) {
+			this._injection = undefined;
+			delete this._injection;
+		}
+		
+		this.get = getInstance;
+		return this.get();
+	};
+	
+	function getInstance() {
+		return this._instance;
+	}
+	
+	/**
+	* Dependency injection container.
+	* 
+	* @class
+	* @alias module:'brixy.di.Container'~Container
+	*/
+	function Container() {
+		this._services = {};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Container.prototype.toString = BX.toString;
+	
+	/**
+	* Registers new service.
+	* 
+	* @param {string} name - Service name.
+	* @param {*} service - Module name (module.Me must refer to the object constructor) or service name or config object or service object.
+	* @throws Exception
+	*/
+	Container.prototype.registerService = function(name, service) {
+		this._services[name + ''] = new Service(service);
+	};
+	
+	/**
+	* Registers new services.
+	* 
+	* @param {object} services
+	* @throws Exception
+	*/
+	Container.prototype.registerServices = function(services) {
+		if (services != undefined && typeof services !== 'object')
+			throw BX.error('brixy.di.Container.registerServices()', Error('Object is expected but ' + typeof services + ' is given.'));
+			
+		for (var s in services) {
+			if (services.hasOwnProperty(s))
+				this.registerService(s, services[s]);
+		}
+	};
+	
+	/**
+	* Returns a service object.
+	* 
+	* @param {string} name - Service name.
+	* @return {Object}
+	* @throws Exception
+	*/
+	Container.prototype.getService = function(name) {
+		name += '';
+		
+		try {
+			return this._services[name].get(this);
+		}
+		catch (e) {
+			var er;
+			if (this._services.hasOwnProperty(name))
+				er = 'Cannot get service "' + name + '".';
+			else
+				er = 'Service "' + name + '" is missing.';
+			throw BX.error('brixy.di.Container.getService()', Error(er), e);
+		}
+	};
+	
+	/**
+	* Creates the instance of the Type. Injects all dependencies that are specified by `Type.injection` property.
+	* Optionally the `injection` argument may replace some of them.
+	* 
+	* @param {Function} Type - Constructor.
+	* @param {Array} [injection] - Forced injection. Defined members will replace the corresponding `Type.injection` members. (optional)
+	* @return {Object} - Instance of the Type.
+	* @throws Exception
+	*/
+	Container.prototype.instanceByType = function(Type, injection) {
+		if (typeof Type !== 'function')
+			throw BX.error('brixy.di.Container.instanceByType()', Error('Function is expected but ' + Type + ' is given.'));
+		
+		var args,
+			i,
+			n;
+		
+		if ('injection' in Type)
+			args = Array.prototype.concat(Type.injection);
+			
+		if (injection != undefined)
+			injection = Array.prototype.concat(injection);
+		
+		if (!args && !injection)
+			return new Type();
+		
+		if (!args) {
+			args = injection;
+		}
+		else if (injection) {
+			for (i = 0, n = injection.length; i < n; i++) {
+				if (injection[i] != undefined)
+					args[i] = injection[i];
+			}
+		}
+			
+		try {
+			for (i = 0, n = args.length; i < n; i++) {
+				args[i] = this.getInstance(args[i]);
+			}
+			
+			return createInstance(Type, args);
+		}
+		catch (e) {
+			throw BX.error('brixy.di.Container.instanceByType()', Error('Creating of the ' + Type.name + ' instance failed.'), e);
+		}
+	};
+	
+	/**
+	* Creates the instance of the service or module.
+	* Injects all dependencies that are specified by the `Type.injection` property.
+	* Optionally, in case of module name, the `injection` argument may replace some of them.
+	* 
+	* @param {string} name - Service or module name.
+	* @param {Array} [injection] - Forced injection. Defined members will replace the corresponding `Type.injection` members. Not applicable for the service. (optional)
+	* @return {Object} - Service or module instance.
+	* @throws Exception
+	*/
+	Container.prototype.instanceByName = function(name, injection) {
+		try {
+			if (this._services.hasOwnProperty(name + '')) { // service
+				if (injection != undefined)
+					throw Error('Cannot inject arguments into service.');
+					
+				return this.getService(name);
+			}
+
+			var Type = BX.module.Me(name); // module
+		}
+		catch (e) {
+			throw BX.error('brixy.di.Container.instanceByName()', Error('Creating of the "' + name + '" instance failed.'), e);
+		}
+		
+		return this.instanceByType(Type, injection);
+	};
+	
+	/*
+	* Calls the constructor with arguments array.
+	* 
+	* @param {Function} Type - Object constructor.
+	* @param {array} args - Constructor arguments.
+	* @return {Object} - New instance of the Type object.
+	*/
+	function createInstance(Type, args) {
+		var F = function() {
+			Type.apply(this, args);
+		};
+		F.prototype = Type.prototype;
+		return new F();
+	}
+	
+	/**
+	* Returns the instance of the subject.  
+	* In case of creating a new instance, it injects all dependencies that are specified by the `SubjectType.injection` property.  
+	* Optionally the `injection` argument may replace some of them.  
+	* 
+	* Types of the subject:  
+	* 1. service name: creates/returns instance of the service (`injection` argument is not applied)  
+	* 2. module name: property `module.Me` is used as constructor of a new instance  
+	* 3. function: is used as constructor of a new instance  
+	* 4. object: is returned unchanged (`injection` argument is not applied)
+	* 
+	* @param {*} subject - Service name or module name or constructor function or subject instance.
+	* @param {Array} [injection] - Forced injection. Defined members will replace the corresponding `Type.injection` members. Not applicable for the service or object. (optional)
+	* @return {Object} - Instance of the subject.
+	* @throws Exception
+	*/
+	Container.prototype.getInstance = function(subject, injection) {
+
+		if (types.isString(subject))
+			return this.instanceByName(subject, injection);
+			
+		if (typeof subject === 'function')
+			return this.instanceByType(subject, injection);
+	
+		if (injection != undefined)
+			throw BX.error('brixy.di.Container.getInstance()', Error('Creating of the ' + subject + ' instance failed.'), Error('Cannot inject arguments into object.'));
+			
+		return subject;
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* Dependency injection Container class.
+		* @memberOf module:'brixy.di.Container'
+		* @type {module:'brixy.di.Container'~Container}
+		*/
+		Me: Container
+	};
+});

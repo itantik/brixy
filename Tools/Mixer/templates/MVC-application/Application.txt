@@ -1,0 +1,5 @@
+This is the main application file. Initializes and runs the MVC application.
+
+This is a generic application launcher only. It requires the creation of config.jsxinc file with the settings that are specific to your application.
+
+Save it as ApplicationName.jsx file to your core application folder.

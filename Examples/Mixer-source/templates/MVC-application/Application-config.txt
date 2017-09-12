@@ -1,0 +1,5 @@
+This is the main configuration file of your application.
+
+Your main application launcher will automatically load it.
+
+Save it as config.jsxinc file to your core application folder.

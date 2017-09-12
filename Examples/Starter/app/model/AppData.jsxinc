@@ -1,0 +1,26 @@
+/**
+* Module 'app.AppData'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.AppData', function() {
+	
+	function AppData() {
+		this._name = '';
+	}
+	
+	AppData.prototype.getName = function() {
+		return this._name;
+	};
+	
+	AppData.prototype.setName = function(name) {
+		this._name = name;
+	};
+	
+	
+	// publish
+	return {
+		Me: AppData
+	};
+});
+

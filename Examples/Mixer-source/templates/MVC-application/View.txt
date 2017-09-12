@@ -1,0 +1,3 @@
+A module containing the view class as a sublass of the View.
+
+Each view class should be in a separate module.

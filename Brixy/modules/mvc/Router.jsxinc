@@ -1,0 +1,326 @@
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* @module 'brixy.mvc.Router'
+*/
+BX.module.define('brixy.mvc.Router', function() {
+	var types = BX.module('brixy.es.types');
+		
+	/**
+	* Route object.
+	* @class
+	* @alias module:'brixy.mvc.Router'~Route
+	* @param {Object|string} [config] - Initial setting. (optional)
+	*/
+	function Route(config) {
+		this.controller = '';
+		this.forward = '';
+		this.action = '';
+		this.data = null;
+		
+		this.refine(config);
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Route.prototype.toString = BX.toString;
+	
+	/**
+	* Refines properties of the route.
+	* @param {Object|string} config - Object may refine properties 'controller', 'forward', 'action', 'data'. String refines 'forward' property.
+	*/
+	Route.prototype.refine = function(config) {
+		if (config && types.isString(config)) {
+			this.forward = config;
+			return;
+		}
+		else if (typeof config !== 'object')
+			return;
+		
+		config.controller && (this.controller = config.controller);
+		config.forward && (this.forward = config.forward);
+		config.action && (this.action = config.action);
+		
+		if (config.data && typeof config.data === 'object' && config.data !== this.data)
+			fillDataProps(config.data, this);
+	};
+	
+	// create new data object, copy properties (don't modify the saved router data)
+	function fillDataProps(data, route) {
+		var p,
+			d = route.data;
+			
+		route.data = {};
+		if (d) {
+			for (p in d) {
+				route.data[p] = d[p];
+			}
+		}
+		
+		for (p in data) {
+			route.data[p] = data[p];
+		}
+	}
+	
+	/**
+	* Gets a human readable string representation of this route.  
+	* Note: This is not an inverse operation to the `parseRequestString()` method.
+	* @return {string}
+	*/
+	Route.prototype.toHumanString = function() {
+		var r = '';
+		
+		if (this.controller)
+		 	r += this.controller;
+		else if (this.forward)
+		 	r += this.forward;
+		 	
+		if (this.action)
+		 	r += Route._actionSeparator + this.action;
+		
+		if (this.data)
+		 	r += Route._dataSeparator + '...';
+		
+		return r;
+	};
+	
+	/**
+	* Checks if route has a valid format (ie. looks like Route).
+	* @param {Object|string} route - Route object. Property 'controller' or 'forward' is required. String is shortcut to {forward: route}.
+	* @throws Exception if route has an invalid format.
+	*/
+	Route.validate = function(route) {
+		if (route && types.isString(route))
+			return;
+			
+		if (typeof route !== 'object')
+			throw Error('Object type is expected.');
+		
+		if (!('controller' in route) && !('forward' in route))
+		 	throw Error('Missing "controller" or "forward" property.');
+	};
+	
+	/* Action separator used in the request string. */
+	Route._actionSeparator = ':';
+	
+	/* Data separator used in the request string. */
+	Route._dataSeparator = '?';
+	
+	/**
+	* Parses the request string to route-like object.  
+	* Request format: `"controller:action?data"`. Controller part is required.  
+	* 
+	* | Part of request | Description |
+	* | --- | --- |
+	* | controller | shall not contain characters `:` and `?` |
+	* | action separator | default is `:` |
+	* | action | shall not contain character `?` |
+	* | data separator | default is `?` |
+	* | data | set of properties and its values in the form `property1=value1&property2=value2` |
+	* 
+	* @example <caption>Valid request strings:</caption>
+	* "controller"
+	* "controller:action"
+	* "controller:action?par1=value1"
+	* "controller?par1=value1"
+	* "controller:action?par1=value1&par2=value2"
+	* "controller:action?par1&par2=value2"
+	* @param {string} request
+	* @return {Object} - {controller: string, action: string, data: Object|null}
+	* @throws Exception if request has an invalid format.
+	*/
+	Route.parseRequestString = function(request) {
+		var a = '',
+			d = null,
+			c = String(request),
+			ra = types.escapeRegexpStr(Route._actionSeparator),
+			rd = types.escapeRegexpStr(Route._dataSeparator),
+			r = c.match(RegExp('^([^' + ra + rd + ']+?)(?:' + ra + '([^' + rd + ']*))?(?:' + rd + '(.*))?$'));
+			
+		if (r) {
+			c = r[1];
+			a = r[2] || '';
+			
+			if (r[3]) { // fill data properties
+				d = {};
+				
+				r[3].replace(RegExp('([^=&]+)(?:=([^&]*))?', 'g'), function($0, $1, $2) {
+					d[$1] = $2;
+				});
+			}
+		}
+		
+		if (!c)
+			throw Error('Bad request format. Controller or route name is not specified.');
+			
+		return {controller: c, action: a, data: d};
+	};
+	
+	
+	/**
+	* Router object. It holds a repository of named routes.
+	* @class
+	* @alias module:'brixy.mvc.Router'~Router
+	* @param {Function} [RouteType={@link module:'brixy.mvc.Router'~Route}] - route constructor (optional)
+	* @throws Exception
+	*/
+	function Router(RouteType) {
+		if (RouteType == undefined)
+			this._Route = Route;
+		else if (typeof RouteType !== 'function')
+			Error('Route must be a function.');
+		else
+			this._Route = RouteType;
+			
+		this._routes = {}; // own routes
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Router.prototype.toString = BX.toString;
+	
+	/**
+	* Saves a set of routes and replaces existing route set. The correct format is verified.
+	* @param {Object} routes - Set of routes in the form `{name1: route1, name2: route2, ...}`.
+	* @throws Exception if routes has an invalid format.
+	*/
+	Router.prototype.setRoutes = function(routes) {
+		try {
+			if (!routes || typeof routes !== 'object')
+				throw Error('Object type is expected.');
+		
+			var validateR = this._Route.validate,
+				r;
+			
+			if (validateR) { // need validation
+				for (r in routes) {
+					if (routes.hasOwnProperty(r))
+						validateR(routes[r]);
+				}
+			}
+			this._routes = routes;
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Router.setRoutes()', Error('Routes object has an invalid format.' + (r ? ' Route "' + r + '" failed.' : '')), e);
+		}
+	};
+	
+	/**
+	* Adds a new route. The correct format is verified.
+	* @param {string} name - Route name.
+	* @param {Object} route - Route object.
+	* @throws Exception if route has an invalid format.
+	*/
+	Router.prototype.addRoute = function(name, route) {
+		try {
+			if (!name)
+				throw Error('Route name is expected.');
+				
+			this._Route.validate(route);
+			this._routes[name] = route;
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Router.addRoute()', Error('Route "' + name + '" has an invalid format.'), e);
+		}
+	};
+	
+	/**
+	* Removes the route.
+	* @param {string} name - Route name.
+	*/
+	Router.prototype.removeRoute = function(name) {
+		if (this.hasRoute(name)) {
+			this._routes[name] = undefined;
+			delete this._routes[name];
+		}
+	};
+	
+	/**
+	* Gets a saved Route object or null.
+	* @param {string} name - Route name.
+	* @return {Object|null} Route object or null.
+	*/
+	Router.prototype.getRoute = function(name) {
+		if (this.hasRoute(name)) {
+			var R = this._Route;
+			return new R(this._routes[name]);
+		}
+		return null;
+	};
+	
+	/**
+	* Checks if the router has a saved route of this name.
+	* @param {string} name - Route name.
+	* @return {boolean}
+	*/
+	Router.prototype.hasRoute = function(name) {
+		return this._routes.hasOwnProperty(name);
+	};
+	
+	/**
+	* Creates the Route object from request. This one is not saved as named route.
+	* @param {string|Object} request - Request string or route-like object.
+	* @return {Object} Route object.
+	* @throws Exception on error.
+	*/
+	Router.prototype.createRoute = function(request) {
+		var R = this._Route;
+		
+		if (!types.isString(request)) {
+			if (request instanceof R) // is Route
+				return request;
+			
+			try {
+				R.validate(request); // looks like Route
+				return new R(request);
+			}
+			catch (e) {
+				throw BX.error('brixy.mvc.Router.createRoute()', Error('Request "' + request + '" is not a valid object.'), e);
+			}
+		}
+			
+		var req,
+			route;
+		
+		try {
+			req = R.parseRequestString(request);
+			route = this.getRoute(req.controller);
+			
+			if (route) {
+				req.controller = '';
+				route.refine(req);
+			}
+			else {
+				route = new R(req);
+			}
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Router.createRoute()', Error('Cannot create a route from the request "' + request + '".'), e);
+		}
+		
+		return route;
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* Route class.
+		* @memberOf module:'brixy.mvc.Router'
+		* @type {module:'brixy.mvc.Router'~Route}
+		*/
+		Route: Route,
+		/** 
+		* Router class.
+		* @memberOf module:'brixy.mvc.Router'
+		* @type {module:'brixy.mvc.Router'~Router}
+		*/
+		Me: Router
+	};
+});

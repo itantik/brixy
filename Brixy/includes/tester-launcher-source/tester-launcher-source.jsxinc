@@ -1,0 +1,37 @@
+//LINKER-ADD var tester = tester ||  (function () {
+#include "../Brixy.jsxinc";
+
+// Tester object
+BX.use('brixy', 'modules/tester/Tester.jsxinc');
+
+/*LINKER-DEL*/ var tester = tester ||  (function () {
+
+	var t = new (BX.module('brixy.tester.Tester').Me)();
+
+	/**
+	 * Run jobs.
+	 * @param {string|Folder} jobFolder - Folder with job files.
+	 * @param {Object} [config] - Tester's configuration (optional).
+	 */
+	function run(jobFolder, config) {
+		try {
+			if (!jobFolder)
+				throw Error('Tester-launcher requires the "jobFolder" as a path to folder with job files.');
+
+			t.clearJobs();
+			config && t.setConfig(config);
+			t.runJobFiles(jobFolder);
+		}
+		catch (e) {
+			t.errorReport(e);
+		}
+
+		// show result
+		t.report();
+	}
+
+	// publish
+	return {
+		run: run
+	};
+})();

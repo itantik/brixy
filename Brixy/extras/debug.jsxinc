@@ -1,0 +1,36 @@
+BX.use('brixy', 'modules/debug/callStack.jsxinc');
+BX.use('brixy', 'modules/debug/dump.jsxinc');
+BX.use('brixy', 'modules/debug/Summary.jsxinc');
+BX.use('brixy', 'modules/debug/Timer.jsxinc');
+BX.use('brixy', 'modules/debug/systemInfo.jsxinc');
+
+/*
+* 
+*/
+BX.debug || (function() {
+	
+	/**
+	* Namespace BX.debug brings together all debugging tools: [callStack]{@link module:'brixy.debug.callStack'}, [dump]{@link module:'brixy.debug.dump'}, [Summary]{@link module:'brixy.debug.Summary'} instance, [Timer]{@link module:'brixy.debug.Timer'} instance.
+	* 
+	* @namespace BX.debug
+	* @borrows module:'brixy.debug.callStack'.callStack as callStack
+	* @borrows module:'brixy.debug.dump'.dump as dump
+	* @borrows module:'brixy.debug.systemInfo'.showSystemInfo as showSystemInfo
+	*/
+	BX.debug = {
+		callStack: BX.module('brixy.debug.callStack').callStack,
+		dump: BX.module('brixy.debug.dump').dump,
+		showSystemInfo: BX.module('brixy.debug.systemInfo').showSystemInfo
+	};
+	
+	/**
+	* Instance of the [Summary]{@link module:'brixy.debug.Summary'} class.
+	*/
+	BX.debug.summary = new (BX.module.Me('brixy.debug.Summary'))();
+	
+	/**
+	* Instance of the [Timer]{@link module:'brixy.debug.Timer'} class.
+	*/
+	BX.debug.timer = new (BX.module.Me('brixy.debug.Timer'))();
+	
+})();

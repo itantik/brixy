@@ -1,0 +1,341 @@
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/colorize.jsxinc');
+BX.use('brixy', 'modules/ui/helpers.jsxinc');
+BX.use('brixy', 'modules/tester/Result.jsxinc');
+BX.use('brixy', 'modules/debug/dump.jsxinc');
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* @module 'brixy.tester.report'
+*/
+BX.module.define('brixy.tester.report', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me,
+		helpers = BX.module('brixy.ui.helpers'),
+		STATUS = BX.module('brixy.tester.Result').STATUS,
+		COLOR = {
+			TEXT: [0.0, 0.0, 0.0],
+			FAILED: [1.0, 0.0, 0.0],
+			PASSED: [0.25, 0.6, 0],
+			BACK: [1.0, 1.0, 1.0],
+			OVER: [0.9, 0.9, 0.9]
+		},
+		SCROLL = {
+			SIZE: 20
+		};
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* Shows a dialog with tester results.
+	* @memberOf module:'brixy.tester.report'
+	* @param {module:'brixy.tester.Job'~Job[]} jobs - Processed jobs.
+	*/
+	function showResult(jobs) {
+		var b = new Sui(),
+			numJobs = jobs.length,
+			numF = 0,
+			i;
+			
+		for (i = 0; i < numJobs; i++) {
+			if (!jobs[i].passed())
+				numF++;
+		}
+
+		b.addComponents(reportComponents);
+		
+		b.window('dialog', 'Brixy Tester - result')
+			.row().alignChildren('top')
+				.column()
+					.jobBox(jobs)
+					.staticText(numJobs + ' test jobs, ' + numF + ' failed')
+					.end()
+				.column()
+					.button('OK')
+		.showWindow();
+	}
+	
+	// SuiBuilder components
+	var reportComponents = {
+		
+		jobBox: function (jobs) {
+			var b = this.builder,
+				numJobs = jobs.length,
+				maxRows = SCROLL.SIZE,
+				numRows = Math.min(maxRows, numJobs),
+				maxCh = 0,
+				i;
+				
+			for (i = 0; i < numJobs; i++) {
+				maxCh = Math.max(maxCh, jobs[i].getName().length);
+			}
+			
+			b.rowPanel().alignChildren('fill').set('spacing', 1).set('margins', 1)
+				.jobList(numRows, maxCh)
+				.execute(populateJobList, 0);
+				if (numJobs > maxRows) {
+					b.scrollbar()
+						.set('preferredSize', [20, undefined])
+						.set({minvalue: 0, maxvalue: numJobs - maxRows, value: 0, jumpdelta: numRows})
+						.set('onChanging', onScroll);
+				}
+				b.end();
+				
+			function populateJobList(start){
+				var i = start,
+					n = numRows + start,
+					row;
+					
+				for ( ; i < n; i++) {
+					row = b.get('row' + (i - start));
+					populateJobRow(row, jobs[i]);
+				}
+			}
+			
+			function populateJobRow(row, job){
+				if (!job || !(row instanceof Group))
+					return;
+				
+				row.testJob = job;
+				
+				var txE = row.children[0],
+					stE = row.children[1],
+					passed = job.passed(),
+					col,
+					gr = txE.graphics,
+					penType = gr.PenType.SOLID_COLOR;
+				
+				// text
+				txE.text = job.getName();
+				col = passed ? COLOR.TEXT : COLOR.FAILED;
+				gr.foregroundColor = gr.newPen(penType, col, 1);
+				gr.disabledForegroundColor = gr.newPen(penType, col, 1);
+				// status
+				stE.text = passed ? 'OK' : 'FAILED';
+				col = passed ? COLOR.PASSED : COLOR.FAILED;
+				gr = stE.graphics;
+				gr.foregroundColor = gr.newPen(penType, col, 1);
+				gr.disabledForegroundColor = gr.newPen(penType, col, 1);
+			}
+			
+			function onScroll(){
+				this.value = Math.floor(this.value);
+				
+				if (onScroll.old === this.value)
+					return;
+					
+				onScroll.old = this.value;
+				populateJobList(this.value);
+			}
+		},
+		
+		jobList: function (numRows, maxCh) {
+			var i;
+			
+			this.builder.column().alignChildren('fill').set('spacing', 1).set('margins', 1);
+				if (numRows === 0) {
+					this.builder.staticText('No job executed.');
+				}
+				for (i = 0; i < numRows; i++) {
+					this.builder.jobRow(i, maxCh);
+				}
+				this.builder.end();
+		},
+		
+		jobRow: function (index, maxCh) {
+			this.builder.row().id('row' + index).set('margins', 5).backgroundColor(COLOR.BACK)
+				.addEventListener('click', function (event) {
+					showJobResult(this.testJob);
+				})
+				.addEventListener('mouseover',setRowBackground)
+				.addEventListener('mouseout', setRowBackground)
+				.staticText().set('characters', maxCh)
+				.staticText().set('characters', 6).set('justify', 'center')
+				.end();
+		}
+	};
+	
+	function setRowBackground(event) {
+		var gr = this.graphics;
+		gr.backgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, (event.type === 'mouseover') ? COLOR.OVER : COLOR.BACK);
+	}
+	
+	/*
+	* Shows a window with job result.
+	* @param {module:'brixy.tester.Job'~Job} job
+	*/
+	 function showJobResult(job) {
+		if (!job) {
+			alert('Error: Job not found.');
+			return;
+		}
+		
+		var b = new Sui(),
+			stats = job.getStatistics();
+		
+		b.addComponents(jobComponents);
+		
+		b.window('dialog', 'Brixy Tester - job result')
+			.row().alignChildren('top')
+				.column().set('margins', 11)
+					.staticText(job.getName()).doubleAmps() // job name
+					.rowPanel().align('fill').end() // line
+					.column().set('spacing', 2)
+						.staticText(stats.total + ' tests')
+						.staticText(stats.failed + ' failed');
+						if (stats.failed)
+							b.foregroundColor(COLOR.FAILED);
+						if (stats.skipped)
+							b.staticText(stats.skipped + ' skipped').foregroundColor(COLOR.FAILED);
+						b.staticText(stats.duration + ' milliseconds')
+						.end()
+					.end()
+				.column().alignChildren('fill').set('spacing', 2)
+					.columnPanel().alignChildren('fill').backgroundColor(COLOR.BACK)
+						.sectionList(job.sectionList()) // sections
+						.end()
+					.end()
+				.column()
+					.button('OK')
+		.showWindow();
+	}
+	
+	// SuiBuilder components
+	var jobComponents = {
+		
+		sectionList: function (sections) {
+			var sec,
+				i = 0,
+				n = sections.length;
+				
+			for ( ; i < n; i++) {
+				sec = sections[i];
+				
+				if (i > 0)
+					this.builder.rowPanel().align('fill').end(); // line
+					
+				if (sec.getName()) // section name
+					this.container.add('statictext', undefined, helpers.doubleAmps(sec.getName()));
+				
+				this.builder.resultBox(sec.resultList()); // results
+			}
+		},
+		
+		resultBox: function (results) {
+			var i,
+				n,
+				r,
+				status,
+				el,
+				contF = null,
+				contR = this.container.add('group {orientation: "row", spacing: 3}'),
+				penType = contR.graphics.PenType.SOLID_COLOR;
+			
+			// row of results
+			for (i = 0, n = results.length; i < n; i++) {
+				r = results[i];
+				status = r.getStatus();
+				
+				el = contR.add('statictext', undefined, status);
+				el.graphics.foregroundColor = el.graphics.newPen(penType, (status === STATUS.OK) ? COLOR.PASSED : COLOR.FAILED, 1);
+				el.helpTip = r.getLongDescription();
+				
+				if (status === STATUS.FAILED) {
+					// failures
+					if (!contF) {
+						contF = this.container.add('group {orientation: "column", spacing: 2, alignChildren: "left"}');
+						contF.add('statictext', undefined, 'Failures:');
+					}
+					contF.add('statictext', undefined, helpers.doubleAmps('- ' + r.getLongDescription()));
+				}
+			}
+		}
+		
+	};
+
+	/**
+	* Shows a dialog with failed result.
+	* 
+	* @memberOf module:'brixy.tester.report'
+	* @param {module:'brixy.tester.Result'~Result} result - Test result.
+	* @param {module:'brixy.tester.Result'~Value} actual - Tested value.
+	* @param {module:'brixy.tester.Result'~Value} expected - Expected value.
+	* @param {int} depth - Comparison depth.
+	* @return {Object} {abortTester: boolean, showNext: boolean}
+	*/
+	function showFailure(result, actual, expected, depth) {
+		var b = new Sui();
+			
+		b.addComponents(failureComponents);
+		
+		b.window('dialog', 'Brixy Tester - failure report')
+			.row().alignChildren('top')
+				.column().alignChildren('fill')
+					.columnPanel().alignChildren('left').backgroundColor([1.0, 1.0, 1.0])
+						.staticText('Test failed').foregroundColor([1.0, 0.0, 0.0])
+						.staticText(result.getLongDescription()).doubleAmps()
+						.end()
+					.columnPanel('Actual:').alignChildren('left').set('margins', [14, 20, 14, 14])
+						.valueBox(actual, depth)
+						.end()
+					.columnPanel('Expected:').alignChildren('left').set('margins', [14, 20, 14, 14])
+						.valueBox(expected, depth)
+						.end()
+					.checkbox('Show this window on next failure').id('next').set('value', true)
+					.end()
+				.column().alignChildren('fill')
+					.button("{text: 'Continue', properties: {name: 'ok'}}").closeOnClick(true, 1)
+					.button('Abort tester').closeOnClick(true, 2)
+		.showWindow();
+		
+		return {
+			abortTester: b.result() !== 1,
+			showNext: b.get('next').value
+		};
+	}
+	
+	// SuiBuilder components
+	var failureComponents = {
+		
+		valueBox: function (val, depth) {
+			var dump = BX.module('brixy.debug.dump').dump,
+				builder = this.builder,
+				t = BX.module('brixy.es.types').baseType(val.value);
+			
+			builder.staticText(val.caption).doubleAmps();
+			
+			if (val.value === val.caption)
+				return;
+			
+			switch (t) {
+			case 'object':
+			case 'array':
+				builder.row()
+					.button('show...').set('onClick', function() {
+						var d = parseInt(builder.get('depth').text, 10);
+						if (isNaN(d))
+							d = 3;
+						builder.get('depth').text = d;
+						dump(val.value, d);
+					})
+					.staticText('depth:')
+					.editText(depth).id('depth').set('characters', 3)
+					.end();
+				break;
+			case 'function':
+				builder.button('show...').set('onClick', function() {
+					alert(val.value);
+				});
+				break;
+			default:
+				builder.staticText('Value: ' + val.value).doubleAmps();
+			}
+		}
+	};
+	
+	
+	// publish
+	return {
+		showResult: showResult,
+		showFailure: showFailure
+	}
+});

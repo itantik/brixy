@@ -1,0 +1,28 @@
+BX.use('brixy', 'modules/mvc/AppManager.jsxinc');
+
+/*
+* 
+*/
+BX.apps || (function() {
+	
+	var am = new (BX.module('brixy.mvc.AppManager').Me)();
+	
+	/**
+	* Namespace BX.apps holds an instance of the [AppManager]{@link module:'brixy.mvc.AppManager'~AppManager} class.
+	* 
+	* @namespace BX.apps
+	* @borrows module:'brixy.mvc.AppManager'~AppManager#add as add
+	* @borrows module:'brixy.mvc.AppManager'~AppManager#get as get
+	* @borrows module:'brixy.mvc.AppManager'~AppManager#exists as exists
+	* @borrows module:'brixy.mvc.AppManager'~AppManager#processRequest as processRequest
+	* @borrows module:'brixy.mvc.AppManager'~AppManager#processEvent as processEvent
+	*/
+	BX.apps = {
+		add: function(config) { return am.add(config); },
+		get: function(id) { return am.get(id); },
+		exists: function(id) { return am.exists(id); },
+		processRequest: function(id, request) { am.processRequest(id, request); },
+		processEvent: function(event, data) { am.processEvent(event, data); }
+	};
+	
+})();

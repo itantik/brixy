@@ -1,0 +1,247 @@
+BX.use('brixy', 'modules/es/types.jsxinc');
+BX.use('brixy', 'modules/ui/components/base.jsxinc');
+
+/**
+* Easy and fun creation of Adobe ScriptUI user interface.
+* 
+* @module 'brixy.ui.SuiBuilder'
+*/
+BX.module.define('brixy.ui.SuiBuilder', function() {
+	var baseComponents = BX.module('brixy.ui.components.base');
+	
+	/**
+	* SuiBuilder object.
+	* 
+	* @class
+	* @alias module:'brixy.ui.SuiBuilder'~SuiBuilder
+	* @param {string} name - Builder's name. (optional)
+	* 
+	* @property {Object} _builder - Private builder object.
+	* @property {string} _builder.name - Builder's name.
+	* @property {component} _builder.element - Current SUI component.
+	* @property {component} _builder.container - Current SUI container component.
+	* @property {Object} _builder.validator - Validator object.
+	* @property {SuiBuilder} _builder.builder - This SuiBuilder instance.
+	*/
+	function SuiBuilder(name) {
+		this._builder = {
+			name: name, // builder's name
+			element: null, // current element
+			container: null, // current container
+			validator: null, // validator object
+			builder: this, // SuiBuilder instance
+			_containers: [], // the chain of the container components
+			_ids: {}, // repository of the elements saved by the id() method
+			_result: 0, // a result returned from the ScriptUI Window.show() method
+			_counter: 0 // the number of the builder methods already executed
+		};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	SuiBuilder.prototype.toString = BX.toString;
+	
+	/**
+	* Returns saved element.
+	* 
+	* @param {string} id
+	* @return {component}
+	*/
+	SuiBuilder.prototype.get = function (id) {
+		return this._builder._ids[id];
+	};
+	
+	/**
+	* Returns all saved elements.
+	* 
+	* @return {Object}
+	*/
+	SuiBuilder.prototype.getAll = function () {
+		return this._builder._ids;
+	};
+	
+	/**
+	* Returns a result of the ScriptUI window.show() method.
+	* 
+	* @return {int}
+	*/
+	SuiBuilder.prototype.result = function () {
+		return this._builder._result;
+	};
+	
+	/**
+	* Adds methods into SuiBuilder instance. Existing methods are replaced.
+	* 
+	* @param {...Object} [components, ...] - Each argument is object with component definitions.
+	*/
+	SuiBuilder.prototype.addComponents = function (components /* components2, ... */) {
+		var n = arguments.length,
+			i = 0,
+			comps;
+			
+		for ( ; i < n; i++) {
+			comps = arguments[i];
+			if (typeof comps === 'object') {
+				for (var c in comps) {
+					this.addComponent(c, comps[c]);
+				}
+			}
+		}
+	};
+	
+	/**
+	* Adds method into SuiBuilder instance. Existing method are replaced.
+	* 
+	* @param {string} name - Component name.
+	* @param {function} callback
+	*/
+	SuiBuilder.prototype.addComponent = function (name, callback) {
+		if (!callback || typeof callback !== 'function')
+			throw BX.error('brixy.ui.SuiBuilder.addComponent()', Error('Cannot add component "' + name + '".'), 'Callback must be a function. ' + callback + ' is given.');
+			
+		this[name] = function(/* custom parameters */) {
+			return member.call(this, name, callback, arguments);
+		};
+	};
+	
+	/**
+	* Adds methods into SuiBuilder prototype.
+	* 
+	* @param {Object} members - Methods.
+	* @param {boolean} [replace=false] - If true, existing methods will be replaced. (optional)
+	*/
+	SuiBuilder.attach = function (members, replace) {
+		if (typeof members === 'object') {
+			for (var m in members) {
+				if (replace || !(m in SuiBuilder.prototype))
+					attachMember(m, members[m]);
+			}
+		}
+	};
+	
+	/*
+	* Adds a method into SuiBuilder prototype.
+	* 
+	* @param {string} name - Name of the method.
+	* @param {function} callback - Method.
+	*/
+	function attachMember(name, callback) {
+		if (!callback || typeof callback !== 'function')
+			throw BX.error('brixy.ui.SuiBuilder.attachMember()', Error('Cannot add component "' + name + '".'), 'Callback must be a function. ' + callback + ' is given.');
+			
+		SuiBuilder.prototype[name] = function(/* custom parameters */) {
+			return member.call(this, name, callback, arguments);
+		};
+	}
+	
+	/*
+	* General builder method.
+	* 
+	* @param {string} name - Method name.
+	* @param {function} callback - Method.
+	* @param {Array} args - Arguments for callback.
+	* @throws {BX.error.ErrorChain} Exception if component creation failed.
+	* @return {SuiBuilder} Provides fluent interface.
+	*/
+	function member(name, callback, args) {
+		try {
+			var b = this._builder,
+				n;
+				
+			b._counter++;
+			
+			callback.apply(b, args);
+			
+			if (b.container) {
+				n = b._containers.length;
+				if (!n || b._containers[n-1] !== b.container) {
+					b._containers.push(b.container);
+					b.element = b.container;
+				}
+			}
+		}
+		catch (e) {
+			throw createMemberError(this, name, args, e);
+		}
+		return this;
+	}
+	
+	/**
+	* Removes methods from the SuiBuilder prototype.
+	* 
+	* @param {string|Array<string>} members - The list of the method names to detach.
+	*/
+	SuiBuilder.detach = function (members) {
+		if (!members)
+			return;
+		
+		if (members.constructor.name === 'String') { // one
+			remove(members);
+		}
+		else if (members.constructor.name === 'Array') { // array
+			for (var i = 0, n = members.length; i < n; i++) {
+				remove(members[i]);
+			}
+		}
+		
+		function remove(name) {
+			if (name in SuiBuilder.prototype) {
+				SuiBuilder.prototype[name] = null;
+				delete SuiBuilder.prototype[name];
+			}
+		}
+	};
+		
+	/*
+	* Error factory.
+	* 
+	* @param {SuiBuilder} builder - SuiBuilder object.
+	* @param {string} functionName - Function name.
+	* @param {Array} args - Function arguments.
+	* @param {Error|string} error - Error message.
+	* @return {BX.error.ErrorChain}
+	*/
+	function createMemberError(builder, functionName, args, error) {
+		var method,
+			message,
+			s,
+			ord,
+			a = [],
+			i,
+			n,
+			types = BX.module('brixy.es.types');
+		
+		// method name
+		for (i = 0, n = args.length; i < n; i++) {
+			a.push(types.valueString(args[i]));
+		}
+		method = functionName + '(' + a.join(', ') + ')';
+		
+		// convert _counter to ordinal number
+		s = builder._builder._counter.toString(10);
+		n = s.length;
+		if (n > 1 && s[n-2] === '1')
+			ord = s + 'th';
+		else
+			ord = s + ({1: 'st', 2: 'nd', 3: 'rd'}[s[n-1]] || 'th');
+
+		// error message
+		message = (builder._builder.name ? '"' + builder._builder.name + '": ' : 'SuiBuilder: ') + 'the ' + ord + ' method of builder chain failed.';
+		
+		return new BX.error.ErrorChain('brixy.ui.SuiBuilder.' + method, message, error);
+	}
+	
+	
+	// publish
+	return {
+		/** 
+		* SuiBuilder class.
+		* @memberOf module:'brixy.ui.SuiBuilder'
+		* @type module:'brixy.ui.SuiBuilder'~SuiBuilder
+		*/
+		Me: SuiBuilder
+	};
+});

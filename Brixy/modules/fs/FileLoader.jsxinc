@@ -1,0 +1,242 @@
+/**
+ * Warning: This module definition works in 'skip' rewrite mode. It does not throw an exception, if module already exists.
+ * @module 'brixy.fs.FileLoader'
+ */
+BX.module.define('brixy.fs.FileLoader', function() {
+	
+	/**
+	* FileLoader class. Subclass or instance should at least define own `onLoadFile(file)` method.
+	* @class
+	* @alias module:'brixy.fs.FileLoader'~FileLoader
+	*/
+	function FileLoader() {
+		this._aliases = {}; // fullNames of the folder aliases
+		this._loaded = []; // fullNames of the loaded files
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	FileLoader.prototype.toString = BX.toString;
+	
+	/**
+	* Creates alias of the folder path.
+	* @param {string} alias - Folder shortcut.
+	* @param {string} path - Folder path relative to the home folder (alias for '') or absolute path.
+	* @throws Exception if folder doesn't exist.
+	* @throws Exception if alias already exists for a different path.
+	*/
+	FileLoader.prototype.alias = function(alias, path) {
+		if (arguments.length === 1) {
+			path = alias;
+			alias = '';
+		}
+		
+		var a = 'a_' + alias,
+			home = this.aliasPath(''),
+			f,
+			p = (path += '');
+			
+		if (home && p)
+			p = '/' + p; // multiple / are ignored by Extend Script
+		
+		f = Folder(home + p); // relative to the home folder
+		
+		if (!f.exists)
+			f = Folder(path); // or absolute path
+			
+		if (f instanceof File)
+			f = f.parent;
+			
+		if (!f.exists)
+			throw Error('Creating of the alias "' + alias + '" failed. Not found the "' + f.fullName + '".');
+		
+		if (this._aliases.hasOwnProperty(a)) {
+			if (f.fullName != this._aliases[a])
+				throw Error('Creating of the alias "' + alias + '" failed. Alias already exists with path:\n' + this._aliases[a]);
+			
+			return;
+		}
+
+		this._aliases[a] = f.fullName;
+	};
+	
+	/**
+	* Stores path to the included list to prevent the further loading.
+	* Doesn't test if file exists.
+	* @param {string} alias - Folder shortcut.
+	* @param {string} path - File or folder path.
+	* @throws Exception if alias doesn't exist.
+	*/
+	FileLoader.prototype.ignore = function(alias, path) {
+		var a = this.aliasPath(alias),
+			f,
+			p = (path += '');
+			
+		if (a && p)
+			p = '/' + p; // multiple / are ignored by Extend Script
+			
+		f = File(a + p); // relative to the alias
+		
+		if (!f.exists && !alias)
+			f = File(path); // or absolute path
+			
+		if (!f.exists)
+			throw Error('Cannot ignore alias "' + alias + '". Not found the file "' + f.fullName + '".');
+		
+		f = f.fullName; // keep the consistent encoding
+		
+		if (!this.isLoaded(f))
+			this.addPath(f);
+	};
+	
+	/**
+	* Includes jsx|jsxinc|js|jsxbin file. Folders are traversed recursively.
+	* Each file is included only once.
+	* @param {string} alias - Folder shortcut.
+	* @param {string} path - File or folder path.
+	* @throws Exception if alias or file doesn't exist.
+	*/
+	FileLoader.prototype.load = function(alias, path) {
+		var a = this.aliasPath(alias);
+		
+		path = (path == undefined) ? '' : path + '';
+			
+		if (a && path)
+			path = '/' + path; // multiple / are ignored by Extend Script
+			
+		this.loadFile(File(a + path));
+	};
+	
+	/**
+	* Loads the file if it is of an allowed type. Each file is loaded only once.
+	* @param {File|Folder} file - File or folder object.
+	* @throws Exception if file doesn't exist.
+	*/
+	FileLoader.prototype.loadFile = function(file) {
+		var path;
+		
+		file = File(file);
+		if (!file.exists)
+			throw Error('Not found the file "' + file.fullName + '".');
+
+		if (this.isLoaded(path = file.fullName))
+			return;
+			
+		this._loaded.push(path);
+		
+		if (file instanceof File) {
+			if (this.isAllowedFile(path))
+				this.onLoadFile(file);
+		}
+		else if (this.isAllowedFolder(path)) {
+			this.onLoadFolder(file);
+		}
+	};
+	
+	/**
+	* Does nothing.
+	* Subclass or instance should define own onLoadFile method.
+	* @param {File} file
+	*/
+	FileLoader.prototype.onLoadFile = function(file) {
+	};
+	
+	/**
+	* Loads files and folders. Folders are traversed recursively.
+	* Subclass or instance may define own onLoadFolder method.
+	* @param {Folder} folder
+	*/
+	FileLoader.prototype.onLoadFolder = function(folder) {
+		var list;
+		
+		folder = Folder(folder);
+		list = folder.getFiles();
+		if (!list)
+			return;
+			
+		for (var i = 0, n = list.length; i < n; i++) {
+			this.loadFile(list[i]);
+		}
+	};
+	
+	/**
+	* Filters the file. Subclass or instance may define own fileFilter method.
+	* @param {string} path - Full path of the file.
+	* @return {boolean}
+	*/
+	FileLoader.prototype.isAllowedFile = function(path) {
+		return /.+\.(jsx|jsxinc|jsxbin|js)$/i.test(path);
+	};
+	
+	/**
+	* Filters the folder. Subclass or instance may define own fileFilter method.
+	* @param {string} path - Full path of the folder.
+	* @return {boolean}
+	*/
+	FileLoader.prototype.isAllowedFolder = function(path) {
+		return true;
+	};
+	
+	/**
+	* Returns full path of the alias.
+	* @param {string} alias
+	* @throws Exception if alias doesn't exist.
+	*/
+	FileLoader.prototype.aliasPath = function(alias) {
+		var a = 'a_' + alias;
+			
+		if (this._aliases.hasOwnProperty(a))
+			return this._aliases[a];
+		
+		if (a === 'a_') // path to home folder may be undefined
+			return '';
+			
+		throw Error('Alias "' + alias + '" does not exist.');
+	};
+	
+	/**
+	* Return the array of the included file paths.
+	* @return {string[]} - Array of the included file paths.
+	*/
+	FileLoader.prototype.loadedPaths = function() {
+		return Array.prototype.concat(this._loaded);
+	};
+	
+	/**
+	* Tests if the path is already included.
+	* @param {string} path - Full path of the file.
+	*/
+	FileLoader.prototype.isLoaded = function(path) {
+		var i = 0,
+			n = this._loaded.length;
+		
+		for ( ; i < n; i++) {
+			if (this._loaded[i] === path)
+				return true;
+		}
+		
+		return false;
+	};
+	
+	/**
+	* Adds the include path without applying of the file filter.
+	* @param {string} path
+	*/
+	FileLoader.prototype.addPath = function(path) {
+		this._loaded.push(path);
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* FileLoader class.
+		* @memberOf module:'brixy.fs.FileLoader'
+		* @type {module:'brixy.fs.FileLoader'~FileLoader}
+		*/
+		Me: FileLoader
+	};
+}, 'skip'); // do not redefine existing module

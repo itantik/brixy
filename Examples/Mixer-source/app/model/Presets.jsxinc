@@ -1,0 +1,95 @@
+BX.use('brixy', 'modules/es/typedXML.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.model.Presets', function() {
+	
+	var typedXML = BX.module('brixy.es.typedXML');
+	
+	function Presets(templateFolder) {
+		this._presetsFile = File(templateFolder + '/presets.xml');
+	}
+	
+	Presets.injection = ['templateFolder'];
+	
+	/**
+	* Returns a string representation of the object.
+	* @return {string}
+	*/
+	Presets.prototype.toString = BX.toString;
+	
+	/**
+	* Reads defaults from xml file.
+	* @return {Object} - Contents of the defaults file.
+	*/
+	Presets.prototype.read = function () {
+		var xml,
+			f = this._presetsFile;
+			
+		if (f.exists) {
+			try {
+				f.encoding = 'UTF-8';
+				f.open('r');
+				xml = new XML(f.read());
+				f.close();
+				
+				if (xml.name() != 'mixerPresets')
+					xml = undefined;
+			}
+			catch (e) {
+				throw new BX.error('app.models.Presets.read()', Error('Reading of the presets file failed.'), e);
+			}
+		}
+		
+		if (!xml) 
+			xml = new XML('<mixerPresets><object/></mixerPresets>');
+		
+		return typedXML.xmlToValue(xml.elements());
+	};
+
+	/**
+	* Saves defaults to xml file.
+	* @param {Object} values - New values.
+	*/
+	Presets.prototype.save = function (values) {
+		var f = this._presetsFile,
+			xml = new XML('<mixerPresets/>');
+
+		try {
+			xml.value = typedXML.valueToXml(values);
+			
+			f.encoding = 'UTF-8';
+			f.open('w');
+			f.writeln(xml.toXMLString());
+			f.close();
+		}
+		catch (e) {
+			throw new BX.error('app.models.Presets.save()', Error('Saving of the defaults file failed.'), e);
+		}
+	};
+	
+	/**
+	* Saves new and changed values to defaults file.
+	* @param {Object} values - New or changed values.
+	*/
+	Presets.prototype.saveChanges = function (values) {
+		if (!values || (typeof values !== 'object'))
+			return;
+			
+		var p,
+			data = this.read();
+
+		for (p in values) {
+			data[p] = values[p];
+		}
+		
+		this.save(data);
+	};
+	
+	
+	return {
+		Me: Presets
+	};
+});
+

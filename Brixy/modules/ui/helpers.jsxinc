@@ -1,0 +1,58 @@
+/**
+* Defines helper methods for work with {@link module:'brixy.ui.SuiBuilder'~SuiBuilder} components.
+* 
+* @module 'brixy.ui.helpers'
+*/
+BX.module.define('brixy.ui.helpers', function() {
+	
+	/**
+	* Doubles ampersands. 
+	* ScriptUI fields use ampersand to marking a shortcut character.
+	* 
+	* @memberOf module:'brixy.ui.helpers'
+	* @param {string} str
+	* @return {string}
+	*/
+	function doubleAmps(str) {
+		return str.replace(/(&)/g, '&&');
+	}
+	
+	/*
+	* Tests if string has form '{...}'.
+	* 
+	* @memberOf module:'brixy.ui.helpers'
+	* @param {string} str - Tested string.
+	* @return {bool}
+	*/
+	function isResourceString(str) {
+		return str && str.constructor.name === 'String' && /^\s*\{.*\}\s*$/.test(str);
+	}
+	
+	/**
+	* Returns all selected elements from the group. Tests if the value property of the element is equal to true.
+	* 
+	* @memberOf module:'brixy.ui.helpers'
+	* @param {ScriptUIcontrol} group
+	* @return {Array}
+	*/
+	function selectedChildren(group) {
+		var n = group.children.length,
+			i = 0,
+			sel = [];
+			
+		for ( ; i < n; i++) {
+			if (group.children[i].value)
+				sel.push(group.children[i]);
+		}
+		
+		return sel;
+	}
+
+	
+	// publish
+	return {
+		doubleAmps: doubleAmps,
+		isResourceString: isResourceString,
+		selectedChildren: selectedChildren
+	};	
+});

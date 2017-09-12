@@ -1,0 +1,165 @@
+BX.use('brixy', 'modules/es/reflection.jsxinc');
+BX.use('brixy', 'modules/es/types.jsxinc');
+BX.use('brixy', 'modules/debug/helpers.jsxinc');
+
+/**
+* @module 'brixy.debug.dump'
+*/
+BX.module.define('brixy.debug.dump', function() {
+	var reportDialog = BX.module('brixy.debug.helpers').reportDialog,
+		types = BX.module('brixy.es.types'),
+		reflection = BX.module('brixy.es.reflection');
+
+	/**
+	* Shows dialog window with structured information about own properties of the value.
+	* 
+	* @memberOf module:'brixy.debug.dump'
+	* @param {*} value - Value to dump.
+	* @param {int} [depth=3] - Level of nesting. Default is 3. (optional)
+	* @param {string} [title] - The title of the dialog window. (optional)
+	*/
+	function dump(value, depth, title) {
+		var dial,
+			tree;
+			
+		if (depth == undefined)
+			depth = 3;
+			
+		dial = reportDialog('Dump (' + types.className(value) + ')' + (title ? ' - ' +  title : ''));
+		tree = dial.add ("treeview {alignment: ['fill', 'fill'], minimumSize: [400, 500], properties: {name: 'report'}}");
+
+		dumpValue(tree, '', value, depth);
+
+		dial.show();
+	}
+	
+	/**
+	* Maximum length of node text. Set zero to unlimited.
+	* @memberOf module:'brixy.debug.dump'
+	* @type {int}
+	* @default 200
+	*/
+	dump.truncateLength = 200;
+	
+	/*
+	* Adds node item for value.
+	* 
+	* @param {TreeView|ListItem} node.
+	* @param {string} [name] - Name of value. (optional)
+	* @param {*} value.
+	* @param {int} depth - Level of nesting.
+	*/
+	function dumpValue(node, name, value, depth) {
+		if (depth < 0)
+			return;
+		
+		var i,
+			n,
+			c,
+			title;
+			
+		// get property name
+		title = name ? name += ':' : '';
+		c = types.className(value);
+		switch (c) {
+			case 'undefined':
+			case 'null':
+				node.add('item', title + ' ' + c); // add simple node
+				return;
+			case 'Number':
+			case 'Boolean':
+				node.add('item', title + ' ' + types.valueString(value, c)); // add simple node
+				return;
+			case 'String':
+				node.add('item', title + ' ' + truncate(types.valueString(value, c))); // add simple node
+				return;
+			case 'Function':
+				break;
+			default:
+				title = name + ' (' + c + ')'; // object or XML
+		}
+		
+		// get property value
+		// XML
+		if (c === 'XML') {
+			node.add('item', title + ' ' + truncate(value.toXMLString()));
+		}
+		// Array or 'array like' objects (e.g. InDesign collections)
+		else if (likeArray(c, value)) {
+			n = value.length;
+			if (depth >= 1 && n) {// has child items
+				if (name)
+					node = node.add('node', title + ' [...]');
+			
+				for (i = 0; i < n; i++) {
+					if (i in value) // cannot use hasOwnProperty(), eg. index of chars in new String()
+						dumpValue(node, i.toString(), value[i], depth-1);
+				}
+			}
+			else // simple item
+				node.add('item', title + ' [' + (n ? truncate(value.toString()) : '') + ']');
+		}
+		// object/function node may have own properties
+		else if (depth >= 1) {
+			var rootnode = null,
+				pr,
+				v,
+				// Gets object own properties. Dumping of methods (value.reflect.methods) like show() has no meaning.
+				props = reflection.getOwnProperties(value).sort();
+			
+			for (i = 0, n = props.length; i < n; i++) {
+				pr = props[i];
+				
+				try {
+					v = value[pr];
+				}
+				catch (e) { // not applicable property, eg. InDesign Document.filePath of the unsaved document
+					v = 'Warning: ' + e.message;
+				}
+				if (!rootnode)
+					rootnode = name ? node.add('node', title + ' {...}') : node;
+					
+				dumpValue(rootnode, pr, v, depth-1); // add child node
+			}
+
+			if (!rootnode) // object without properties
+				node.add('item', title + ' ' + truncate(types.valueString(value, c)));
+		}
+		// simple item
+		else {
+			node.add('item', title + ' ' + truncate(types.valueString(value, c)));
+		}
+	}
+	
+	/*
+	* Removes endlines. Truncate string if required.
+	* @param {string} str
+	*/
+	function truncate(str) {
+		str = str.replace(/\r|\n/g, ' ');
+		if (dump.truncateLength > 0 && str.length > dump.truncateLength) { // truncate
+			return str.substr(0, dump.truncateLength) + '...';
+		}
+		return str;
+	}
+	
+	/*
+	* Tests if value is Array or 'array like' object (e.g. InDesign collection).
+	* @param className
+	* @param value
+	* @return {boolean}
+	*/
+	function likeArray(className, value) {
+		try {
+			return className === 'Array' || (('length' in value) && (typeof value.length === 'number') && ('0' in value));
+		}
+		catch (e) {
+			return false;
+		}
+	}
+
+
+	return {
+		dump: dump
+	};
+});

@@ -1,0 +1,8 @@
+{
+  "name": "brixy-api-doc",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": {
+    "jsdoc": "^3.4.2"
+  }
+}

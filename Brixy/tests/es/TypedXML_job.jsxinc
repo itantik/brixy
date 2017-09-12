@@ -1,0 +1,65 @@
+/**
+* Available variables:
+* tester - tester object
+* job - current job
+* it - shortcut to job.it
+* file - full path to this file
+* debug - BX.debug object
+*/
+
+// required sources
+$.evalFile(tester.getConfig('brixyPath') + '/includes/Brixy.jsxinc');
+
+// tested module
+BX.use('brixy', 'modules/es/typedXML.jsxinc');
+
+var txml = BX.module('brixy.es.typedXML');
+
+var x = new XML('<object>' +
+	'<array name="colors">' +
+		'<string>red</string>' +
+		'<string>green</string>' +
+		'<string>blue</string>' +
+		'<array>' +
+			'<string>black</string>' +
+			'<string>white</string>' +
+		'</array>' +
+	'</array>' +
+	'<object name="city">' +
+		'<string name="name">Prague</string>' +
+		'<object name="GPS">' +
+			'<number name="N">50.0904317</number>' +
+			'<number name="E">14.4000508</number>' +
+		'</object>' +
+		'<number name="population">1250000</number>' +
+		'<boolean name="beautiful">true</boolean>' +
+		'<undefined name="disneyland"></undefined>' +
+	'</object>' +
+	'<objectXml name="myXml">' +
+		'<abc><a>A</a><b>B</b><c>C</c></abc>' +
+	'</objectXml>' +
+'</object>');
+
+// expected object
+var o = {
+	colors: ['red', 'green', 'blue', ['black', 'white']],
+	city: { name: 'Prague', GPS: {N: 50.0904317, E: 14.4000508}, population: 1250000, beautiful: true, disneyland: undefined },
+	myXml: new XML('<abc><a>A</a><b>B</b><c>C</c></abc>')
+};
+
+// faulty object
+var bad = {
+	colors: ['red', 'green', 'blue'],
+	city: { name: 'Prague', GPS: {N: 50.0904317, E: 14.4000508}, population: 1250000, beautiful: true }, // without 'disneyland' property
+	myXml: new XML('<abc><a>A</a><b>B</b><c>C</c></abc>')
+};
+
+// debug.dump(txml.xmlToValue(x));
+
+// run tests
+job.setName('Typed XML');
+
+it.isLike('XML to Object', txml.xmlToValue(x), o);
+it.isLike('XML list to Object', txml.xmlToValue(x.elements()), o);
+it.notLike('XML to Object (comparison with faulty object)', txml.xmlToValue(x), bad);
+it.isLike('Object to XML to Object', txml.xmlToValue(txml.valueToXml(o)), o);

@@ -1,0 +1,679 @@
+BX.use('brixy', 'modules/ui/helpers.jsxinc');
+BX.use('brixy', 'modules/ui/SuiValidator.jsxinc');
+
+/**
+* Defines base {@link module:'brixy.ui.SuiBuilder'~SuiBuilder} components.
+* 
+* @module 'brixy.ui.components.base'
+*/
+BX.module.define('brixy.ui.components.base', function() {
+	var helpers = BX.module('brixy.ui.helpers'),
+		SuiValidator = BX.module('brixy.ui.SuiValidator').Me;
+
+	/*
+	* Creates new standard ScriptUI element.
+	* 
+	* @param {ScriptUIcontrol} container - Container element.
+	* @param {string} type - ScriptUI control type.
+	* @param {string|Array<string>} resource - Text property or array of items or resource string. (optional)
+	* @return {ScriptUIcontrol}
+	*/
+	function addSuiElement(container, type, resource) {
+		var tx = false;
+		
+		if (resource == undefined) // undefined or null
+			resource = '{}';
+		else if (resource.constructor.name === 'Array')
+			resource = '{properties: {items: ' + resource.toSource() + '}}';
+		else if (!helpers.isResourceString(resource)) { // String
+			tx = resource.toString();
+			resource = '{}';
+		}
+
+		var e = container.add(type + resource);
+		if (tx)
+			e.text = tx;
+			
+		return e;
+	}
+	
+	
+	// publish
+	return {
+
+		/* ***** Base builder's methods. ***** */
+
+		/**
+		* Registers an event listener to the current element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} eventName - Event name.
+		* @param {function} callback - Event handler.
+		* @param {boolean} capturePhase - When true, the handler is called only in the capturing phase of the event propagation. Default is false. (optional)
+		* @throws {Error} Exception if callback is not a function.
+		*/
+		addEventListener: function(eventName, callback, capturePhase) {
+			if (!callback)
+				throw Error('Null is not a function.');
+			if (typeof callback !== 'function')
+				throw Error(callback + ' is not a function.');
+			
+			this.element.addEventListener(eventName, callback, capturePhase);
+		},
+		
+		/**
+		* The alignment style for current element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Array<string>} alignment - Alignment style.
+		*/
+		align: function(alignment) {
+			this.element.alignment = alignment;
+		},
+		
+		/**
+		* The alignment style for children elements.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {String|Array<string>} alignment - Alignment style.
+		* @throws {Error} Exception if element doesn't support alignChildren property.
+		*/
+		alignChildren: function(alignment) {
+			if ('alignChildren' in this.element)
+				this.element.alignChildren = alignment;
+			else
+				throw Error('Method alignChildren() is invalid in this context.');
+		},
+		
+		/**
+		* Adds onClick event that closes a window with the result code. 
+		* If validate is true, it runs a builder validate() method. Window remains open if validation failed.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {boolean} [validate] - Validate the controls before closing.
+		* @param {int} [result] - Code returned by window. (optional)
+		*/
+		closeOnClick: function(validate, result) {
+			var b = this;
+			
+			// InDesign CC (2015, Win): addEventListener('click', ...) doesn't work with OK and Cancel button
+			this.element.onClick = function() {
+				var w = b._containers[0];
+				if (!w || w.constructor.name !== 'Window')
+					throw Error('Window does not exist.');
+					
+				if (validate && b.validator && !b.validator.validate())
+					return false;
+			
+				w.close((result == undefined) ? 1 : result);
+			};
+		},
+
+		/**
+		* Sets builder counter. It helps to identify builder method.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {int} counter - Your number.
+		*/
+		counter: function(counter) {
+			var c = Number(counter);
+			this._counter = c > 0 ? Math.floor(c) : 0;
+		},
+		
+		/**
+		* Doubles ampersands. 
+		* ScriptUI fields use ampersand to marking a shortcut character.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [property='text'] - Property name. (optional)
+		*/
+		doubleAmps: function(property) {
+			property = (property == undefined) ? 'text' : property + '';
+				
+			if (property in this.element)
+				this.element[property] = helpers.doubleAmps(this.element[property]);
+		},
+
+		/**
+		* Sets the parent container as the current container.
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		end: function() {
+			var c = this._containers,
+				i = c.length;
+				
+			if (i > 1) { // don't delete the first container - Window
+				this.element = c.pop();
+				this.container = c[i-2]; // the last
+			}
+		},
+		
+		/**
+		* Immediately executes the callback method.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {function} callback - Custom method (.execute(callback, par1, par2)). Keyword 'this' references the builder.
+		* @param {...*} [pars, ...] - Additional parameters will be passed to callback method. (optional)
+		* @throws {Error} Exception if callback is not a function.
+		*/
+		execute: function(callback /*, callback parameters */) {
+			if (typeof callback !== 'function')
+				throw Error(callback + ' is not a function.');
+				
+			callback.apply(this, [].slice.call(arguments, 1));
+		},
+		
+		/**
+		* Saves the current element into SuiBuilder's repository.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} id - ID of this element.
+		* @throws {Error} Exception on error.
+		*/
+		id: function(id) {
+			if (!id)
+				throw Error('Invalid id key.');
+			if (!this.element)
+				throw Error('Element is undefined.');
+				
+			this._ids[id + ''] = this.element;
+		},
+		
+		/**
+		* Adds a click event listener that activates a target element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} id - ID of target element.
+		*/
+		labelFor: function(id) {
+			var b = this.builder;
+			
+			this.element.addEventListener('click', function(event) {
+				try {
+					var el = b.get(id);
+					el.active = false;
+					el.active = true;
+				}
+				catch (e) { // ignore all problems
+				}
+			});
+		},
+		
+		/**
+		* Sets the property/properties of the current element.
+		* Does not check if this property exists in the element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Object} property - Property name or Object of the property name-value pairs.
+		* @param {*} [value] - Ignored if property is Object. (optional)
+		*/
+		set: function(property, value) {
+			if (typeof property === 'object' && property.constructor.name !== 'String') {
+				for (var p in property) {
+					this.element[p] = property[p];
+				}
+			}
+			else
+				this.element[property + ''] = value;
+		},
+		
+		/**
+		* Shows the window.
+		*
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [position] - The window position. Supported only 'center'. (optional)
+		* @throws {Error} Exception if Window doesn't exist.
+		*/
+		showWindow: function(position) {
+			if (!this._containers.length)
+				throw Error('Window does not exist.');
+			
+			var w = this._containers[0];
+			if (!w || w.constructor.name !== 'Window')
+				throw Error('Window does not exist.');
+			
+			this._containers.length = 1;
+			this.container = this.element = w;
+			
+			if (position === 'center')
+				w.center();
+			this._result = w.show();
+		},
+		
+		/**
+		* Sets the subitem of the multicolumn ListBox item.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {int} index - Index of the subitem. Note: subitem[0] is the second item of the ScriptUI ListBox row.
+		* @param {string} text - Text of this subitem.
+		* @param {string|File|ScriptUIImage} [image] - Image of this subitem. (optional)
+		* @throws {Error} Exception if element doesn't have 'item' property.
+		*/
+		subItem: function(index, text, image) {
+			if (this.element.type === 'item' && this.element.parent.type === 'listbox') {
+				if (index >= this.element.subItems.length)
+					throw Error('ListBox multicolumn row has just ' + this.element.subItems.length + ' subitems.');
+					
+				this.element.subItems[index].text = text;
+				if (image)
+					this.element.subItems[index].image = image;
+			}
+			else
+				throw Error('Method subItem() is invalid in this context.');
+		},
+		
+		/**
+		* Sets the validation method on the current element.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|function} callback - Validator method.
+		* @param {...*} [args, ...] - Additional arguments will be passed to the callback method. (optional)
+		* @throws {Error} Exception if a validator cannot be set.
+		*/
+		validator: function(callback /*, callback parameters */) {
+			if (!this.validator)
+				this.validator = new SuiValidator();
+				
+			this.validator.addRule(this.element, callback, [].slice.call(arguments, 1));
+		},
+	
+	
+		/* ***** Base builder's components. ***** */
+
+		/**
+		* Adds new Button element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		button: function(resource) {
+			this.element = addSuiElement(this.container, 'button', resource);
+		},
+		
+		/**
+		* Adds new Checkbox element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		checkbox: function(resource) {
+			this.element = addSuiElement(this.container, 'checkbox', resource);
+		},
+		
+		/**
+		* Adds new Group with orientation 'column'.  
+		* Container component.
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		column: function() {
+			this.container = this.container.add("group {orientation: 'column'}");
+		},
+		
+		/**
+		* Adds new Panel with orientation 'column'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [title] - Panel title. (optional)
+		*/
+		columnPanel: function(title) {
+			this.container = this.container.add("panel {orientation: 'column'}");
+			this.container.text = title || '';
+		},
+		
+		/**
+		* Adds new DropDownList element. Specify items as the array parameter or use item() for adding further items.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {Array|string} [resource] - Array of items or resource specification. (optional)
+		*/
+		dropDownList: function(resource) {
+			this.container = addSuiElement(this.container, 'dropdownlist', resource);
+		},
+		
+		/**
+		* Adds new EditText element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		editText: function(resource) {
+			this.element = addSuiElement(this.container, 'edittext', resource);
+		},
+		
+		/**
+		* Adds new FlashPlayer element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|File} [resource] - Resource string or file path or File to load. (optional)
+		* @param {string|File} [file] - File path or File to load. (optional)
+		*/
+		flashPlayer: function(resource, file) {
+			var f = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (!helpers.isResourceString(resource)) {
+				f = resource;
+				resource = '{}';
+			}
+			if (file)
+				f = file;
+
+			this.element = this.container.add('flashplayer' + resource);
+			if (f)
+				this.element.loadMovie(f);
+		},
+		
+		/**
+		* Adds new Group element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Creation properties. (optional)
+		*/
+		group: function(resource) {
+			this.container = addSuiElement(this.container, 'group', resource);
+		},
+		
+		/**
+		* Adds new IconButton element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|File|Array<string>|ScriptUIImage} [resource] - IconButton resource string or image path or Array|ScriptUIImage of the 4-state button images. (optional)
+		*/
+		iconButton: function(resource) {
+			var im = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (resource.constructor.name === 'Array') {
+				im = ScriptUI.newImage(resource[0], resource[1], resource[2], resource[3]);
+				resource = '{}';
+			}
+			else if (!helpers.isResourceString(resource)){
+				im = resource;
+				resource = '{}';
+			}
+
+			this.element = this.container.add('iconbutton' + resource);
+			if (im)
+				this.element.image = im;
+		},
+		
+		/**
+		* Adds new Image element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|File|ScriptUIImage} [resource] - Image resource string or image file|path. (optional)
+		*/
+		image: function(resource) {
+			var im = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (!helpers.isResourceString(resource)) {
+				im = resource;
+				resource = '{}';
+			}
+
+			this.element = this.container.add('image' + resource);
+			if (im)
+				this.element.image = im;
+		},
+		
+		/**
+		* Adds new item to the ListBox, DropDownList or TreeView.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Array<string>} text - Text of this item or array of strings for the columns of multicolumn ListBox row.
+		* @param {int} [index] - The index of this item in the list of items. (optional)
+		* @throws {Error} Exception if element doesn't have 'items' property.
+		* @throws {Error} Exception if ListBox doesn't have enough columns.
+		*/
+		item: function(text, index) {
+			var c = this.container,
+				el,
+				i,
+				n;
+				
+			if ('items' in c) {
+				if (text && text.constructor.name === 'Array' && text.length && c.type === 'listbox' && 'columns' in c) {
+					n = text.length;
+					if (n > c.columns.titles.length)
+						throw Error('ListBox has ' + c.columns.titles.length + ' columns only.');
+						
+					el = c.add('item', text[0], index);
+					for (i = 1; i < n; i++)
+						el.subItems[i-1].text = text[i];
+					
+					this.element = el;
+				}
+				else
+					this.element = c.add((text === '-' && c.type === 'dropdownlist') ? 'separator' : 'item', text, index);
+			}
+			else
+				throw Error('Component type "item" is invalid in this context.');
+		},
+		
+		/**
+		* Adds new ListBox.  
+		* Specify lines as the array parameter or use item() for adding further lines.  
+		* In case of multiline ListBox specify the column titles as the array parameter. Use item() for adding new line. Use subItem() for setting of the item cell.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string|Array<string>} [resource] -  Resource string or array of lines or array of column titles for the multicolumn ListBox. (optional)
+		*/
+		listBox: function(resource) {
+			var pr = null;
+			
+			if (resource == undefined) // undefined or null
+				resource = '{}';
+			else if (resource.constructor.name === 'Array' && 'columns' in ListBox) {
+				pr = { 
+					numberOfColumns: resource.length, 
+					showHeaders: true, 
+					columnTitles: resource
+				};
+			}
+
+			if (pr)
+				this.container = this.container.add('listbox', undefined, '', pr);
+			else
+				this.container = this.container.add('listbox' + resource);
+		},
+		
+		/**
+		* Adds new node item into the TreeView.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} text - Text of this item.
+		* @param {int} [index] - The index of this node in the list of items (optional)
+		* @throws {Error} Exception if element doesn't have 'items' property.
+		*/
+		nodeItem: function(text, index) {
+			var c = this.container;
+			if ('items' in c) {
+				this.container = c.add('node', text, index);
+			}
+			else
+				throw Error('Component type "nodeItem" is invalid in this context.');
+		},
+		
+		/**
+		* Adds new Panel element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		panel: function(resource) {
+			this.container = addSuiElement(this.container, 'panel', resource);
+		},
+		
+		/**
+		* Adds new Progressbar element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Resource specification. (optional)
+		*/
+		progressBar: function(resource) {
+			this.element = addSuiElement(this.container, 'progressbar', resource);
+		},
+		
+		/**
+		* Adds new RadioButton element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		radioButton: function(resource) {
+			this.element = addSuiElement(this.container, 'radiobutton', resource);
+		},
+		
+		/**
+		* Adds new Group with orientation 'row'.  
+		* Container component.
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		row: function() {
+			this.container = this.container.add('group {orientation: "row"}');
+		},
+		
+		/**
+		* Adds new Panel with orientation 'row'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [title] - Panel title. (optional)
+		*/
+		rowPanel: function(title) {
+			this.container = this.container.add('panel {orientation: "row"}');
+			this.container.text = title || '';
+		},
+		
+		/**
+		* Adds new Scrollbar element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Resource specification. (optional)
+		*/
+		scrollbar: function(resource) {
+			this.element = addSuiElement(this.container, 'scrollbar', resource);
+		},
+		
+		/**
+		* Adds new Slider element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Resource specification. (optional)
+		*/
+		slider: function(resource) {
+			this.element = addSuiElement(this.container, 'slider', resource);
+		},
+		
+		/**
+		* Adds new Group with orientation 'stack'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		*/
+		stack: function() {
+			this.container = this.container.add('group {orientation: "stack"}');
+		},
+		
+		/**
+		* Adds new Panel with orientation 'stack'.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [title] - Panel title. (optional)
+		*/
+		stackPanel: function(title) {
+			this.container = this.container.add('panel {orientation: "stack"}');
+			this.container.text = title || '';
+		},
+		
+		/**
+		* Adds new StaticText element.  
+		* Element component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		staticText: function(resource) {
+			this.element = addSuiElement(this.container, 'statictext', resource);
+		},
+		
+		/**
+		* Adds new Tab element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		tab: function(resource) {
+			this.container = addSuiElement(this.container, 'tab', resource);
+		},
+		
+		/**
+		* Adds new TabbedPanel element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} [resource] - Text property or resource specification. (optional)
+		*/
+		tabbedPanel: function(resource) {
+			this.container = addSuiElement(this.container, 'tabbedpanel', resource);
+		},
+		
+		/**
+		* Adds new TreeView element.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {Array|string} [resource] - Array of items or resource specification. (optional)
+		*/
+		treeView: function(resource) {
+			this.container = addSuiElement(this.container, 'treeview', resource);
+		},
+		
+		/**
+		* Creates new window with the standard ScriptUI Window parameters.
+		* Window is the base element and it is only a single Window element in each SuiBuilder instance.  
+		* Container component.
+		* 
+		* @memberOf module:'brixy.ui.components.base'
+		* @param {string} type - Window type: 'window'|'palette'|'dialog'.
+		* @param {string} [title] - Window title. (optional)
+		* @param {Bounds} [bounds] - Position and size of the window. (optional)
+		* @param {Object} [properties] - Creation-only properties. (optional)
+		* @throws {Error} Exception if Window is not the first element in this builder.
+		*/
+		window: function(type, title, bounds, properties) {
+			if (this.container)
+				throw Error('Window must be the first component, some already exists.');
+			
+			if (title && !this.name)
+				this.name = title;
+				
+			this.container = new Window(type, title, bounds, properties);
+		}
+		
+	};
+
+});

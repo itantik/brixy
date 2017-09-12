@@ -1,0 +1,3 @@
+New module according to Brixy module system.
+
+Module may contain a class definition or a set of methods or anything other.

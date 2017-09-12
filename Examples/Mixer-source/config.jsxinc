@@ -1,0 +1,31 @@
+// release error reporter
+BX.use('brixy', 'includes/releaseErrorReporter.jsxinc');
+
+// application modules
+BX.use('app'); // includes all files in 'app' folder
+
+// create application
+BX.apps.add({
+
+	id: 'Mixer',
+	
+	autorun: 'Selector',
+
+	routes: {
+		Selector: 'selectorCtrl',
+		Editor: 'app.editor.Controller',
+		Presets: 'app.presets.Controller',
+		AddPresets: 'app.presets.Controller:Add' // is the same as {controller: 'app.presets.Controller', action: 'Add'}
+	},
+
+	services: {
+		templateFolder: Folder(File($.fileName).parent + '/templates'),
+		
+		selectorCtrl: 'app.selector.Controller',
+		
+		templateList: 'app.model.TemplateList',
+		template: 'app.model.Template',
+		parser: 'app.model.Parser',
+		presets: 'app.model.Presets'
+	}
+});

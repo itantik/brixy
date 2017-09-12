@@ -1,0 +1,168 @@
+BX.use('brixy', 'modules/debug/helpers.jsxinc');
+
+/**
+* @module 'brixy.debug.Timer'
+*/
+BX.module.define('brixy.debug.Timer', function() {
+	var reportDialog = BX.module('brixy.debug.helpers').reportDialog;
+
+	/*
+	* TimerRecord object.
+	* 
+	* @class
+	* @alias module:'brixy.debug.Timer'~TimerRecord
+	* 
+	* @property {int} _start - Start time. Private property.
+	* @property {int} _end - End time. Private property.
+	* @property {int} _count - Number of measurements. Private property.
+	*/
+	function TimerRecord() {
+		this._start = this._end = (new Date()).getTime();
+		this._count = 0;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* 
+	* @method
+	* @return {string}
+	*/
+	TimerRecord.prototype.toString = BX.toString;
+	
+	/*
+	* Records a time moment.
+	* 
+	*/
+	TimerRecord.prototype.storeTime = function() {
+		this._end = (new Date()).getTime();
+		this._count++;
+	};
+	
+	/*
+	* Returns a total time in milliseconds.
+	* 
+	* @return {int} total time in milliseconds
+	*/
+	TimerRecord.prototype.getTime = function() {
+		return this._end - this._start;
+	};
+	
+	/*
+	* Returns a number of time intervals.
+	* 
+	* @return {int} number of time intervals
+	*/
+	TimerRecord.prototype.countIntervals = function() {
+		return this._count;
+	};
+	
+	/**
+	* Timer object.
+	* 
+	* @class
+	* @alias module:'brixy.debug.Timer'~Timer
+	*/
+	function Timer() {
+		this._timers = {};
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* 
+	* @method
+	* @return {string}
+	*/
+	Timer.prototype.toString = BX.toString;
+	
+	/**
+	* Records a time interval into named timer.
+	* 
+	* @param {string} name - Timer's name.
+	*/
+	Timer.prototype.shot = function(name) {
+		if (this._timers[name]) {
+			this._timers[name].storeTime();
+		}
+		else
+			this._timers[name] = new TimerRecord();
+	};
+	
+	/**
+	* Shows a report window with timer records.
+	* 
+	* @param {boolean} [thenClear=false] - Clear records after closing window. (optional)
+	*/
+	Timer.prototype.report = function(thenClear) {
+		var name,
+			t,
+			s,
+			c,
+			a,
+			dial,
+			listBox,
+			addItem,
+			columnsSupport = 'columns' in ListBox; // CS3 doesn't support multicolumn ListBox
+			
+		dial = reportDialog('Timers');
+		
+		if (columnsSupport) {
+			listBox = dial.add ("group {alignment: ['fill', 'fill'], properties: {name: 'report'}}") // InDesing CS6 on Windows 10: ListBox must be inside a Group or Panel
+				.add ("listbox {alignment: ['fill', 'fill'], "
+				+ "properties: {numberOfColumns: 4, showHeaders: true, "
+				+ "columnTitles: ['Timer', 'Total time (s)', 'Average (s)', 'Intervals']}}");		
+		}
+		else {
+			listBox = dial.add ("treeview {alignment: ['fill', 'fill'], minimumSize: [400, 500], properties: {name: 'report'}}");
+		}
+		
+		addItem = (function(listBox) {
+			if (columnsSupport) {
+				return function (name, total, average, count) {
+						var item = listBox.add('item', name);
+						item.subItems[0].text = total;
+						item.subItems[1].text = average;
+						item.subItems[2].text = count;
+					};
+			}
+			else {
+				return function (name, total, average, count) {
+						var item = listBox.add('node', name);
+						item.add('item', 'Total time: ' + total + ' s');
+						item.add('item', 'Average: ' + average + ' s');
+						item.add('item', 'Intervals: ' + count);
+					};
+			}
+		})(listBox);
+		
+		for (name in this._timers) {
+			t = this._timers[name];
+			s = t.getTime();
+			c = t.countIntervals();
+			a = c ? Math.round(s / c) : 0;
+			addItem(name, s / 1000, a / 1000, c);
+		}
+		
+		dial.show();
+		
+		if (thenClear)
+			this.clear();
+	};
+	
+	/**
+	* Clears all records.
+	* 
+	*/
+	Timer.prototype.clear = function() {
+		this._timers = {};
+	};
+
+	
+	return {
+		/** 
+		* Timer class.
+		* @memberOf module:'brixy.debug.Timer'
+		* @type {module:'brixy.debug.Timer'~Timer}
+		*/
+		Me: Timer
+	};
+});

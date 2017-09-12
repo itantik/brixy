@@ -1,0 +1,211 @@
+/**
+* @module 'brixy.mvc.AppManager'
+*/
+BX.module.define('brixy.mvc.AppManager', function() {
+	
+	/*
+	* Configuration wrapper.
+	* @class
+	* @param {Object} config
+	*/
+	function AppConfig(config) {
+		this._app = null;
+		this._config = config;
+	}
+	
+	/*
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	AppConfig.prototype.toString = BX.toString;
+	
+	/*
+	* Returns application. Creates new one if it doesn't exist.
+	* @return {Object} - instance of the application
+	*/
+	AppConfig.prototype.getApp = function() {
+		if (!this._app) {
+			var c = this._config,
+				a = c.hasOwnProperty('application') ? c.application : 'brixy.mvc.Application';
+			
+			if (typeof a === 'function') { // constructor
+				this._app = new a(c);
+			}
+			else { // module name
+				a = BX.module(a);
+				this._app = new a.Me(c);
+			}
+		}
+		
+		return this._app;
+	};
+	
+	/*
+	* Returns application ID.
+	* @return {string}
+	*/
+	AppConfig.prototype.getId = function() {
+		var c = this._config;
+		return c.hasOwnProperty('id') ? c.id : '';
+	};
+	
+	/*
+	* Returns true if application can process the event.
+	* @param {string} event - event name
+	* @return {boolean}
+	*/
+	AppConfig.prototype.listensEvent = function(event) {
+		if (this._app)
+			return this._app.listensEvent(event);
+		
+		var c = this._config;
+		return c.hasOwnProperty('events') && c.events.hasOwnProperty(event);
+	};
+	
+	/**
+	* AppManager class.
+	* @class
+	* @alias module:'brixy.mvc.AppManager'~AppManager
+	*/
+	function AppManager() {
+		this._apps = [];
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	AppManager.prototype.toString = BX.toString;
+	
+	/**
+	* Saves the configuration of a new application. Application instance will be created on the first request.  
+	* Application is a class of 'brixy.mvc.Application' or `config.application`.  
+	* If `config.autorun` is passed, application runs immediately with it as the first request.  
+	* Application with the specified `config.id` is added only once.
+	* 
+	* @param {Object} config - Configuration object is used to create application.
+	* @throws Exception on error.
+	*/
+	AppManager.prototype.add = function(config) {
+		if (config.hasOwnProperty('id') && this.exists(config.id))
+			return;
+		
+		var c = new AppConfig(config);
+		this._apps.push(c);
+		
+		if (!config.hasOwnProperty('autorun'))
+			return;
+		
+		try {
+			c.getApp().processRequest(config.autorun);
+		}
+		catch (e) {
+			throw new BX.error('brixy.mvc.AppManager.add()', Error('Application' + (config.id ? ' "' + config.id + '" ' : ' ') + 'failed.'), e);
+		}
+	};
+	
+	/**
+	* Returns an application with the given id.
+	* 
+	* @param {*} id - Application ID.
+	* @return {Object|null}
+	*/
+	AppManager.prototype.get = function(id) {
+		var c = this._getConfig(id);
+		if (c)
+			return c.getApp();
+		
+		return null;
+	};
+	
+	/**
+	* Checks if there exists an application with the given id.
+	* 
+	* @param {*} id - Application ID.
+	* @return {boolean}
+	*/
+	AppManager.prototype.exists = function(id) {
+		return this._getConfig(id) != null;
+	};
+	
+	/*
+	* Returns a config object with the given id.
+	* 
+	* @param {*} id - Application ID.
+	* @return {object}
+	*/
+	AppManager.prototype._getConfig = function(id) {
+		if (!id && id !== 0)
+			return null;
+			
+		var c,
+			apps = this._apps,
+			i = 0,
+			n = apps.length;
+		
+		for ( ; i < n; i++) {
+			c = apps[i];
+			
+			if (c.getId() === id)
+				return c;
+		}
+		return null;
+	};
+	
+	/**
+	* Passes the request to the application of the ID. If the ID doesn't exist, does nothing.
+	* 
+	* @param {*} id - Application ID.
+	* @param {string|Object} request - Request string or route object.
+	* @throws Exception on error.
+	*/
+	AppManager.prototype.processRequest = function(id, request) {
+		try {
+			var a = this.get(id);
+			if (a)
+				a.processRequest(request);
+		}
+		catch (e) {
+			throw new BX.error('brixy.mvc.AppManager.processRequest()', Error('Application "' + id + '" failed.'), e);
+		}
+	};
+	
+	/**
+	* Processes the event. Passes the event to each application that listens it.
+	* @param {string} event - Event name.
+	* @param {Object} data - Application will pass the data to the event handler. (optional)
+	*/
+	AppManager.prototype.processEvent = function(event, data) {
+		var c,
+			apps = this._apps,
+			i = 0,
+			n = apps.length;
+		
+		try {
+			for ( ; i < n; i++) {
+				c = apps[i];
+				
+				if (c.listensEvent(event))
+					c.getApp().processEvent(event, data);
+			}
+		}
+		catch (e) {
+			// report errors
+			BX.error.report(e);
+		}
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* AppManager class.
+		* @memberOf module:'brixy.mvc.AppManager'
+		* @type {module:'brixy.mvc.AppManager'~AppManager}
+		*/
+		Me: AppManager
+	};
+});
+

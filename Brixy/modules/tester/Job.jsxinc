@@ -1,0 +1,210 @@
+BX.use('brixy', 'modules/tester/Section.jsxinc');
+BX.use('brixy', 'modules/tester/It.jsxinc');
+BX.use('brixy', 'modules/tester/Result.jsxinc');
+BX.use('brixy', 'modules/tester/report.jsxinc');
+
+/**
+* @module 'brixy.tester.Job'
+*/
+BX.module.define('brixy.tester.Job', function() {
+	var Section = BX.module('brixy.tester.Section').Me,
+		Result = BX.module('brixy.tester.Result').Me,
+		STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* AbortException exception.
+	* @class
+	* @alias module:'brixy.tester.Job'~AbortException
+	*/
+	function AbortException() {
+	}
+	
+	/**
+	* Job object.
+	* @class
+	* @alias module:'brixy.tester.Job'~Job
+	* @property {Object} it - Assert library instance. Default is {@link module:'brixy.tester.It'~It}.
+	
+	* @param {string} [name='Test job'] - Job name.
+	* @param {boolean} dialogOnFailure - Shows the report dialog when test fails.
+	* @param {Function|string} [assertLib='brixy.tester.It'] - Assert library. Accepts a constructor or module name. (optional)
+	* @param {int} [comparisonDepth=10] - Default comparison depth. (optional)
+	*/
+	function Job(name, dialogOnFailure, assertLib, comparisonDepth) {
+		// assertLibrary should be a module name or constructor
+		var It = assertLib || 'brixy.tester.It';
+		if (typeof It !== 'function') {
+			It = BX.module.Me(It);
+		}
+		this.it = new It(this, (comparisonDepth == undefined) ? 10 : comparisonDepth);
+		
+		this._name = name || 'Test job';
+		this._sections = [];
+		this._currentSection = null;
+		this._dialogOnFailure = !!dialogOnFailure;
+		this._timeStart = this._timeEnd = (new Date()).getTime();
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Job.prototype.toString = BX.toString;
+	
+	/**
+	* Gets job name.
+	* @return {string}
+	*/
+	Job.prototype.getName = function() {
+		return this._name;
+	};
+	
+	/**
+	* Sets job name.
+	* @param {string} name
+	*/
+	Job.prototype.setName = function(name) {
+		this._name = name;
+	};
+	
+	/**
+	* Adds a new job section.
+	* @param {string} [name]
+	* @return {module:'brixy.tester.Section'~Section} current job section
+	*/
+	Job.prototype.addSection = function(name) {
+		this._currentSection = new Section(name);
+		this._sections.push(this._currentSection);
+		
+		return this._currentSection;
+	};
+	
+	/**
+	* Gets current job section. Create new section if none exists.
+	* @return {module:'brixy.tester.Section'~Section} current job section
+	*/
+	Job.prototype.currentSection = function() {
+		if (!this._currentSection)
+			this.addSection();
+		
+		return this._currentSection;
+	};
+	
+	/**
+	* Gets list of all sections.
+	* @return {Array}
+	*/
+	Job.prototype.sectionList = function() {
+		return this._sections;
+	};
+	
+	/**
+	* Adds a result to the current job section. 
+	* @param {module:'brixy.tester.Result'~Result} result
+	*/
+	Job.prototype.addResult = function(result) {
+		this._timeEnd = (new Date()).getTime();
+		this.currentSection().addResult(result);
+	};
+	
+	/**
+	* Adds a failed result to the current job section. 
+	* @param {string} name
+	* @param {string} description
+	*/
+	Job.prototype.addFailedResult = function(name, description) {
+		this.addResult(new Result(STATUS.FAILED, name, description));
+	};
+	
+	/**
+	* Adds a skipped result to the current job section. 
+	* @param {string} name
+	* @param {string} description
+	*/
+	Job.prototype.addSkippedResult = function(name, description) {
+		this.addResult(new Result(STATUS.SKIPPED, name, description));
+	};
+	
+	/**
+	* Adds the result to the current job section, shows error if needed. Assert library methods calls it after evaluating a test.
+	* @param {module:'brixy.tester.Result'~Result} result
+	* @param {module:'brixy.tester.Result'~Value} actual - Actual tested value.
+	* @param {module:'brixy.tester.Result'~Value} expected - Expected value.
+	* @param {int} depth - The nesting level of the comparison of the objects.
+	*/
+	Job.prototype.onResult = function(result, actual, expected, depth) {
+		this.addResult(result);
+		
+		// failure report
+		if (!result.passed() && this._dialogOnFailure) {
+			// dialog
+			var r = BX.module('brixy.tester.report').showFailure(result, actual, expected, depth);
+			if (r.abortTester)
+				throw new AbortException();
+
+			this._dialogOnFailure = r.showNext;
+			
+			// subtract a time when the dialog was displayed
+			var t = (new Date()).getTime();
+			this._timeStart += t - this._timeEnd;
+			this._timeEnd = t;
+		}
+	};
+	
+	/**
+	* Counts number of tests, number of failed/skipped tests, job duration.
+	* @return {Object} - `{total: int, failed: int, skipped: int, duration: milliseconds}`
+	*/
+	Job.prototype.getStatistics = function() {
+		var i = 0,
+			n = this._sections.length,
+			t,
+			f,
+			s = t = f = 0,
+			stat;
+		
+		for ( ; i < n; i++) {
+			stat = this._sections[i].getStatistics();
+			t += stat.total;
+			f += stat.failed;
+			s += stat.skipped;
+		}
+	
+		return {
+			total: t,
+			failed: f,
+			skipped: s,
+			duration: this._timeEnd - this._timeStart
+		};
+	};
+	
+	/**
+	* Returns true if job passed.
+	* @return {boolean}
+	*/
+	Job.prototype.passed = function() {
+		for (var i = 0, n = this._sections.length; i < n; i++) {
+			if (!this._sections[i].passed())
+				return false;
+		}
+		return true;
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Job class.
+		* @memberOf module:'brixy.tester.Job'
+		* @type {module:'brixy.tester.Job'~Job}
+		*/
+		Me: Job,
+		/** 
+		* AbortException class.
+		* @memberOf module:'brixy.tester.Job'
+		* @type {module:'brixy.tester.Job'~AbortException}
+		*/
+		AbortException: AbortException
+	};
+});

@@ -1,0 +1,101 @@
+BX.use('brixy', 'modules/tester/Result.jsxinc');
+
+/**
+* @module 'brixy.tester.Section'
+*/
+BX.module.define('brixy.tester.Section', function() {
+	
+	var STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* Section object.
+	* @class
+	* @alias module:'brixy.tester.Section'~Section
+	* @param {string} [name]
+	*/
+	function Section(name) {
+		this._name = name || '';
+		this._resultList = [];
+		
+		this._statsCache = null;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Section.prototype.toString = BX.toString;
+	
+	/**
+	* Adds a result.
+	* @param {module:'brixy.tester.Result'~Result} result
+	*/
+	Section.prototype.addResult = function(result) {
+		this._resultList.push(result);
+		this._statsCache = null;
+	};
+	
+	/**
+	* Counts number of tests, number of failed/skipped tests.
+	* @return {Object} - `{total: int, failed: int, skipped: int}`
+	*/
+	Section.prototype.getStatistics = function() {
+		if (this._statsCache)
+			return this._statsCache;
+			
+		var i = 0,
+			n = this._resultList.length,
+			f = 0, s = 0;
+		
+		for ( ; i < n; i++) {
+			switch (this._resultList[i].getStatus()) {
+			case STATUS.FAILED: f++; break;
+			case STATUS.SKIPPED: s++; break;
+			}
+		}
+	
+		this._statsCache = {
+			total: n,
+			failed: f,
+			skipped: s
+		};
+		return this._statsCache;
+	};
+	
+	/**
+	* Returns true if job passed.
+	* @return {boolean}
+	*/
+	Section.prototype.passed = function() {
+		var stat = this.getStatistics();
+		return stat.failed == 0 && stat.skipped == 0;
+	};
+	
+	/**
+	* Gets section name.
+	* @return {string}
+	*/
+	Section.prototype.getName = function() {
+		return this._name;
+	};
+	
+	/**
+	* Gets result list.
+	* @return {Array}
+	*/
+	Section.prototype.resultList = function() {
+		return this._resultList;
+	};
+	
+	
+	// publish
+	return {
+		/** 
+		* Section class.
+		* @memberOf module:'brixy.tester.Section'
+		* @type {module:'brixy.tester.Section'~Section}
+		*/
+		Me: Section
+	};
+});

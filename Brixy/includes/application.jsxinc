@@ -1,0 +1,17 @@
+// MVC modules
+BX.use('brixy', 'modules/di/Container.jsxinc');
+BX.use('brixy', 'modules/mvc/Router.jsxinc');
+BX.use('brixy', 'modules/mvc/Controller.jsxinc');
+BX.use('brixy', 'modules/mvc/Application.jsxinc');
+
+// application container
+BX.use('brixy', 'extras/apps.jsxinc');
+
+/*LINKER-DEL*/		// debugging
+/*LINKER-DEL*/		
+/*LINKER-DEL*/		// BX.debug methods
+/*LINKER-DEL*/		BX.use('brixy', 'extras/debug.jsxinc');
+/*LINKER-DEL*/		
+/*LINKER-DEL*/		// error reporter
+/*LINKER-DEL*/		BX.use('brixy', 'modules/err/DebugReporter.jsxinc');
+/*LINKER-DEL*/		BX.error.addReporter('brixy.err.DebugReporter');

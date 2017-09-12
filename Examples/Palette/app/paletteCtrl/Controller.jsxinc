@@ -1,0 +1,42 @@
+
+/**
+* Module 'app.palette.Controller'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.palette.Controller', function() {
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(view) {
+		MvcController.call(this); // parent constructor
+
+		// do not create new view instance on each controller call
+		this.view = view;
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	// list of dependencies
+	Controller.injection = ['app.palette.View'];
+	
+	/**
+	* Default action of this controller.
+	* @param {Object|null} [data] - Action data. (optional)
+	* @return {string} - Next application request.
+	*/
+	Controller.prototype.actionDefault = function (data) {
+		// set view
+		this.setView(this.view);
+		
+		
+		// no request
+		//return '';
+	};
+	
+	
+	// publish the class
+	return {
+		Me: Controller
+	};
+});
+

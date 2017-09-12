@@ -1,0 +1,408 @@
+/**
+* Core namespace of the Brixy framework.
+* @namespace BX
+* @author Stanislav Antos
+* @version 1.0.0
+*/
+var BX = BX || {
+	
+	//LINKER-APPLY BX.use.alias('brixy', $.fileName); // Linker has to know the 'brixy' alias in case we link without BX.use namespace.
+	
+	/**
+	* Returns a string representation of the object in the form of `"[object ClassName]"`.  
+	* Base Extend Script `Object.prototype.toString()` method doesn't distinguish the type and always returns `"[object Object]"`.
+	* @memberOf BX
+	* @return {string}
+	*/
+	toString: function() {
+		var n = this.constructor.name;
+		return '[object ' + (n === 'anonymous' ? 'Object' : n) + ']';
+	},
+
+	/**
+	* Subclassing. Adds the prototype of the parent class to the child class.  
+	* `BX.subclass()` should be called before adding of child's prototype methods and properties.
+	* 
+	* @example
+	* // parent class
+	* function Parent(surname) {
+	* 	this._surname = surname;
+	* }
+	* Parent.prototype.getSurname = function() {
+	* 	return this._surname;
+	* };
+	* 
+	* // subclass
+	* function Child(name, surname) {
+	* 	// you may call the Parent constructor (if needed)
+	* 	Parent.call(this, surname);
+	* 	this._name = name;
+	* }
+	* BX.subclass(Child, Parent); // subclassing
+	* Child.prototype.getName = function() {
+	* 	return this._name + ' ' + this._surname;
+	* 	// or you may directly call the Parent method
+	* 	return this._name + ' ' + Parent.prototype.getSurname.call(this);
+	* };
+	* 
+	* @memberOf BX
+	* @param {Function} Child
+	* @param {Function} Parent
+	*/
+	subclass: function (Child, Parent) {
+		var F = function() {};
+		F.prototype = Parent.prototype;
+		Child.prototype = new F();
+		Child.prototype.constructor = Child;	
+	},
+	
+	/**
+	* Evaluates the file.
+	* @memberOf BX
+	* @param {File} file
+	*/
+	evalFile: function (file) {
+		$.evalFile(file);
+	}
+};
+
+/**
+* @namespace BX.error
+*/
+BX.error || (function() {
+	
+	/**
+	* ErrorItem object.
+	* @class
+	* @alias BX.error.ErrorItem
+	* 
+	* @property {string} location - Name of the module or method where the error has occurred.
+	* @property {string} message - Description of the error.
+	* @property {int} line - Line number where the error occured.
+	* @property {string} fileName - Name of the source file.
+	* 
+	* @param {string} location - Name of the module or method where the error has occurred.
+	* @param {Error|string} error - Description of the error.
+	* @param {Error|string} [primeError] - A prime error that caused this exception. (optional)
+	*/
+	function ErrorItem(location, error, primeError) {
+		var m = '',
+			l,
+			f;
+			
+		if (error) {
+			if (error instanceof Error || error instanceof ErrorItem) {
+				l = error.line;
+				f = error.fileName;
+				m = error.message;
+			}
+			else
+				m = m + error; // convert to string
+		}
+		
+		if (primeError) {
+			m = m ? m + '\n' + primeError : primeError;
+			
+			if (primeError instanceof Error) { // raw error that caused the exception
+				l = primeError.line;
+				f = primeError.fileName;
+			}
+		}
+		
+		this.location = location;
+		this.message = m;
+		this.line = l;
+		this.fileName = f;
+	}
+	
+	/**
+	* Returns the error string.
+	* @return {string}
+	*/
+	ErrorItem.prototype.toString = function() {
+		var f = this.fileName ? decodeURI(this.fileName) : '';
+		
+		return (this.location ? '-> ' + this.location + ':' : '') 
+			+ (this.message ? '\n' + this.message : '') 
+			+ (f ? '\nFile: ' + f.substr(f.lastIndexOf('/') + 1) : '') 
+			+ (this.line ? '\nLine: ' + this.line : '');
+	};
+	
+	/**
+	* ErrorChain object wraps a chain of errors. Creation of the ErrorChain instance is possible without **new** keyword.  
+	* There is available method `BX.error()` as a shortcut to `BX.error.ErrorChain()`.
+	* 
+	* @example <caption>Example 1:</caption>
+	* throw BX.error('Application.run()', 'Run method failed.', Error('Something is wrong.'));
+	* 
+	* @example <caption>Example 2 - without the third parameter:</caption>
+	* throw BX.error('Application.run()', 'Run method failed.');
+	* // or better:
+	* throw BX.error('Application.run()', Error('Run method failed.')); // Error object captures the line number and file name
+	* 
+	* @example <caption>Example 3 - try/catch block:</caption>
+	* try {
+	* 	// ...
+	* }
+	* catch (e) {
+	* 	throw BX.error('Application.run()', Error('Run method failed.'), e); // chaining of the errors
+	* }
+	* 
+	* @class
+	* @alias BX.error.ErrorChain
+	* @param {string} location - Name of the module or method where the error has occurred.
+	* @param {Error|string} error - Description of the error.
+	* @param {BX.error.ErrorChain|Error|string} [primeError] - A prime error that caused this exception. (optional)
+	*/
+	function ErrorChain(location, error, primeError) {
+		if (primeError && typeof primeError.addError === 'function') { // error chaining (primeError may not be subclass of ErrorChain)
+			primeError.addError(location, error);
+			return primeError;
+		}
+		
+		if (!(this instanceof ErrorChain)) // ErrorChain is called without 'new' keyword
+			return new ErrorChain(location, error, primeError);
+			
+		this._errors = [];
+		this._callStack = $.stack;
+		this.addError(location, error, primeError);
+	}
+	
+	/**
+	* Adds new error to error list.
+	* @param {string} location - Name of the module or method where the error has occurred.
+	* @param {Error|string} error - Description of the error.
+	* @param {BX.error.ErrorChain|Error|string} [primeError] - A prime error that caused this exception. (optional)
+	*/
+	ErrorChain.prototype.addError = function(location, error, primeError) {
+		if (location || error)
+			this._errors.push(new BX.error.ErrorItem(location, error, primeError));
+	};
+	
+	/**
+	* Returns call stack.
+	* @return {string}
+	*/
+	ErrorChain.prototype.getCallStack = function() {
+		return this._callStack;
+	};
+	
+	/**
+	* Returns error list.
+	* @return {Array}
+	*/
+	ErrorChain.prototype.getErrors = function() {
+		return this._errors;
+	};
+	
+	/**
+	* Returns the original error that caused the exception.
+	* @return {BX.error.ErrorItem|null}
+	*/
+	ErrorChain.prototype.getPrimeError = function() {
+		return this._errors.length ? this._errors[0] : null;
+	};
+	
+	/**
+	* Returns the error string.
+	* @return {string}
+	*/
+	ErrorChain.prototype.toString = function() {
+		return 'Error occured:\n\n' + (this._errors ? this._errors.join('\n\n') : '');
+	};
+	
+	BX.error.ErrorChain = BX.error = ErrorChain;
+	
+	BX.error.ErrorItem = ErrorItem;
+	
+	// registered error reporters
+	var _reporters = [];
+	
+	/**
+	* Reports an error issue. Calls method `report(err)` on all registered reporters.
+	* @param {*} err - Error object or message.
+	*/
+	BX.error.report = function(err) {
+		if (err == undefined)
+			return;
+		
+		var passed = false,
+			hasOwn = Object.prototype.hasOwnProperty,
+			r,
+			i = 0,
+			n = _reporters.length;
+		
+		// try to process at least one reporter
+		for ( ; i < n; i++) {
+			try {
+				if (!hasOwn.call(_reporters, i))
+					continue;
+				r = _reporters[i];
+				if (typeof r === 'string')
+					r = BX.module(r).Me;
+				if (typeof r === 'function')
+					r = new r();
+				r.report(err);
+				passed || (passed = true);
+			}
+			catch (e) {
+			}
+		}
+		
+		if (!passed) // none reporter processed
+			alert(err);
+	};
+	
+	/**
+	* Adds an error reporter. Reporter should have `report(err)` method.
+	* @param {Object|Function|string} reporter - Reporter object or constructor or module name.
+	*/
+	BX.error.addReporter = function(reporter) {
+		_reporters.push(reporter);
+	};
+
+})();
+
+/**
+* Module system.
+* @namespace BX.module
+*/
+BX.module || (function() {
+
+	var _modules = {};
+
+	/**
+	* Returns instance of the module.
+	* If instance is defined as a creation function, it is invoked only on the first call of the get() method.
+	* There is available method BX.module() as a shortcut to BX.module.module().
+	* @memberOf BX.module
+	* @param {string} name - Name of the module.
+	* @return {*}
+	*/
+	function module(name) {
+		try {
+			if (!_modules.hasOwnProperty(name))
+				throw Error('Module "' + name + '" is not defined.');
+
+			return _modules[name].get();
+		}
+		catch (e) {
+			throw new BX.error('BX.module()', Error('Cannot load module "' + name + '".'), e);
+		}
+	}
+
+	/**
+	 * Adds new module.
+	 * @memberOf BX.module
+	 * @method define
+	 * @param {string} name - Name of the module.
+	 * @param {*} factory - Module object or factory function.
+	 * @param {string} [rewriteMode='error'] - How to redefine module if it already exists: `'error'` = throw an exception (default), `'skip'` = keep the old definition, `'rewrite'` = rewrite the old definition.
+	 */
+	module.define = function(name, factory, rewriteMode) {
+		if (_modules.hasOwnProperty(name)) {
+			switch (rewriteMode || 'error') {
+				case 'skip':
+					return;
+				case 'error':
+					throw new BX.error('BX.module.define()', 'Cannot define module.', Error('Module "' + name + '" already exists.'));
+					break;
+				case 'rewrite':
+					break;
+				default:
+					throw new BX.error('BX.module.define()', 'Cannot properly redefine existing module "' + name + '". Unknown rewrite mode.');
+			}
+		}
+
+		_modules[name] = new BX.module.Module(factory);
+	};
+
+	/**
+	* Checks if the module exists.
+	* @memberOf BX.module
+	* @method exists
+	* @param {string} name - Name of the module.
+	* @return {boolean}
+	*/
+	module.exists = function(name) {
+		return _modules.hasOwnProperty(name);
+	};
+
+	/**
+	* Returns the list of the module names.
+	* @memberOf BX.module
+	* @method list
+	* @return {Array}
+	*/
+	module.list = function() {
+		var l = [];
+
+		for (var m in _modules) {
+			if (_modules.hasOwnProperty(m))
+				l.push(m);
+		}
+
+		return l;
+	};
+
+	/**
+	* Returns the property Me of the module.
+	* Property Me should hold the constructor of the object wrapped by this module.
+	* @memberOf BX.module
+	* @method Me
+	* @param {string} name - Module name.
+	* @return {Function}
+	* @throws Exception if module.Me is missing or is not a Function.
+	*/
+	module.Me = function(name) {
+		var m = module(name);
+
+		if (!m.hasOwnProperty('Me'))
+			throw Error('Missing property "Me" of the module "' + name + '".');
+
+		if (typeof m.Me !== 'function')
+			throw Error('Property "Me" of the module "' + name + '" should be a Function.');
+
+		return m.Me;
+	};
+
+	BX.module.module = BX.module = module;
+})();
+
+BX.module.Module || (function() {
+	
+	/**
+	* Module item.
+	* @class
+	* @alias BX.module.Module
+	* @param {*} factory - Module object or factory function.
+	*/
+	function Module(factory) {
+		this._instance = factory;
+	}
+	
+	/**
+	* Gets module object.
+	* @return {*}
+	*/
+	Module.prototype.get = function() {
+		if (typeof this._instance === "function") {
+				this._instance = this._instance();
+		}
+		this.get = getInstance;
+		return this.get();
+	};
+	
+	function getInstance() {
+		return this._instance;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Module.prototype.toString = BX.toString;
+	
+	BX.module.Module = Module;
+})();

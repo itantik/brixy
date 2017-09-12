@@ -1,0 +1,80 @@
+BX.use('brixy', 'modules/fs/filesystem.jsxinc');
+BX.use('', 'app/model/fileHelpers.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.model.Template', function() {
+	
+	var filesystem = BX.module('brixy.fs.filesystem'),
+		fileHelpers = BX.module('app.model.fileHelpers');
+	
+	function Template() {
+		this._template = null; // selected template
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @return {string}
+	*/
+	Template.prototype.toString = BX.toString;
+	
+	/**
+	* Selects template file.
+	* @param {File} template
+	*/
+	Template.prototype.setTemplate = function (template) {
+		this._template = template;
+	};
+
+	/**
+	* Returns the selected template file.
+	* @return {File} template
+	*/
+	Template.prototype.getTemplate = function () {
+		return this._template;
+	};
+
+	/**
+	* Returns the name of the selected template file without extension.
+	* @return {string}
+	*/
+	Template.prototype.nakedTemplateName = function () {
+		return fileHelpers.nakedName(this._template);
+	};
+
+	/**
+	* Reads template file.
+	* @return {string} - Contents of the template file.
+	*/
+	Template.prototype.readSource = function () {
+		var source = fileHelpers.fileContent(this.getTemplate());
+			
+		if (source === false)
+			throw new BX.error('app.models.Template.read()', '', Error('Cannot open file "' + this.getTemplate() + '"'));
+			
+		return source;
+	};
+
+	/**
+	* Saves a new file.
+	* @param {string} filename - A name of new file.
+	* @param {string} code - Saved code.
+	*/
+	Template.prototype.saveResult = function (filename, code) {
+		var file = File(Folder.current + '/' + filename);
+		file = filesystem.saveDialog('Save file', 'ExtendScript file:*.jsx;*.jsxinc;*.js', file);
+		
+		if (!file)
+			return;
+		
+		file.open('w');
+		file.writeln(code);
+		file.close();
+	};
+
+
+	return {
+		Me: Template
+	};
+});

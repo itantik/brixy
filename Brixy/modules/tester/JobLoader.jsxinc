@@ -1,0 +1,85 @@
+BX.use('brixy', 'modules/fs/FileLoader.jsxinc');
+BX.use('brixy', 'modules/tester/Job.jsxinc');
+BX.use('brixy', 'extras/debug.jsxinc');
+
+/**
+* @module 'brixy.tester.JobLoader'
+*/
+BX.module.define('brixy.tester.JobLoader', function() {
+	
+	var FileLoader = BX.module.Me('brixy.fs.FileLoader');
+
+	/**
+	* JobLoader object.
+	* 
+	* @class
+	* @alias module:'brixy.tester.JobLoader'~JobLoader
+	* @extends {module:'brixy.fs.FileLoader'~FileLoader}
+	* @param {module:'brixy.tester.Tester'~Tester} tester
+	* @param {Function} [fileFilter] - Callback filters the files in the job folders: `function(path){return boolean;}`. By default, accepts all files whose name ends with **job.jsx** / **job.jsxinc** / **job.js**. (optional)
+	* @param {Function} [folderFilter] - Callback filters the job folders: `function(path){return boolean;}`. By default, accepts all folders and subfolders. (optional)
+	*/
+	function JobLoader(tester, fileFilter, folderFilter) {
+		FileLoader.call(this); // parent constructor
+		
+		this._tester = tester;
+		
+		if (typeof fileFilter === 'function')
+			this.isAllowedFile = fileFilter;
+			
+		if (typeof folderFilter === 'function')
+			this.isAllowedFolder = folderFilter;
+	}
+	
+	BX.subclass(JobLoader, FileLoader); // subclassing
+	
+	/**
+	* Filters the file.
+	* 
+	* @param {string} path - Full path of the file.
+	* @return {boolean}
+	*/
+	JobLoader.prototype.isAllowedFile = function(path) {
+		return /.*job\.(jsx|jsxinc|js)$/i.test(path);
+	};
+
+	/**
+	* Runs job files.
+	* @param {File} file
+	* @throws Exception
+	*/
+	JobLoader.prototype.onLoadFile = function(file) {
+		var AbortException = BX.module('brixy.tester.Job').AbortException,
+			debug = BX.debug,
+			tester = this._tester;
+	
+		tester.addJob('File: ' + file.displayName);
+		
+		try {
+			runJobFile(file, tester, debug);
+		}
+		catch (e) {
+			throw (e instanceof AbortException) ? e : BX.error('brixy.tester.JobLoader.onLoadFile()', Error('File: ' + file), e);
+		}
+	};
+	
+	function runJobFile(file, tester, debug) {
+		var BX = undefined, // hide global variable (but $.global.BX could be available)
+			JobLoader = undefined,
+			job = tester.currentJob(),
+			it = job.it;
+
+		// test file can use variables: file, tester, debug, job, it
+		$.evalFile(file);
+	}
+	
+	
+	return {
+		/** 
+		* JobLoader class.
+		* @memberOf module:'brixy.tester.JobLoader'
+		* @type {module:'brixy.tester.JobLoader'~JobLoader}
+		*/
+		Me: JobLoader
+	};
+});

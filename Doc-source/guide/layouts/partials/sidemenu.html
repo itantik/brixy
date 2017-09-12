@@ -1,0 +1,23 @@
+<div id="side-menu-wrap">
+	<a id="side-menu-title">Menu</a>
+	<div class="pure-menu side-menu">
+		<ul class="pure-menu-list">
+		{{#each navs.guides}}
+			{{#if children}}
+				<li class="pure-menu-heading">
+					{{#if file}}{{file.title}}{{else}}{{name}}{{/if}}
+					<ul class="pure-menu-list">
+						{{#each children}}
+							{{> navchildren}}
+						{{/each}}
+					</ul>
+				</li>
+			{{else}}
+				<li class="pure-menu-item{{#ifOnPath @root.navPath path}} {{#ifEqual @root.navPath path}}pure-menu-selected{{else}}selected-path{{/ifEqual}}{{/ifOnPath}}"><a class="pure-menu-link" href="{{relativePath @root.navPath path}}">{{#if file}}{{file.title}}{{else}}{{name}}{{/if}}</a>
+				</li>
+			{{/if}}
+			
+		{{/each}}
+		</ul>
+	</div>
+</div>

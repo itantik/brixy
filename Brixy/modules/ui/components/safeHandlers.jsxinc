@@ -1,0 +1,78 @@
+/**
+* Defines components for {@link module:'brixy.ui.SuiBuilder'~SuiBuilder}.  
+* Creates event handlers for Script UI controls. Wraps a callback to try/catch block so it can report error if any.  
+* Script UI controls don't show errors, that are thrown from the event handlers, while window is opened.
+* 
+* @example
+* function myHandler() {
+* 	// do something bad
+* 	throw 'This is bad.';
+* }
+* 
+* // standard handler: after click does nothing
+* builder.button.set('onClick', myHandler);
+* 
+* // safe handler: after click shows error report
+* builder.button.safeHandler('onClick', myHandler);
+* 
+* @module 'brixy.ui.components.safeHandlers'
+*/
+BX.module.define('brixy.ui.components.safeHandlers', function() {
+
+	// publish
+	return {
+
+		/**
+		* Adds event handler to the current element. Reports error if any occurs.
+		* 
+		* @memberOf module:'brixy.ui.components.safeHandlers'
+		* @param {string} eventName - Event names: 'onClick', 'onChange', ...
+		* @param {function} callback - Event handler.
+		* @param {...*} [pars, ...] - Additional parameters will be passed to callback method. (optional)
+		*/
+		safeHandler: function(eventName, callback /*, args */) {
+			var args = [].slice.call(arguments, 2);
+			
+			this.element[eventName + ''] = function() {
+				try {
+					callback.apply(this, args);
+				}
+				catch (e) {
+					BX.error.report(e);
+				}
+			};
+		},
+		
+		/**
+		* Adds event handler that calls [BX.apps.processRequest()]{@link BX.apps.processRequest} method. Reports error if any occurs.
+		* 
+		* @memberOf module:'brixy.ui.components.safeHandlers'
+		* @param {string} eventName - Event names: 'onClick', 'onChange', ...
+		* @param {string} appId - Application ID.
+		* @param {string|Object} request - Request route.
+		*/
+		safeRequestHandler: function(eventName, appId, request) {
+			this.element[eventName + ''] = function() {
+				try {
+					BX.apps.processRequest(appId, request);
+				}
+				catch (e) {
+					BX.error.report(e);
+				}
+			};
+		},
+		
+		/**
+		* Adds 'onClick' handler that calls [BX.apps.processRequest()]{@link BX.apps.processRequest} method. Reports error if any occurs.
+		* 
+		* @memberOf module:'brixy.ui.components.safeHandlers'
+		* @param {string} appId - Application ID.
+		* @param {string|Object} request - Request route.
+		*/
+		safeRequestOnClick: function(appId, request) {
+			this.builder.safeRequestHandler('onClick', appId, request);
+		}
+		
+	};
+	
+});

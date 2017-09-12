@@ -1,0 +1,38 @@
+
+/**
+* Module 'app.main.Controller'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.main.Controller', function() {
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(appData) {
+		MvcController.call(this); // parent constructor
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	// list of dependencies
+	Controller.injection = [];
+	
+	/**
+	* Default action of this controller.
+	* @param {Object|null} [data] - Action data. (optional)
+	* @return {string} - Next application request.
+	*/
+	Controller.prototype.actionDefault = function (data) {
+		// set view
+		this.setView('app.main.View'/*, arguments */);
+
+		// next request
+		//return 'request';
+	};
+	
+
+	// publish the class
+	return {
+		Me: Controller
+	};
+});
+

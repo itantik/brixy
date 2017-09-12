@@ -1,0 +1,36 @@
+/**
+* 
+*/
+BX.module.define('app.settings.Controller', function() {
+	
+	var MvcController = BX.module.Me('brixy.mvc.Controller');
+	
+	function Controller(settings) {
+		MvcController.call(this); // parent constructor
+		
+		this.settings = settings; // service 'settings'
+	}
+	
+	BX.subclass(Controller, MvcController); // subclassing
+	
+	Controller.injection = ['settings'];
+	
+	/**
+	* First action of this controller.
+	* 
+	* @return {string} - Next controller.
+	*/
+	Controller.prototype.actionDefault = function () {
+		this.setView('app.settings.View', this.settings.getSetting());
+	};
+	
+	Controller.prototype.handleOK = function (view) {
+		this.settings.setValues(view.settings);
+		return 'app.linking.Controller';
+	};
+
+	
+	return {
+		Me: Controller
+	};
+});

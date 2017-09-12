@@ -1,0 +1,136 @@
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.presets.View', function() {
+	
+	var MvcView = BX.module.Me('brixy.mvc.View');
+	
+	function PresetsView() {
+		MvcView.call(this); // parent constructor
+		
+		this.defaultsObj = null;
+	}
+	
+	BX.subclass(PresetsView, MvcView); // subclassing
+	
+	/**
+	* Shows dialog.
+	* 
+	* @param {Object} defaults
+	*/
+	PresetsView.prototype.render = function (defaults) {
+		var Sui = BX.module('brixy.ui.SuiBuilder').Me,
+			b = new Sui();
+			
+		this.defaultsObj = null;
+		
+		b.window('dialog', 'Brixy Mixer - preset values')
+			.row().alignChildren('top')
+				.column().alignChildren('fill')
+					.listBox().id('list').set('minimumSize', [200, 150]).set('onChange', selectionChanged)
+						.end()
+					.columnPanel('Edit').alignChildren('right')
+						.row()
+							.staticText('Name:').labelFor('name')
+							.editText().id('name').set('characters', 40).set('onChange', trimSpacesOnChange)
+							.end()
+						.row()
+							.staticText('Value:').labelFor('value')
+							.editText().id('value').set('characters', 40).set('onChange', trimSpacesOnChange)
+							.end()
+						.row()
+							.button('Save').id('saveButton').set('onClick', saveItem)
+							.button('Delete').id('delButton').set('onClick', deleteItem)
+							.end()
+						.end()
+					.end()
+				.column().alignChildren('fill')
+					.button("{text: 'Save', properties: {name: 'ok'}}").closeOnClick(true, 1)
+					.button('Cancel').closeOnClick(false, 2)
+		.execute(updateList) // fills listBox
+		.showWindow();
+		
+		if (b.result() == 1) {
+			this.defaultsObj = defaults;
+			return 'Save';
+		}
+		
+		function trimSpacesOnChange() {
+			this.text = this.text.replace(/^\s*(.*?)\s*$/, '$1');
+		}
+		
+		function selectionChanged() {
+			var sel = b.get('list').selection;
+			
+			if (sel) {
+				b.get('name').text = sel.name;
+				b.get('value').text = sel.value;
+				b.get('delButton').enabled = true;
+				b.get('saveButton').text = 'Save';
+			}
+			else {
+				b.get('name').text = '';
+				b.get('value').text = '';
+				b.get('delButton').enabled = false;
+				b.get('saveButton').text = 'Add';
+			}
+		}
+		
+		function saveItem() {
+			var v,
+				name = b.get('name').text,
+				value = b.get('value').text;
+			
+			if (name) {
+				defaults[name] = value;
+					
+				updateList();
+			}
+		}
+		
+		function deleteItem() {
+			var sel = b.get('list').selection,
+				name = sel ? sel.name : '',
+				i;
+			
+			if (name && confirm('Do you want to delete a variable "' + name + '"?')) {
+				if (name in defaults) {
+					defaults[name] = undefined;
+					delete defaults[name];
+				}
+				
+				updateList();
+			}
+		}
+		
+		function updateList() {
+			var k,
+				val,
+				list = b.get('list'),
+				item;
+			
+			list.removeAll();
+			
+			for (k in defaults) {
+				val = defaults[k];
+				if (val == undefined)
+					continue;
+					
+				item = list.add('item', k + ': ' + val);
+				item.name = k;
+				item.value = val;
+			}
+			
+			selectionChanged();
+		}
+	};
+	
+
+	return {
+		Me: PresetsView
+	};
+});
+

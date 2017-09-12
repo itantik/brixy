@@ -1,0 +1,451 @@
+
+/**
+* 
+*/
+BX.module.define('app.model.Parser', function() {
+	
+	/**
+	* Parser object.
+	*/
+	function Parser() {
+		this._source = '';
+		this._result = '';
+		
+		this._tokens = [];
+		this._values = {};
+		this._comments = [];
+		this._filename = '';
+		
+		this._processIndex = 0; // index of the processed token during the compilation
+		this._tokensLength = 0;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @return {string}
+	*/
+	Parser.prototype.toString = BX.toString;
+	
+	/**
+	* Returns resulting string.
+	* @return {string|false} - Resulting string or false.
+	*/
+	Parser.prototype.getResult = function() {
+		return this._result;
+	};
+	
+	/**
+	* Returns macro values.
+	* @return {Object} - Macro values.
+	*/
+	Parser.prototype.getValues = function() {
+		return this._values;
+	};
+	
+	/**
+	* Returns all comments.
+	* @return {Object} - Macro values.
+	*/
+	Parser.prototype.getComments = function() {
+		return this._comments;
+	};
+	
+	/**
+	* Sets values into the corresponding macros.
+	* @param {Object} values
+	*/
+	Parser.prototype.assignValues = function (values) {
+		if (!values)
+			return;
+		
+		var v = this._values,
+			name;
+			
+		for (name in values) {
+			if (v.hasOwnProperty(name))
+				v[name].value = values[name];
+		}
+	};
+	
+	/**
+	* Tries to guess a template name from the parsed values.
+	* @return {string}
+	*/
+	Parser.prototype.guessName = function() {
+		var v = this._values,
+			name = '',
+			val,
+			tname,
+			str = '',
+			strM = '',
+			strN = '',
+			str1 = '',
+			res,
+			filename = this._filename || '*.jsxinc';
+		
+		try {
+			for (name in v) {
+				val = v[name].value;
+				if (val === !!val) // is boolean
+					continue;
+				val += '';
+					
+				if (!str1) {
+					str1 = val;
+				}
+				tname = v[name].title || name;
+				if (tname.match(/.*(application).*/i)) {
+					str = val;
+					break;
+				}
+				if (!strM && tname.match(/.*(modul).*/i)) {
+					strM = val;
+				}
+				if (!strN && tname.match(/.*(name).*/i)) {
+					strN = val;
+				}
+			}
+			str = str || strM || strN || str1;
+		}
+		catch (e) {
+			str = '';
+		}
+		
+		if (str) {
+			res = str.match(/(\w*)\s*$/);
+			if (res)
+				name = res[1];
+			else
+				name = str.replace(/^\s*(.*?)\s*$/, '$1');
+		}
+		
+		return filename.replace('*', name);
+	};
+	
+	/* ===== Parsing ===== */
+	
+	/**
+	* Sets a source string and parses into tokens.
+	* @param {string} - Source string.
+	*/
+	Parser.prototype.parse = function(source) {
+		// reset
+		this._tokens = [];
+		this._values = {};
+		this._comments = [];
+		this._filename = '';
+		this._source = source.toString();
+		this._result = '';
+		
+		try {
+			this._searchTokens();
+		}
+		catch (e) {
+			throw new BX.error('app.model.Parser.parse()', Error('Parser error.'), e);
+		}
+	};
+	
+	Parser.prototype._searchTokens = function() {
+		var oldStyle = 'support\nmultiline'.match(/port[^]*line/) == null, // e.g. InDesign CS4
+			s = this._source,
+			last = '',
+			ind = 0,
+			lineN,
+			lineR,
+			searchReg,
+			that = this;
+		
+		if (oldStyle) {
+			// endline substitute
+			lineN = findEndlineSub(s);
+			lineR = lineN + 'r';
+			lineN += 'n';
+			// replace endlines to get a single line source
+			s = s.split('\n').join(lineN).split('\r').join(lineR);
+			
+			// search value
+			searchReg = /(.*?)<(!)?([a-zA-Z_*]*):([^<]*?):>/g;
+		}
+		else {
+			// search value
+			searchReg = /([^]*?)<(!)?([a-zA-Z_*]*):([^<]*?):>/g;
+		}
+		
+		s.replace(searchReg, function(all, text, required, command, value) {
+			if (oldStyle) {
+				// restore endlines
+				text = text && restoreEndlines(text);
+				all = restoreEndlines(all);
+				// remove endlines
+				value = value && value.split(lineR).join('').split(lineN).join('');
+			}
+			else {
+				// remove endlines
+				value = value ? value.replace(/\r|\n/, '') : '';
+			}
+			
+			last = all;
+			required = !!required;
+			ind = ind + all.length; // offset from the beginning of the source
+			
+			if (command) {
+				that._addToken(text, command, required, value, ind);
+				switch (command) {
+				case 'if':
+				case 'each':
+					that._addValue(command, required, value);
+					break;
+				case 'title':
+					that._addTitle(required, value);
+					break;
+				case '*':
+					that._addComment(value);
+					break;
+				}
+			}
+			else if (value) {
+				that._addToken(text, 'value', required, value, ind);
+				that._addValue('value', required, value);
+			}
+			else { // unknown
+				that._addTextToken(all, ind);
+			}
+		});
+		
+		if (last) {
+			this._addTextToken(this._source.substr(ind), this._source.length);
+		}
+		
+		/* helpers */
+		function restoreEndlines(str) {
+			return str.split(lineR).join('\r').split(lineN).join('\n');
+		}
+		function findEndlineSub(code) {
+			var sub = '@%#',
+				i = 0;
+			while (code.indexOf(sub) >= 0) {
+				sub = '@%#' + (++i);
+			}
+			return sub;
+		}
+	};
+	
+	Parser.prototype._addToken = function(text, type, required, value, offsetIndex) {
+		if (text) {
+			this._tokens.push({type: 'text', value: text, index: offsetIndex});
+		}
+		this._tokens.push({type: type, required: required, value: value, index: offsetIndex});
+	};
+	
+	Parser.prototype._addTextToken = function(value, offsetIndex) {
+		this._tokens.push({type: 'text', value: value, index: offsetIndex});
+	};
+	
+	Parser.prototype._addComment = function(value) {
+		this._comments.push(value);
+	};
+	
+	Parser.prototype._addValue = function(type, required, value) {
+		if (value == '')
+			throw Error('Value of the macro <' + type + '::> not defined.');
+			
+		var val = this._values.hasOwnProperty(value) ? this._values[value] : undefined;
+		if (!val) {
+			val = this._values[value] = ({type: type, required: required, value: ''});
+		}
+		else {
+			if (required && !val.required)
+				val.required = true;
+				
+			if (val.type !== type) {
+				if (val.type === 'if' || val.type === 'title' || type === 'each')
+					val.type = type;
+			}
+		}
+		return val;
+	};
+	
+	Parser.prototype._addTitle = function(required, value) {
+		var res = value.match(/^\s*([^=]+?)\s*=\s*(.+)\s*$/);
+		if (!res || !res[1] || !res[2]) {
+			throw Error('Macro <title::> should be in the form <title:name=value:>.');
+		}
+		var val = this._addValue('title', required, res[1]);
+		val.title = res[2];
+	};
+	
+	/* ===== Compilation ===== */
+	
+	/**
+	* Replaces all macros in the source string.
+	*/
+	Parser.prototype.compile = function() {
+		try {
+			this._result = [];
+			this._filename = '';
+			this._processIndex = 0;
+			this._tokensLength = this._tokens.length;
+			var res = this._processBlock(true);
+			if (res.ending)
+				throw Error('Cannot process macro <' + res.ending.type + '::> in this context.');
+			
+			this._result = [].concat(res.result).join('');
+		}
+		catch (e) {
+			var s, ind;
+			try {
+				ind = Math.min(this._processIndex, this._tokensLength - 1);
+				s = (ind < 0) ? '' : this._source.substring(0, this._tokens[ind].index);
+				if (s.length > 200)
+					s = '... ' + s.substr(s.length - 200);
+			}
+			catch (ee) {
+				s = '';
+			}
+			throw new BX.error('app.model.Parser.compile()', Error('Error in the source:\n' + s), e);
+		}
+	};
+	
+	Parser.prototype._processBlock = function(isLive) {
+		var t = this._tokens,
+			n = this._tokensLength,
+			token,
+			ending = null, // ending token
+			res,
+			result = [];
+		
+		for ( ; this._processIndex < n; this._processIndex++) {
+			res = '';
+			token = t[this._processIndex];
+			switch (token.type) {
+			case 'if':
+				res = this._processIf(token, isLive);
+				break;
+			case 'each':
+				res = this._processEach(token, isLive);
+				break;
+			case 'filename':
+				this._processFilename(isLive);
+				break;
+			case 'value':
+				if (isLive && this._values.hasOwnProperty(token.value))
+					res = this._values[token.value].value;
+				break;
+			case 'text':
+				if (isLive)
+					res = token.value;
+				break;
+			case '*':
+			case 'title':
+				break;
+			case 'separator':
+			case 'else':
+			case 'end':
+				ending = token; // end of this block
+				break;
+			default:
+				throw Error('Cannot process an unknown macro <' + token.type + '::>.');
+			}
+			if (res)
+				result.push(res + '');
+			if (ending !== null)
+				break;
+		}
+		return {ending: ending, result: result.join('')};
+	};
+	
+	Parser.prototype._processIf = function(token, isLive) {
+		var res,
+			result = '',
+			cond = this._values.hasOwnProperty(token.value) && this._values[token.value].value,
+			live = isLive && cond;
+		
+		this._processIndex++;
+		res = this._processBlock(live);
+		if (live)
+			result = res.result;
+			
+		if (res.ending && res.ending.type === 'else') {
+			this._processIndex++;
+			live = isLive && !cond;
+			res = this._processBlock(live);
+			if (live)
+				result = res.result;
+		}
+		
+		if (!res.ending)
+			throw Error('<if::> block should be terminated by <end::> macro.');
+			
+		if (res.ending.type !== 'end')
+			throw Error('Cannot process macro <' + res.type + '::> in <if::> block.');
+		
+		return result;
+	};
+	
+	Parser.prototype._processEach = function(token, isLive) {
+		var res,
+			result = [],
+			index = this._processIndex,
+			orig = this._values.hasOwnProperty(token.value) ? this._values[token.value].value : '',
+			vals = (isLive && orig) ? [].concat(orig) : [],
+			n = vals.length,
+			i = 0;
+		
+		if (n === 0) {
+			n = 1;
+			isLive = false;
+		}
+		
+		for ( ; i < n; i++) {
+			this._processIndex = index;
+			if (isLive)
+				this._values[token.value].value = vals[i];
+			
+			do {
+				this._processIndex++;
+				res = this._processBlock(isLive);
+				if (isLive)
+					result.push(res.result);
+					
+				if (!res.ending)
+					throw Error('<each::> block should be terminated by <end::> macro.');
+			
+				if (res.ending.type === 'separator' && isLive && i < n-1)
+					result.push(res.ending.value);
+				
+			} while (res.ending.type === 'separator');
+			
+			if (res.ending.type !== 'end')
+				throw Error('Cannot process macro <' + res.ending.type + '::> in <each::> block.');
+		}
+		
+		if (isLive && this._values.hasOwnProperty(token.value))
+			this._values[token.value].value = orig;
+		
+		return result.join('');
+	};
+	
+	Parser.prototype._processFilename = function(isLive) {
+		var res;
+		
+		this._processIndex++;
+		res = this._processBlock(isLive);
+		
+		if (!res.ending)
+			throw Error('<filename::> block should be terminated by <end::> macro.');
+			
+		if (res.ending.type !== 'end')
+			throw Error('Cannot process macro <' + res.type + '::> in <filename::> block.');
+		
+		if (isLive && res.result)
+			this._filename = res.result;
+			
+		return '';
+	};
+	
+	
+	// publish
+	return {
+		Me: Parser
+	};
+});

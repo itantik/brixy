@@ -1,0 +1,9 @@
+BX.use('brixy', 'modules/ui/SuiBuilder.jsxinc');
+
+// SuiBuilder base components
+BX.use('brixy', 'modules/ui/components/base.jsxinc');
+BX.module('brixy.ui.SuiBuilder').Me.attach(BX.module('brixy.ui.components.base'), true);
+
+/*LINKER-DEL*/		// SuiBuilder debug methods
+/*LINKER-DEL*/		BX.use('brixy', 'modules/ui/components/debug.jsxinc');
+/*LINKER-DEL*/		BX.module('brixy.ui.SuiBuilder').Me.attach(BX.module('brixy.ui.components.debug'), true);

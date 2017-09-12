@@ -1,0 +1,56 @@
+
+BX.use('brixy', 'modules/mvc/View.jsxinc');
+BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+
+/**
+* Module 'app.startup.View'
+* 
+* @author Stanislav Antos
+*/
+BX.module.define('app.startup.View', function() {
+	var MvcView = BX.module.Me('brixy.mvc.View');
+	
+	function View() {
+		MvcView.call(this); // parent constructor
+		
+		this.name = '';
+	}
+	
+	BX.subclass(View, MvcView); // subclassing
+	
+	/**
+	* Renders the view.
+	* @return {string} - Next controller handler.
+	*/
+	View.prototype.render = function( /* arguments */ ) {
+		var Sui = BX.module.Me('brixy.ui.SuiBuilder'),
+			b = new Sui();
+		
+		b.window('dialog', 'Setup')
+			.row().alignChildren('top')
+				.rowPanel()
+					.staticText('Your name:')
+					.editText().set('characters', 20).id('name').validator('required', 'text', 'Please type your name.')
+					.end()
+				.column().alignChildren('fill')
+					.button('OK').closeOnClick(true, 1)
+					.button('Cancel').closeOnClick(false, 0)
+		.showWindow();
+		
+		switch (b.result()) {
+		case 1:
+			this.name = b.get('name').text;
+			return 'Submit'; // next controller handler
+		default:
+			return ''; // exit
+		}
+		
+	};
+	
+	
+	// publish
+	return {
+		Me: View
+	};
+});
+

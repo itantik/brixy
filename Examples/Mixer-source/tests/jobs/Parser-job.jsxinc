@@ -1,0 +1,88 @@
+/**
+* Available variables:
+* tester - tester object
+* job - current job
+* it - shortcut to job.it
+* file - full path to this file
+* debug - BX.debug object
+*/
+
+// assets
+$.evalFile(tester.getConfig('brixyPath') + '/includes/Brixy.jsxinc');
+BX.use(tester.getConfig('mixerPath') + '/app/model/Parser.jsxinc');
+
+job.setName('Parser');
+
+var parser = new (BX.module.Me('app.model.Parser')),
+	s;
+
+job.addSection('Test a bad syntax');
+
+parser.parse('Author: <if:Author:><!:Author:><else::>unknown. End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <if:Author:><!:Author:><else::>unknown<else::><end::>. End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <if:Author:><!:Author:><else::>unknown<end::>. <else::>End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <each:Author:><!:Author:><else::>unknown<end::>. End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <each:Author:><!:Author:>. End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <each:Author:><!:Author:><if:Any:><end::>. End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <hello:Author:>. End.');
+it.isThrown('', parser.compile);
+parser.parse('Author: <separator:,:>. End.');
+it.isThrown('', parser.compile);
+
+it.isThrown('', function(){ parser.parse('<title:text:>'); });
+it.isThrown('', function(){ parser.parse('<title:text=:>'); });
+it.isThrown('', function(){ parser.parse('<title:=text:>'); });
+
+
+job.addSection('Compile');
+
+s = 'Author: <if:Author:><!:Author:><else::>unknown<what:<end::>. End.';
+parser.parse(s);
+parser.compile();
+it.is('', parser.getResult(), 'Author: unknown<what:. End.');
+
+s = 'Author: <if:Author:><!:Author:><else::>unknown<end::>. End.';
+parser.parse(s);
+parser.compile();
+it.is('', parser.getResult(), 'Author: unknown. End.');
+
+parser.assignValues({'Author': 'sa'});
+parser.compile();
+it.is('', parser.getResult(), 'Author: sa. End.');
+
+s = 'Authors: <if:Author:><each:Author:><!:Author:><separator:, :><end::><else::>unknown<end::>. End.';
+parser.parse(s);
+parser.compile();
+it.is('', parser.getResult(), 'Authors: unknown. End.');
+
+parser.assignValues({'Author': 'sa'});
+parser.compile();
+it.is('', parser.getResult(), 'Authors: sa. End.');
+
+parser.assignValues({'Author': ['sa', 'steve', 'bill']});
+parser.compile();
+it.is('', parser.getResult(), 'Authors: sa, steve, bill. End.');
+
+s = 'If test:<if:Outer if:> is outer<if:Inner if:>, is inner<else::>, not inner<end::><else::> not outer<end::>. End.';
+parser.parse(s);
+parser.compile();
+it.is('', parser.getResult(), 'If test: not outer. End.');
+
+parser.assignValues({'Outer if': 1});
+parser.compile();
+it.is('', parser.getResult(), 'If test: is outer, not inner. End.');
+
+parser.assignValues({'Outer if': 1, 'Inner if': 1});
+parser.compile();
+it.is('', parser.getResult(), 'If test: is outer, is inner. End.');
+
+parser.assignValues({'Outer if': 0, 'Inner if': 1});
+parser.compile();
+it.is('', parser.getResult(), 'If test: not outer. End.');
+

@@ -1,0 +1,89 @@
+BX.use('brixy', 'modules/fs/filesystem.jsxinc');
+BX.use('', 'app/model/fileHelpers.jsxinc');
+
+/**
+* 
+*/
+BX.module.define('app.model.TemplateList', function() {
+	
+	var filesystem = BX.module('brixy.fs.filesystem'),
+		fileHelpers = BX.module('app.model.fileHelpers');
+	
+	/**
+	* @param {Folder} templateFolder
+	*/
+	function TemplateList(templateFolder) {
+		this._templateList = null; // list of the folders with template files
+		
+		if (!(templateFolder instanceof Folder))
+			throw new BX.error('app.models.TemplateList()', Error('Please specify a template folder.'));
+			
+		if (!templateFolder.exists)
+			throw new BX.error('app.models.TemplateList()', Error('Cannot find the template folder: ' + templateFolder.fullName));
+			
+		this._templateFolder = templateFolder; // Folder with template files
+	}
+	
+	TemplateList.injection = ['templateFolder'];
+	
+	/**
+	* Returns a string representation of the object.
+	* @return {string}
+	*/
+	TemplateList.prototype.toString = BX.toString;
+	
+	/**
+	* Returns array of folders with its files.
+	* @return {array} - [{name: folder name, files: [{name: file name without extension, file: File}]]
+	*/
+	TemplateList.prototype.getList = function () {
+		if (this._templateList) // browse the filesystem only once
+			return this._templateList;
+			
+		var list = [],
+			folders,
+			files,
+			f,
+			i,
+			n,
+			j,
+			k;
+		
+		folders = filesystem.folderList(this._templateFolder);
+		
+		for (i = 0, n = folders.length; i < n; i++) {
+			f = {
+				name: folders[i].displayName,
+				files: []
+			};
+			files = filesystem.fileList(folders[i], "*.tpl;*.jsx;*.jsxinc;*.js", true);
+			for (j = 0, k = files.length; j < k; j++) {
+				f.files.push({
+					name: fileHelpers.nakedName(files[j]),
+					file: files[j]
+				});
+			}
+			list.push(f);
+		}
+		this._templateList = list;
+		
+		return this._templateList;
+	};
+
+	/**
+	* Reads info file.
+	* @param {File} file - Template file.
+	* @return {string} - Contents of the info file.
+	*/
+	TemplateList.prototype.readInfo = function (file) {
+		file = File(file.fullName.replace(/^(.*)\.[^\.]*$/, '$1.txt'));
+		
+		var info = fileHelpers.fileContent(file);
+		return (info === false) ? '' : info;
+	};
+
+
+	return {
+		Me: TemplateList
+	};
+});
