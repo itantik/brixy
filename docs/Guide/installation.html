@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Installation | Brixy</title>
+	
+	<meta name="Description" content="Brixy framework is Extend Script module system and MVC framework bundled with useful development tools.">
+	
+	<link rel="stylesheet" href="css/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="css/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="css/grids-responsive-min.css">
+<!--<![endif]-->
+
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,400,300,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+
+	<link rel="stylesheet" href="css/prism.css">
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../API/index.html">API Reference</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="index.html">User Guide</a>
+		</div>
+		<div class="page">
+			<div class="pure-g">
+				<div class="pure-u-1-1 pure-u-md-1-3 pure-u-lg-7-24">
+					<div class="pad-box">
+						<div id="side-menu-wrap">
+							<a id="side-menu-title">Menu</a>
+							<div class="pure-menu side-menu">
+								<ul class="pure-menu-list">
+										<li class="pure-menu-item"><a class="pure-menu-link" href="index.html">About Brixy</a>
+										</li>
+									
+										<li class="pure-menu-item pure-menu-selected"><a class="pure-menu-link" href="installation.html">Installation</a>
+										</li>
+									
+										<li class="pure-menu-item"><a class="pure-menu-link" href="starter-application.html">Starter application</a>
+										</li>
+									
+										<li class="pure-menu-heading">
+											MVC application
+											<ul class="pure-menu-list">
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="mvc-application/model-view-controller.html">Model - View - Controller</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="mvc-application/application-lifetime.html">Application lifetime</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="mvc-application/configuration.html">Configuration</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="mvc-application/routing.html">Routing</a>
+													</li>
+											</ul>
+										</li>
+									
+										<li class="pure-menu-heading">
+											Guides
+											<ul class="pure-menu-list">
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="guides/file-loading.html">File loading</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="guides/modules.html">Module system</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link has-children" href="guides/scriptui-builder.html">ScriptUI Builder</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link has-children" href="guides/dependency-injection.html">Dependency injection</a>
+													</li>
+											</ul>
+										</li>
+									
+										<li class="pure-menu-heading">
+											Debugging
+											<ul class="pure-menu-list">
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="debugging/error-reporting.html">Error reporting</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="debugging/debug-tools.html">Debug tools</a>
+													</li>
+											</ul>
+										</li>
+									
+										<li class="pure-menu-heading">
+											Tools
+											<ul class="pure-menu-list">
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="tools/linker.html">Linker</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="tools/mixer.html">Mixer</a>
+													</li>
+													<li class="pure-menu-item">
+															<a class="pure-menu-link" href="tools/tester.html">Tester</a>
+													</li>
+											</ul>
+										</li>
+									
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="pure-u-1-1 pure-u-md-2-3 pure-u-lg-17-24">
+					<div class="pad-box">
+						<h1>Installation</h1>
+						<p>Move Brixy folder into a folder destined by your Adobe application for location of extend scripts.</p>
+<p>If your applications recognize the folder aliases, you may move Brixy folder to a common location (e.g. <em>Documents/Adobe scripts/Brixy</em>) and then put its alias inside Adobe application folder structure.</p>
+<h2 id="folder-structure">Folder structure</h2>
+<pre><code class="language-text">/Brixy              - framework source files
+    /extras         - extensions to the core namespace
+    /includes       - files prepared for easy including of the framework parts
+    /modules        - core modules
+    /tests          - tests of framework modules
+    /BX.jsxinc      - core namespace and module system
+    /BX.use.jsxinc  - BX.use extension
+/Doc                - API documentation and user guides
+/Doc-source         - sources and generators for the documentation
+/Examples           - example applications
+    /Debug tools    - using of the debug modules
+    /Linker-source  - source of the Brixy Linker tool
+    /Mixer-source   - source of the Brixy Mixer tool
+    /Palette        - example of the palette application
+    /Starter        - skeleton of the starter application
+    /User Interface - using of the Brixy SuiBuilder module
+/Tools              - development tools
+    /Linker         - joining of the source files
+    /Mixer          - generating of the source files
+</code></pre>
+
+						<p class="edited">Edited: 2016/05/04</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1 pure-u-md-1-2">
+						<h3>Recently edited chapters</h3>
+						<ul>
+							<li><span class="date">2017/09/10</span> <a href="debugging/debug-tools.html">Debug tools</a></li>
+							<li><span class="date">2017/09/10</span> <a href="debugging/error-reporting.html">Error reporting</a></li>
+							<li><span class="date">2017/08/16</span> <a href="tools/tester.html">Tester</a></li>
+							<li><span class="date">2017/08/16</span> <a href="tools/mixer.html">Mixer</a></li>
+							<li><span class="date">2017/06/16</span> <a href="guides/dependency-injection/standalone-usage.html">Dependency injection / Standalone usage</a></li>
+						</ul>
+				</div>
+				<div class="pure-u-1-1 pure-u-md-1-2">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>Special thanks to <a href="http://www.metalsmith.io/" target="_blank">Metalsmith</a> - static site generator.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="js/prism.js"></script>
+	<script src="js/site.js"></script>
+</body>
+</html>

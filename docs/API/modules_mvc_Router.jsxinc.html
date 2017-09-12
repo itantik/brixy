@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Source: modules/mvc/Router.jsxinc | Brixy API</title>
+
+	<script src="scripts/prettify/prettify.js"> </script>
+	<script src="scripts/prettify/lang-css.js"> </script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	
+	<link rel="stylesheet" href="styles/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="styles/grids-responsive-min.css">
+<!--<![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../Guide/index.html">User Guide</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="./index.html">API reference</a>
+		</div>
+		
+		<div class="page">
+			<div class="pure-g">
+				<div id="main-column" class="pure-u-1-1 pure-u-md-2-3">
+					<div class="pad-box">
+						<a href="#" id="toggle-column">&#x25ba;</a>
+						<h1 class="page-title">Source: modules/mvc/Router.jsxinc</h1>
+						
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* @module 'brixy.mvc.Router'
+*/
+BX.module.define('brixy.mvc.Router', function() {
+	var types = BX.module('brixy.es.types');
+		
+	/**
+	* Route object.
+	* @class
+	* @alias module:'brixy.mvc.Router'~Route
+	* @param {Object|string} [config] - Initial setting. (optional)
+	*/
+	function Route(config) {
+		this.controller = '';
+		this.forward = '';
+		this.action = '';
+		this.data = null;
+		
+		this.refine(config);
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Route.prototype.toString = BX.toString;
+	
+	/**
+	* Refines properties of the route.
+	* @param {Object|string} config - Object may refine properties 'controller', 'forward', 'action', 'data'. String refines 'forward' property.
+	*/
+	Route.prototype.refine = function(config) {
+		if (config &amp;&amp; types.isString(config)) {
+			this.forward = config;
+			return;
+		}
+		else if (typeof config !== 'object')
+			return;
+		
+		config.controller &amp;&amp; (this.controller = config.controller);
+		config.forward &amp;&amp; (this.forward = config.forward);
+		config.action &amp;&amp; (this.action = config.action);
+		
+		if (config.data &amp;&amp; typeof config.data === 'object' &amp;&amp; config.data !== this.data)
+			fillDataProps(config.data, this);
+	};
+	
+	// create new data object, copy properties (don't modify the saved router data)
+	function fillDataProps(data, route) {
+		var p,
+			d = route.data;
+			
+		route.data = {};
+		if (d) {
+			for (p in d) {
+				route.data[p] = d[p];
+			}
+		}
+		
+		for (p in data) {
+			route.data[p] = data[p];
+		}
+	}
+	
+	/**
+	* Gets a human readable string representation of this route.  
+	* Note: This is not an inverse operation to the `parseRequestString()` method.
+	* @return {string}
+	*/
+	Route.prototype.toHumanString = function() {
+		var r = '';
+		
+		if (this.controller)
+		 	r += this.controller;
+		else if (this.forward)
+		 	r += this.forward;
+		 	
+		if (this.action)
+		 	r += Route._actionSeparator + this.action;
+		
+		if (this.data)
+		 	r += Route._dataSeparator + '...';
+		
+		return r;
+	};
+	
+	/**
+	* Checks if route has a valid format (ie. looks like Route).
+	* @param {Object|string} route - Route object. Property 'controller' or 'forward' is required. String is shortcut to {forward: route}.
+	* @throws Exception if route has an invalid format.
+	*/
+	Route.validate = function(route) {
+		if (route &amp;&amp; types.isString(route))
+			return;
+			
+		if (typeof route !== 'object')
+			throw Error('Object type is expected.');
+		
+		if (!('controller' in route) &amp;&amp; !('forward' in route))
+		 	throw Error('Missing "controller" or "forward" property.');
+	};
+	
+	/* Action separator used in the request string. */
+	Route._actionSeparator = ':';
+	
+	/* Data separator used in the request string. */
+	Route._dataSeparator = '?';
+	
+	/**
+	* Parses the request string to route-like object.  
+	* Request format: `"controller:action?data"`. Controller part is required.  
+	* 
+	* | Part of request | Description |
+	* | --- | --- |
+	* | controller | shall not contain characters `:` and `?` |
+	* | action separator | default is `:` |
+	* | action | shall not contain character `?` |
+	* | data separator | default is `?` |
+	* | data | set of properties and its values in the form `property1=value1&amp;property2=value2` |
+	* 
+	* @example &lt;caption>Valid request strings:&lt;/caption>
+	* "controller"
+	* "controller:action"
+	* "controller:action?par1=value1"
+	* "controller?par1=value1"
+	* "controller:action?par1=value1&amp;par2=value2"
+	* "controller:action?par1&amp;par2=value2"
+	* @param {string} request
+	* @return {Object} - {controller: string, action: string, data: Object|null}
+	* @throws Exception if request has an invalid format.
+	*/
+	Route.parseRequestString = function(request) {
+		var a = '',
+			d = null,
+			c = String(request),
+			ra = types.escapeRegexpStr(Route._actionSeparator),
+			rd = types.escapeRegexpStr(Route._dataSeparator),
+			r = c.match(RegExp('^([^' + ra + rd + ']+?)(?:' + ra + '([^' + rd + ']*))?(?:' + rd + '(.*))?$'));
+			
+		if (r) {
+			c = r[1];
+			a = r[2] || '';
+			
+			if (r[3]) { // fill data properties
+				d = {};
+				
+				r[3].replace(RegExp('([^=&amp;]+)(?:=([^&amp;]*))?', 'g'), function($0, $1, $2) {
+					d[$1] = $2;
+				});
+			}
+		}
+		
+		if (!c)
+			throw Error('Bad request format. Controller or route name is not specified.');
+			
+		return {controller: c, action: a, data: d};
+	};
+	
+	
+	/**
+	* Router object. It holds a repository of named routes.
+	* @class
+	* @alias module:'brixy.mvc.Router'~Router
+	* @param {Function} [RouteType={@link module:'brixy.mvc.Router'~Route}] - route constructor (optional)
+	* @throws Exception
+	*/
+	function Router(RouteType) {
+		if (RouteType == undefined)
+			this._Route = Route;
+		else if (typeof RouteType !== 'function')
+			Error('Route must be a function.');
+		else
+			this._Route = RouteType;
+			
+		this._routes = {}; // own routes
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	Router.prototype.toString = BX.toString;
+	
+	/**
+	* Saves a set of routes and replaces existing route set. The correct format is verified.
+	* @param {Object} routes - Set of routes in the form `{name1: route1, name2: route2, ...}`.
+	* @throws Exception if routes has an invalid format.
+	*/
+	Router.prototype.setRoutes = function(routes) {
+		try {
+			if (!routes || typeof routes !== 'object')
+				throw Error('Object type is expected.');
+		
+			var validateR = this._Route.validate,
+				r;
+			
+			if (validateR) { // need validation
+				for (r in routes) {
+					if (routes.hasOwnProperty(r))
+						validateR(routes[r]);
+				}
+			}
+			this._routes = routes;
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Router.setRoutes()', Error('Routes object has an invalid format.' + (r ? ' Route "' + r + '" failed.' : '')), e);
+		}
+	};
+	
+	/**
+	* Adds a new route. The correct format is verified.
+	* @param {string} name - Route name.
+	* @param {Object} route - Route object.
+	* @throws Exception if route has an invalid format.
+	*/
+	Router.prototype.addRoute = function(name, route) {
+		try {
+			if (!name)
+				throw Error('Route name is expected.');
+				
+			this._Route.validate(route);
+			this._routes[name] = route;
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Router.addRoute()', Error('Route "' + name + '" has an invalid format.'), e);
+		}
+	};
+	
+	/**
+	* Removes the route.
+	* @param {string} name - Route name.
+	*/
+	Router.prototype.removeRoute = function(name) {
+		if (this.hasRoute(name)) {
+			this._routes[name] = undefined;
+			delete this._routes[name];
+		}
+	};
+	
+	/**
+	* Gets a saved Route object or null.
+	* @param {string} name - Route name.
+	* @return {Object|null} Route object or null.
+	*/
+	Router.prototype.getRoute = function(name) {
+		if (this.hasRoute(name)) {
+			var R = this._Route;
+			return new R(this._routes[name]);
+		}
+		return null;
+	};
+	
+	/**
+	* Checks if the router has a saved route of this name.
+	* @param {string} name - Route name.
+	* @return {boolean}
+	*/
+	Router.prototype.hasRoute = function(name) {
+		return this._routes.hasOwnProperty(name);
+	};
+	
+	/**
+	* Creates the Route object from request. This one is not saved as named route.
+	* @param {string|Object} request - Request string or route-like object.
+	* @return {Object} Route object.
+	* @throws Exception on error.
+	*/
+	Router.prototype.createRoute = function(request) {
+		var R = this._Route;
+		
+		if (!types.isString(request)) {
+			if (request instanceof R) // is Route
+				return request;
+			
+			try {
+				R.validate(request); // looks like Route
+				return new R(request);
+			}
+			catch (e) {
+				throw BX.error('brixy.mvc.Router.createRoute()', Error('Request "' + request + '" is not a valid object.'), e);
+			}
+		}
+			
+		var req,
+			route;
+		
+		try {
+			req = R.parseRequestString(request);
+			route = this.getRoute(req.controller);
+			
+			if (route) {
+				req.controller = '';
+				route.refine(req);
+			}
+			else {
+				route = new R(req);
+			}
+		}
+		catch (e) {
+			throw BX.error('brixy.mvc.Router.createRoute()', Error('Cannot create a route from the request "' + request + '".'), e);
+		}
+		
+		return route;
+	};
+	
+	
+	// publish the class
+	return {
+		/** 
+		* Route class.
+		* @memberOf module:'brixy.mvc.Router'
+		* @type {module:'brixy.mvc.Router'~Route}
+		*/
+		Route: Route,
+		/** 
+		* Router class.
+		* @memberOf module:'brixy.mvc.Router'
+		* @type {module:'brixy.mvc.Router'~Router}
+		*/
+		Me: Router
+	};
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+					</div>
+				</div>
+				<div id="side-column" class="pure-u-1-1 pure-u-md-1-3">
+					<div class="pad-box">
+						<div class="side-menu-wrap">
+							<div class="pure-menu side-menu"><span class="pure-menu-heading">Modules</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="module-_brixy.debug.callStack_.html">'brixy.debug.callStack'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.dump_.html">'brixy.debug.dump'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.helpers_.html">'brixy.debug.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_.html">'brixy.debug.Summary'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.systemInfo_.html">'brixy.debug.systemInfo'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_.html">'brixy.debug.Timer'</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_.html">'brixy.di.Container'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_.html">'brixy.err.DebugReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.helpers_.html">'brixy.err.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_.html">'brixy.err.ReleaseReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_.html">'brixy.err.SilentLog'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.reflection_.html">'brixy.es.reflection'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.typedXML_.html">'brixy.es.typedXML'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.types_.html">'brixy.es.types'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_.html">'brixy.fs.FileLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.filesystem_.html">'brixy.fs.filesystem'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_.html">'brixy.mvc.Application'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_.html">'brixy.mvc.AppManager'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_.html">'brixy.mvc.Controller'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_.html">'brixy.mvc.Router'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_.html">'brixy.mvc.View'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.html">'brixy.tester.Assert'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_.html">'brixy.tester.It'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_.html">'brixy.tester.Job'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_.html">'brixy.tester.JobLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.report_.html">'brixy.tester.report'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_.html">'brixy.tester.Result'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_.html">'brixy.tester.Section'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_.html">'brixy.tester.Specials'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.base_.html">'brixy.ui.components.base'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.colorize_.html">'brixy.ui.components.colorize'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.debug_.html">'brixy.ui.components.debug'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.safeHandlers_.html">'brixy.ui.components.safeHandlers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.helpers_.html">'brixy.ui.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_.html">'brixy.ui.SuiBuilder'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.html">'brixy.ui.SuiValidator'</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Classes</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.error.ErrorChain.html">BX.error.ErrorChain</a></li><li class="pure-menu-item"><a href="BX.error.ErrorItem.html">BX.error.ErrorItem</a></li><li class="pure-menu-item"><a href="BX.module.Module.html">BX.module.Module</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_-Summary.html">'brixy.debug.Summary'~Summary</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_-Timer.html">'brixy.debug.Timer'~Timer</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_-Container.html">'brixy.di.Container'~Container</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_-DebugReporter.html">'brixy.err.DebugReporter'~DebugReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_-ReleaseReporter.html">'brixy.err.ReleaseReporter'~ReleaseReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_-SilentLog.html">'brixy.err.SilentLog'~SilentLog</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_-FileLoader.html">'brixy.fs.FileLoader'~FileLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_-Application.html">'brixy.mvc.Application'~Application</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_-AppManager.html">'brixy.mvc.AppManager'~AppManager</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_-Controller.html">'brixy.mvc.Controller'~Controller</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Route.html">'brixy.mvc.Router'~Route</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Router.html">'brixy.mvc.Router'~Router</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_-View.html">'brixy.mvc.View'~View</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_-Rating.html">'brixy.tester.Assert'~Rating</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_-It.html">'brixy.tester.It'~It</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-AbortException.html">'brixy.tester.Job'~AbortException</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-Job.html">'brixy.tester.Job'~Job</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_-JobLoader.html">'brixy.tester.JobLoader'~JobLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Result.html">'brixy.tester.Result'~Result</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Value.html">'brixy.tester.Result'~Value</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_-Section.html">'brixy.tester.Section'~Section</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_-Specials.html">'brixy.tester.Specials'~Specials</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_-Tester.html">'brixy.tester.Tester'~Tester</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">'brixy.ui.SuiBuilder'~SuiBuilder</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_-SuiValidator.html">'brixy.ui.SuiValidator'~SuiValidator</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Namespaces</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.html">BX</a></li><li class="pure-menu-item"><a href="BX.apps.html">BX.apps</a></li><li class="pure-menu-item"><a href="BX.debug.html">BX.debug</a></li><li class="pure-menu-item"><a href="BX.di.html">BX.di</a></li><li class="pure-menu-item"><a href="BX.error.html">BX.error</a></li><li class="pure-menu-item"><a href="BX.module.html">BX.module</a></li><li class="pure-menu-item"><a href="BX.use.html">BX.use</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.Asserts.html">'brixy.tester.Assert'.Asserts</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.Validators.html">'brixy.ui.SuiValidator'.Validators</a></li></ul></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>API Reference generated by <a href="https://github.com/jsdoc3/jsdoc" target="_blank">JSDoc 3.4.3</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script> prettyPrint(); </script>
+	<script src="scripts/linenumber.js"> </script>
+	<script src="scripts/jquery.js"> </script>
+	<script src="scripts/scripts.js"> </script>
+</body>
+</html>

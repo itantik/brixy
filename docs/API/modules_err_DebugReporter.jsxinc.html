@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Source: modules/err/DebugReporter.jsxinc | Brixy API</title>
+
+	<script src="scripts/prettify/prettify.js"> </script>
+	<script src="scripts/prettify/lang-css.js"> </script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	
+	<link rel="stylesheet" href="styles/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="styles/grids-responsive-min.css">
+<!--<![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../Guide/index.html">User Guide</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="./index.html">API reference</a>
+		</div>
+		
+		<div class="page">
+			<div class="pure-g">
+				<div id="main-column" class="pure-u-1-1 pure-u-md-2-3">
+					<div class="pad-box">
+						<a href="#" id="toggle-column">&#x25ba;</a>
+						<h1 class="page-title">Source: modules/err/DebugReporter.jsxinc</h1>
+						
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/colorize.jsxinc');
+BX.use('brixy', 'modules/err/helpers.jsxinc');
+BX.use('brixy', 'modules/debug/callStack.jsxinc');
+BX.use('brixy', 'modules/debug/systemInfo.jsxinc');
+
+/**
+* @module 'brixy.err.DebugReporter'
+*/
+BX.module.define('brixy.err.DebugReporter', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me;
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* DebugReporter class.
+	* @class
+	* @alias module:'brixy.err.DebugReporter'~DebugReporter
+	*/
+	function DebugReporter() {
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	DebugReporter.prototype.toString = BX.toString;
+
+	/**
+	* Shows report window.
+	* 
+	* @param {BX.error.ErrorChain|Error|string} err
+	*/
+	DebugReporter.prototype.report = function(err) {
+		if (!(err instanceof BX.error.ErrorChain))
+			err = new BX.error.ErrorChain('', err);
+			
+		var b = new Sui(),
+			cs = (typeof err.getCallStack === 'function') ? err.getCallStack() : '',
+			errs = (typeof err.getErrors === 'function') ? err.getErrors() : [];
+		
+		b.addComponents(components);
+		
+		b.window('dialog', 'Error report')
+			.column().alignChildren('fill')
+				.columnPanel().alignChildren('left').backgroundColor([1.0, 1.0, 1.0])
+					.mainError(errs, cs)
+					.end()
+				.columnPanel().alignChildren('left').set('spacing', 4)
+					.errorList(errs)
+					.end()
+				.row()
+					.button('Save report...').set('helpTip', 'Error report and system information will be saved.').set('onClick', saveFile)
+					.button('System info...').set('helpTip', 'Shows system information.').set('onClick', showSystemInfo)
+					.end()
+		.showWindow();
+		
+		function saveFile() {
+			BX.module('brixy.err.helpers').saveErrorReport(err, '');
+		}
+		
+		function showSystemInfo() {
+			BX.module('brixy.debug.systemInfo').showSystemInfo();
+		}
+	};
+	
+	// define SuiBuilder components
+	var components = {
+		
+		mainError: function (errors, callStack) {
+			if (errors.length &lt;= 0) {
+				this.builder.staticLines('NO ERROR FOUND');
+				return;
+			}
+			
+			var er = errors[0];
+			
+			this.builder
+				.staticLines(er.location, '-> ')
+				.column().alignChildren('fill').set('spacing', 2)
+					.staticLines(er.message, '', [1.0, 0.0, 0.0])
+					.end()
+				.row()
+					.buttonsRow(er.fileName, er.line, callStack)
+					.end();
+		},
+
+		errorList: function (errors) {
+			var er,
+				i,
+				n = errors.length;
+			
+			for (i = 1; i &lt; n; i++) {
+				if (i > 1)
+					this.builder.rowPanel().align('fill').end(); // separator line
+				
+				er = errors[i];
+				
+				this.builder
+					.staticLines(er.location, '-> ')
+					.staticLines(er.message)
+					.row()
+						.buttonsRow(er.fileName, er.line)
+						.end();
+			}
+		},
+	
+		staticLines: function (str, prefix, color) {
+			if (!str)
+				return;
+			
+			if (!prefix)
+				prefix = '';
+				
+			var lines = str.toString().split('\n'),
+				i,
+				n = lines.length;
+			
+			for (i = 0; i &lt; n; i++) {
+				if (lines[i] == '')
+					continue;
+				this.builder.staticText(prefix + lines[i]).doubleAmps();
+				if (color)
+					this.builder.foregroundColor(color);
+			}
+		},
+		
+		buttonsRow: function (file, line, callStack) {
+			var f = file ? decodeURI(file) : '',
+				fname = f ? f.substr(f.lastIndexOf('/') + 1) : '';
+			
+			if (/.+\.(jsxbin)$/i.test(file)) { // compiled file
+				if (f)
+					this.builder.staticText('File: ' + fname).doubleAmps()
+					.set('helpTip', f);
+				
+				if (line)
+					this.builder.staticText('Line: ' + line);
+			}
+			else {
+				if (f)
+					this.builder.button('File: ' + fname).doubleAmps()
+					.set('helpTip', f)
+					.set('fileName', file)
+					.set('onClick', openFile);
+					
+				if (line)
+					this.builder.button('Line: ' + line)
+					.set('helpTip', 'Show code snippet.')
+					.set('fileName', file)
+					.set('line', line)
+					.set('onClick', showCode);
+			}
+			
+			if (callStack) {
+				this.builder.button('Call stack')
+				.set('helpTip', 'Show a call stack.')
+				.set('callStack', callStack)
+				.set('onClick', showCallStack);
+			}
+		},
+		
+		fileButton: function (file) {
+			var f = file ? decodeURI(file) : '';
+			if (f)  {
+				this.builder.button('File: ' + f.substr(f.lastIndexOf('/') + 1)).doubleAmps()
+					.set('helpTip', f)
+					.set('fileName', file)
+					.set('onClick', openFile);
+			}
+		}
+		
+	};
+	
+	function showCode() {
+		var l = this.line,
+			lmin = l - 10,
+			lmax = l + 10,
+			ch,
+			i = 0,
+			f,
+			line;
+		
+		f = new File(this.fileName);
+		if (!f.open('r')) {
+			alert('File not found.');
+			f.close();
+			return;
+		}
+			
+		var b = new Sui();
+		
+		b.addComponent('fileButton', components.fileButton);
+		
+		b.window('dialog', 'Code snippet - ' + f.displayName)
+			.column().alignChildren('left')
+				.columnPanel().alignChildren('left').set('spacing', 2).backgroundColor([1.0, 1.0, 1.0]);
+					
+				while (!f.eof) {
+					i++;
+					line = f.readln();
+					if (i &lt; lmin)
+						continue;
+					if (i > lmax)
+						break;
+					
+					line = line.replace(/(\t)/g, '  ');
+					ch = -1;
+					while (line.charAt(++ch) === ' ');
+					line = line.slice(ch);
+					
+					b.row().set('spacing', ch * 10 + 10)
+						.staticText(i + ':').foregroundColor(i == l ? [1.0, 0.0, 0.0] : [0.6, 0.6, 0.6])				
+						.staticText(line).doubleAmps().foregroundColor(i == l ? [1.0, 0.0, 0.0] : [0.2, 0.2, 0.5])
+						.end();
+				}
+		
+					b.end()
+				.fileButton(this.fileName);
+		b.showWindow();
+		
+		f.close();
+	}
+	
+	function showCallStack() {
+		BX.module('brixy.debug.callStack').callStack(this.callStack);
+	}
+	
+	function openFile() {
+		var f = new File(this.fileName);
+		if (!f.execute())
+			alert('File not found.');
+	}
+	
+	
+	// publish the class
+	return {
+		/** 
+		* DebugReporter class.
+		* @memberOf module:'brixy.err.DebugReporter'
+		* @type {module:'brixy.err.DebugReporter'~DebugReporter}
+		*/
+		Me: DebugReporter
+	};
+});
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+					</div>
+				</div>
+				<div id="side-column" class="pure-u-1-1 pure-u-md-1-3">
+					<div class="pad-box">
+						<div class="side-menu-wrap">
+							<div class="pure-menu side-menu"><span class="pure-menu-heading">Modules</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="module-_brixy.debug.callStack_.html">'brixy.debug.callStack'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.dump_.html">'brixy.debug.dump'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.helpers_.html">'brixy.debug.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_.html">'brixy.debug.Summary'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.systemInfo_.html">'brixy.debug.systemInfo'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_.html">'brixy.debug.Timer'</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_.html">'brixy.di.Container'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_.html">'brixy.err.DebugReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.helpers_.html">'brixy.err.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_.html">'brixy.err.ReleaseReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_.html">'brixy.err.SilentLog'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.reflection_.html">'brixy.es.reflection'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.typedXML_.html">'brixy.es.typedXML'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.types_.html">'brixy.es.types'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_.html">'brixy.fs.FileLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.filesystem_.html">'brixy.fs.filesystem'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_.html">'brixy.mvc.Application'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_.html">'brixy.mvc.AppManager'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_.html">'brixy.mvc.Controller'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_.html">'brixy.mvc.Router'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_.html">'brixy.mvc.View'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.html">'brixy.tester.Assert'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_.html">'brixy.tester.It'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_.html">'brixy.tester.Job'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_.html">'brixy.tester.JobLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.report_.html">'brixy.tester.report'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_.html">'brixy.tester.Result'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_.html">'brixy.tester.Section'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_.html">'brixy.tester.Specials'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.base_.html">'brixy.ui.components.base'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.colorize_.html">'brixy.ui.components.colorize'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.debug_.html">'brixy.ui.components.debug'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.safeHandlers_.html">'brixy.ui.components.safeHandlers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.helpers_.html">'brixy.ui.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_.html">'brixy.ui.SuiBuilder'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.html">'brixy.ui.SuiValidator'</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Classes</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.error.ErrorChain.html">BX.error.ErrorChain</a></li><li class="pure-menu-item"><a href="BX.error.ErrorItem.html">BX.error.ErrorItem</a></li><li class="pure-menu-item"><a href="BX.module.Module.html">BX.module.Module</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_-Summary.html">'brixy.debug.Summary'~Summary</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_-Timer.html">'brixy.debug.Timer'~Timer</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_-Container.html">'brixy.di.Container'~Container</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_-DebugReporter.html">'brixy.err.DebugReporter'~DebugReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_-ReleaseReporter.html">'brixy.err.ReleaseReporter'~ReleaseReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_-SilentLog.html">'brixy.err.SilentLog'~SilentLog</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_-FileLoader.html">'brixy.fs.FileLoader'~FileLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_-Application.html">'brixy.mvc.Application'~Application</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_-AppManager.html">'brixy.mvc.AppManager'~AppManager</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_-Controller.html">'brixy.mvc.Controller'~Controller</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Route.html">'brixy.mvc.Router'~Route</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Router.html">'brixy.mvc.Router'~Router</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_-View.html">'brixy.mvc.View'~View</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_-Rating.html">'brixy.tester.Assert'~Rating</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_-It.html">'brixy.tester.It'~It</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-AbortException.html">'brixy.tester.Job'~AbortException</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-Job.html">'brixy.tester.Job'~Job</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_-JobLoader.html">'brixy.tester.JobLoader'~JobLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Result.html">'brixy.tester.Result'~Result</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Value.html">'brixy.tester.Result'~Value</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_-Section.html">'brixy.tester.Section'~Section</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_-Specials.html">'brixy.tester.Specials'~Specials</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_-Tester.html">'brixy.tester.Tester'~Tester</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">'brixy.ui.SuiBuilder'~SuiBuilder</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_-SuiValidator.html">'brixy.ui.SuiValidator'~SuiValidator</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Namespaces</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.html">BX</a></li><li class="pure-menu-item"><a href="BX.apps.html">BX.apps</a></li><li class="pure-menu-item"><a href="BX.debug.html">BX.debug</a></li><li class="pure-menu-item"><a href="BX.di.html">BX.di</a></li><li class="pure-menu-item"><a href="BX.error.html">BX.error</a></li><li class="pure-menu-item"><a href="BX.module.html">BX.module</a></li><li class="pure-menu-item"><a href="BX.use.html">BX.use</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.Asserts.html">'brixy.tester.Assert'.Asserts</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.Validators.html">'brixy.ui.SuiValidator'.Validators</a></li></ul></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>API Reference generated by <a href="https://github.com/jsdoc3/jsdoc" target="_blank">JSDoc 3.4.3</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script> prettyPrint(); </script>
+	<script src="scripts/linenumber.js"> </script>
+	<script src="scripts/jquery.js"> </script>
+	<script src="scripts/scripts.js"> </script>
+</body>
+</html>

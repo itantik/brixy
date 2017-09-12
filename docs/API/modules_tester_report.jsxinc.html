@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Source: modules/tester/report.jsxinc | Brixy API</title>
+
+	<script src="scripts/prettify/prettify.js"> </script>
+	<script src="scripts/prettify/lang-css.js"> </script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	
+	<link rel="stylesheet" href="styles/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="styles/grids-responsive-min.css">
+<!--<![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../Guide/index.html">User Guide</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="./index.html">API reference</a>
+		</div>
+		
+		<div class="page">
+			<div class="pure-g">
+				<div id="main-column" class="pure-u-1-1 pure-u-md-2-3">
+					<div class="pad-box">
+						<a href="#" id="toggle-column">&#x25ba;</a>
+						<h1 class="page-title">Source: modules/tester/report.jsxinc</h1>
+						
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>BX.use('brixy', 'includes/suiBuilderPack.jsxinc');
+BX.use('brixy', 'modules/ui/components/colorize.jsxinc');
+BX.use('brixy', 'modules/ui/helpers.jsxinc');
+BX.use('brixy', 'modules/tester/Result.jsxinc');
+BX.use('brixy', 'modules/debug/dump.jsxinc');
+BX.use('brixy', 'modules/es/types.jsxinc');
+
+/**
+* @module 'brixy.tester.report'
+*/
+BX.module.define('brixy.tester.report', function() {
+	var Sui = BX.module('brixy.ui.SuiBuilder').Me,
+		helpers = BX.module('brixy.ui.helpers'),
+		STATUS = BX.module('brixy.tester.Result').STATUS,
+		COLOR = {
+			TEXT: [0.0, 0.0, 0.0],
+			FAILED: [1.0, 0.0, 0.0],
+			PASSED: [0.25, 0.6, 0],
+			BACK: [1.0, 1.0, 1.0],
+			OVER: [0.9, 0.9, 0.9]
+		},
+		SCROLL = {
+			SIZE: 20
+		};
+	
+	Sui.attach(BX.module('brixy.ui.components.colorize'));
+	
+	/**
+	* Shows a dialog with tester results.
+	* @memberOf module:'brixy.tester.report'
+	* @param {module:'brixy.tester.Job'~Job[]} jobs - Processed jobs.
+	*/
+	function showResult(jobs) {
+		var b = new Sui(),
+			numJobs = jobs.length,
+			numF = 0,
+			i;
+			
+		for (i = 0; i &lt; numJobs; i++) {
+			if (!jobs[i].passed())
+				numF++;
+		}
+
+		b.addComponents(reportComponents);
+		
+		b.window('dialog', 'Brixy Tester - result')
+			.row().alignChildren('top')
+				.column()
+					.jobBox(jobs)
+					.staticText(numJobs + ' test jobs, ' + numF + ' failed')
+					.end()
+				.column()
+					.button('OK')
+		.showWindow();
+	}
+	
+	// SuiBuilder components
+	var reportComponents = {
+		
+		jobBox: function (jobs) {
+			var b = this.builder,
+				numJobs = jobs.length,
+				maxRows = SCROLL.SIZE,
+				numRows = Math.min(maxRows, numJobs),
+				maxCh = 0,
+				i;
+				
+			for (i = 0; i &lt; numJobs; i++) {
+				maxCh = Math.max(maxCh, jobs[i].getName().length);
+			}
+			
+			b.rowPanel().alignChildren('fill').set('spacing', 1).set('margins', 1)
+				.jobList(numRows, maxCh)
+				.execute(populateJobList, 0);
+				if (numJobs > maxRows) {
+					b.scrollbar()
+						.set('preferredSize', [20, undefined])
+						.set({minvalue: 0, maxvalue: numJobs - maxRows, value: 0, jumpdelta: numRows})
+						.set('onChanging', onScroll);
+				}
+				b.end();
+				
+			function populateJobList(start){
+				var i = start,
+					n = numRows + start,
+					row;
+					
+				for ( ; i &lt; n; i++) {
+					row = b.get('row' + (i - start));
+					populateJobRow(row, jobs[i]);
+				}
+			}
+			
+			function populateJobRow(row, job){
+				if (!job || !(row instanceof Group))
+					return;
+				
+				row.testJob = job;
+				
+				var txE = row.children[0],
+					stE = row.children[1],
+					passed = job.passed(),
+					col,
+					gr = txE.graphics,
+					penType = gr.PenType.SOLID_COLOR;
+				
+				// text
+				txE.text = job.getName();
+				col = passed ? COLOR.TEXT : COLOR.FAILED;
+				gr.foregroundColor = gr.newPen(penType, col, 1);
+				gr.disabledForegroundColor = gr.newPen(penType, col, 1);
+				// status
+				stE.text = passed ? 'OK' : 'FAILED';
+				col = passed ? COLOR.PASSED : COLOR.FAILED;
+				gr = stE.graphics;
+				gr.foregroundColor = gr.newPen(penType, col, 1);
+				gr.disabledForegroundColor = gr.newPen(penType, col, 1);
+			}
+			
+			function onScroll(){
+				this.value = Math.floor(this.value);
+				
+				if (onScroll.old === this.value)
+					return;
+					
+				onScroll.old = this.value;
+				populateJobList(this.value);
+			}
+		},
+		
+		jobList: function (numRows, maxCh) {
+			var i;
+			
+			this.builder.column().alignChildren('fill').set('spacing', 1).set('margins', 1);
+				if (numRows === 0) {
+					this.builder.staticText('No job executed.');
+				}
+				for (i = 0; i &lt; numRows; i++) {
+					this.builder.jobRow(i, maxCh);
+				}
+				this.builder.end();
+		},
+		
+		jobRow: function (index, maxCh) {
+			this.builder.row().id('row' + index).set('margins', 5).backgroundColor(COLOR.BACK)
+				.addEventListener('click', function (event) {
+					showJobResult(this.testJob);
+				})
+				.addEventListener('mouseover',setRowBackground)
+				.addEventListener('mouseout', setRowBackground)
+				.staticText().set('characters', maxCh)
+				.staticText().set('characters', 6).set('justify', 'center')
+				.end();
+		}
+	};
+	
+	function setRowBackground(event) {
+		var gr = this.graphics;
+		gr.backgroundColor = gr.newBrush(gr.BrushType.SOLID_COLOR, (event.type === 'mouseover') ? COLOR.OVER : COLOR.BACK);
+	}
+	
+	/*
+	* Shows a window with job result.
+	* @param {module:'brixy.tester.Job'~Job} job
+	*/
+	 function showJobResult(job) {
+		if (!job) {
+			alert('Error: Job not found.');
+			return;
+		}
+		
+		var b = new Sui(),
+			stats = job.getStatistics();
+		
+		b.addComponents(jobComponents);
+		
+		b.window('dialog', 'Brixy Tester - job result')
+			.row().alignChildren('top')
+				.column().set('margins', 11)
+					.staticText(job.getName()).doubleAmps() // job name
+					.rowPanel().align('fill').end() // line
+					.column().set('spacing', 2)
+						.staticText(stats.total + ' tests')
+						.staticText(stats.failed + ' failed');
+						if (stats.failed)
+							b.foregroundColor(COLOR.FAILED);
+						if (stats.skipped)
+							b.staticText(stats.skipped + ' skipped').foregroundColor(COLOR.FAILED);
+						b.staticText(stats.duration + ' milliseconds')
+						.end()
+					.end()
+				.column().alignChildren('fill').set('spacing', 2)
+					.columnPanel().alignChildren('fill').backgroundColor(COLOR.BACK)
+						.sectionList(job.sectionList()) // sections
+						.end()
+					.end()
+				.column()
+					.button('OK')
+		.showWindow();
+	}
+	
+	// SuiBuilder components
+	var jobComponents = {
+		
+		sectionList: function (sections) {
+			var sec,
+				i = 0,
+				n = sections.length;
+				
+			for ( ; i &lt; n; i++) {
+				sec = sections[i];
+				
+				if (i > 0)
+					this.builder.rowPanel().align('fill').end(); // line
+					
+				if (sec.getName()) // section name
+					this.container.add('statictext', undefined, helpers.doubleAmps(sec.getName()));
+				
+				this.builder.resultBox(sec.resultList()); // results
+			}
+		},
+		
+		resultBox: function (results) {
+			var i,
+				n,
+				r,
+				status,
+				el,
+				contF = null,
+				contR = this.container.add('group {orientation: "row", spacing: 3}'),
+				penType = contR.graphics.PenType.SOLID_COLOR;
+			
+			// row of results
+			for (i = 0, n = results.length; i &lt; n; i++) {
+				r = results[i];
+				status = r.getStatus();
+				
+				el = contR.add('statictext', undefined, status);
+				el.graphics.foregroundColor = el.graphics.newPen(penType, (status === STATUS.OK) ? COLOR.PASSED : COLOR.FAILED, 1);
+				el.helpTip = r.getLongDescription();
+				
+				if (status === STATUS.FAILED) {
+					// failures
+					if (!contF) {
+						contF = this.container.add('group {orientation: "column", spacing: 2, alignChildren: "left"}');
+						contF.add('statictext', undefined, 'Failures:');
+					}
+					contF.add('statictext', undefined, helpers.doubleAmps('- ' + r.getLongDescription()));
+				}
+			}
+		}
+		
+	};
+
+	/**
+	* Shows a dialog with failed result.
+	* 
+	* @memberOf module:'brixy.tester.report'
+	* @param {module:'brixy.tester.Result'~Result} result - Test result.
+	* @param {module:'brixy.tester.Result'~Value} actual - Tested value.
+	* @param {module:'brixy.tester.Result'~Value} expected - Expected value.
+	* @param {int} depth - Comparison depth.
+	* @return {Object} {abortTester: boolean, showNext: boolean}
+	*/
+	function showFailure(result, actual, expected, depth) {
+		var b = new Sui();
+			
+		b.addComponents(failureComponents);
+		
+		b.window('dialog', 'Brixy Tester - failure report')
+			.row().alignChildren('top')
+				.column().alignChildren('fill')
+					.columnPanel().alignChildren('left').backgroundColor([1.0, 1.0, 1.0])
+						.staticText('Test failed').foregroundColor([1.0, 0.0, 0.0])
+						.staticText(result.getLongDescription()).doubleAmps()
+						.end()
+					.columnPanel('Actual:').alignChildren('left').set('margins', [14, 20, 14, 14])
+						.valueBox(actual, depth)
+						.end()
+					.columnPanel('Expected:').alignChildren('left').set('margins', [14, 20, 14, 14])
+						.valueBox(expected, depth)
+						.end()
+					.checkbox('Show this window on next failure').id('next').set('value', true)
+					.end()
+				.column().alignChildren('fill')
+					.button("{text: 'Continue', properties: {name: 'ok'}}").closeOnClick(true, 1)
+					.button('Abort tester').closeOnClick(true, 2)
+		.showWindow();
+		
+		return {
+			abortTester: b.result() !== 1,
+			showNext: b.get('next').value
+		};
+	}
+	
+	// SuiBuilder components
+	var failureComponents = {
+		
+		valueBox: function (val, depth) {
+			var dump = BX.module('brixy.debug.dump').dump,
+				builder = this.builder,
+				t = BX.module('brixy.es.types').baseType(val.value);
+			
+			builder.staticText(val.caption).doubleAmps();
+			
+			if (val.value === val.caption)
+				return;
+			
+			switch (t) {
+			case 'object':
+			case 'array':
+				builder.row()
+					.button('show...').set('onClick', function() {
+						var d = parseInt(builder.get('depth').text, 10);
+						if (isNaN(d))
+							d = 3;
+						builder.get('depth').text = d;
+						dump(val.value, d);
+					})
+					.staticText('depth:')
+					.editText(depth).id('depth').set('characters', 3)
+					.end();
+				break;
+			case 'function':
+				builder.button('show...').set('onClick', function() {
+					alert(val.value);
+				});
+				break;
+			default:
+				builder.staticText('Value: ' + val.value).doubleAmps();
+			}
+		}
+	};
+	
+	
+	// publish
+	return {
+		showResult: showResult,
+		showFailure: showFailure
+	}
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+					</div>
+				</div>
+				<div id="side-column" class="pure-u-1-1 pure-u-md-1-3">
+					<div class="pad-box">
+						<div class="side-menu-wrap">
+							<div class="pure-menu side-menu"><span class="pure-menu-heading">Modules</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="module-_brixy.debug.callStack_.html">'brixy.debug.callStack'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.dump_.html">'brixy.debug.dump'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.helpers_.html">'brixy.debug.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_.html">'brixy.debug.Summary'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.systemInfo_.html">'brixy.debug.systemInfo'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_.html">'brixy.debug.Timer'</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_.html">'brixy.di.Container'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_.html">'brixy.err.DebugReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.helpers_.html">'brixy.err.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_.html">'brixy.err.ReleaseReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_.html">'brixy.err.SilentLog'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.reflection_.html">'brixy.es.reflection'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.typedXML_.html">'brixy.es.typedXML'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.types_.html">'brixy.es.types'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_.html">'brixy.fs.FileLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.filesystem_.html">'brixy.fs.filesystem'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_.html">'brixy.mvc.Application'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_.html">'brixy.mvc.AppManager'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_.html">'brixy.mvc.Controller'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_.html">'brixy.mvc.Router'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_.html">'brixy.mvc.View'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.html">'brixy.tester.Assert'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_.html">'brixy.tester.It'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_.html">'brixy.tester.Job'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_.html">'brixy.tester.JobLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.report_.html">'brixy.tester.report'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_.html">'brixy.tester.Result'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_.html">'brixy.tester.Section'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_.html">'brixy.tester.Specials'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.base_.html">'brixy.ui.components.base'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.colorize_.html">'brixy.ui.components.colorize'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.debug_.html">'brixy.ui.components.debug'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.safeHandlers_.html">'brixy.ui.components.safeHandlers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.helpers_.html">'brixy.ui.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_.html">'brixy.ui.SuiBuilder'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.html">'brixy.ui.SuiValidator'</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Classes</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.error.ErrorChain.html">BX.error.ErrorChain</a></li><li class="pure-menu-item"><a href="BX.error.ErrorItem.html">BX.error.ErrorItem</a></li><li class="pure-menu-item"><a href="BX.module.Module.html">BX.module.Module</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_-Summary.html">'brixy.debug.Summary'~Summary</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_-Timer.html">'brixy.debug.Timer'~Timer</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_-Container.html">'brixy.di.Container'~Container</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_-DebugReporter.html">'brixy.err.DebugReporter'~DebugReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_-ReleaseReporter.html">'brixy.err.ReleaseReporter'~ReleaseReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_-SilentLog.html">'brixy.err.SilentLog'~SilentLog</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_-FileLoader.html">'brixy.fs.FileLoader'~FileLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_-Application.html">'brixy.mvc.Application'~Application</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_-AppManager.html">'brixy.mvc.AppManager'~AppManager</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_-Controller.html">'brixy.mvc.Controller'~Controller</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Route.html">'brixy.mvc.Router'~Route</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Router.html">'brixy.mvc.Router'~Router</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_-View.html">'brixy.mvc.View'~View</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_-Rating.html">'brixy.tester.Assert'~Rating</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_-It.html">'brixy.tester.It'~It</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-AbortException.html">'brixy.tester.Job'~AbortException</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-Job.html">'brixy.tester.Job'~Job</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_-JobLoader.html">'brixy.tester.JobLoader'~JobLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Result.html">'brixy.tester.Result'~Result</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Value.html">'brixy.tester.Result'~Value</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_-Section.html">'brixy.tester.Section'~Section</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_-Specials.html">'brixy.tester.Specials'~Specials</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_-Tester.html">'brixy.tester.Tester'~Tester</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">'brixy.ui.SuiBuilder'~SuiBuilder</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_-SuiValidator.html">'brixy.ui.SuiValidator'~SuiValidator</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Namespaces</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.html">BX</a></li><li class="pure-menu-item"><a href="BX.apps.html">BX.apps</a></li><li class="pure-menu-item"><a href="BX.debug.html">BX.debug</a></li><li class="pure-menu-item"><a href="BX.di.html">BX.di</a></li><li class="pure-menu-item"><a href="BX.error.html">BX.error</a></li><li class="pure-menu-item"><a href="BX.module.html">BX.module</a></li><li class="pure-menu-item"><a href="BX.use.html">BX.use</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.Asserts.html">'brixy.tester.Assert'.Asserts</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.Validators.html">'brixy.ui.SuiValidator'.Validators</a></li></ul></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>API Reference generated by <a href="https://github.com/jsdoc3/jsdoc" target="_blank">JSDoc 3.4.3</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script> prettyPrint(); </script>
+	<script src="scripts/linenumber.js"> </script>
+	<script src="scripts/jquery.js"> </script>
+	<script src="scripts/scripts.js"> </script>
+</body>
+</html>

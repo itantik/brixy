@@ -1,0 +1,7067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Module: 'brixy.ui.components.base' | Brixy API</title>
+
+	<script src="scripts/prettify/prettify.js"> </script>
+	<script src="scripts/prettify/lang-css.js"> </script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	
+	<link rel="stylesheet" href="styles/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="styles/grids-responsive-min.css">
+<!--<![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../Guide/index.html">User Guide</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="./index.html">API reference</a>
+		</div>
+		
+		<div class="page">
+			<div class="pure-g">
+				<div id="main-column" class="pure-u-1-1 pure-u-md-2-3">
+					<div class="pad-box">
+						<a href="#" id="toggle-column">&#x25ba;</a>
+						<h1 class="page-title">Module: 'brixy.ui.components.base'</h1>
+						
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview toggle-wrap expanded">
+    
+        
+            <div class="description"><p>Defines base <a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">module:'brixy.ui.SuiBuilder'~SuiBuilder</a> components.</p></div>
+        
+
+        
+            
+
+<div class="method-block">
+
+
+
+
+<div class="method-extended">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line4">line 4</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+		
+		<table class="methods">
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".addEventListener"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>addEventListener <span class="signature">(eventName, callback, capturePhase)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Registers an event listener to the current element.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">eventName</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Event name.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">callback</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Event handler.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">capturePhase</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>When true, the handler is called only in the capturing phase of the event propagation. Default is false. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if callback is not a function.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line55">line 55</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".align"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>align <span class="signature">(alignment)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>The alignment style for current element.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">alignment</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Alignment style.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line70">line 70</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".alignChildren"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>alignChildren <span class="signature">(alignment)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>The alignment style for children elements.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">alignment</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Alignment style.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if element doesn't support alignChildren property.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line81">line 81</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".button"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>button <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Button element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line290">line 290</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".checkbox"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>checkbox <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Checkbox element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line301">line 301</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".closeOnClick"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>closeOnClick <span class="signature">(validate<span class="signature-attributes">opt</span>, result<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds onClick event that closes a window with the result code. 
+If validate is true, it runs a builder validate() method. Window remains open if validation failed.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">validate</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Validate the controls before closing.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">result</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Code returned by window. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line96">line 96</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".column"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>column <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Group with orientation 'column'.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line310">line 310</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".columnPanel"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>columnPanel <span class="signature">(title<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Panel with orientation 'column'.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">title</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Panel title. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line321">line 321</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".counter"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>counter <span class="signature">(counter)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Sets builder counter. It helps to identify builder method.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">counter</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Your number.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line118">line 118</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".doubleAmps"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>doubleAmps <span class="signature">(property<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Doubles ampersands. 
+ScriptUI fields use ampersand to marking a shortcut character.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">property</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'text'
+                
+                </td>
+            
+
+            <td class="description last"><p>Property name. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line130">line 130</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".dropDownList"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>dropDownList <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new DropDownList element. Specify items as the array parameter or use item() for adding further items.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Array of items or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line333">line 333</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".editText"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>editText <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new EditText element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line344">line 344</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".end"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>end <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Sets the parent container as the current container.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line141">line 141</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".execute"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>execute <span class="signature">(callback)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Immediately executes the callback method.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">callback</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Custom method (.execute(callback, par1, par2)). Keyword 'this' references the builder.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">pars, ...</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                    &lt;repeatable><br>
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Additional parameters will be passed to callback method. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if callback is not a function.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line159">line 159</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".flashPlayer"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>flashPlayer <span class="signature">(resource<span class="signature-attributes">opt</span>, file<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new FlashPlayer element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">File</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Resource string or file path or File to load. (optional)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">file</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">File</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>File path or File to load. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line356">line 356</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".group"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>group <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Group element.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Creation properties. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line380">line 380</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".iconButton"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>iconButton <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new IconButton element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">File</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+|
+
+<span class="param-type">ScriptUIImage</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>IconButton resource string or image path or Array|ScriptUIImage of the 4-state button images. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line391">line 391</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".id"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>id <span class="signature">(id)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Saves the current element into SuiBuilder's repository.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">id</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>ID of this element.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception on error.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line173">line 173</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".image"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>image <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Image element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">File</span>
+|
+
+<span class="param-type">ScriptUIImage</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Image resource string or image file|path. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line417">line 417</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".item"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>item <span class="signature">(text, index<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new item to the ListBox, DropDownList or TreeView.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">text</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text of this item or array of strings for the columns of multicolumn ListBox row.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">index</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>The index of this item in the list of items. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if element doesn't have 'items' property.</p>
+	</div>
+
+</li>
+
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if ListBox doesn't have enough columns.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line442">line 442</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".labelFor"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>labelFor <span class="signature">(id)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds a click event listener that activates a target element.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">id</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>ID of target element.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line188">line 188</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".listBox"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>listBox <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new ListBox.<br>Specify lines as the array parameter or use item() for adding further lines.<br>In case of multiline ListBox specify the column titles as the array parameter. Use item() for adding new line. Use subItem() for setting of the item cell.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Resource string or array of lines or array of column titles for the multicolumn ListBox. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line476">line 476</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".nodeItem"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>nodeItem <span class="signature">(text, index<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new node item into the TreeView.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">text</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text of this item.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">index</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>The index of this node in the list of items (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if element doesn't have 'items' property.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line504">line 504</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".panel"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>panel <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Panel element.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line520">line 520</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".progressBar"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>progressBar <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Progressbar element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line531">line 531</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".radioButton"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>radioButton <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new RadioButton element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line542">line 542</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".row"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>row <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Group with orientation 'row'.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line551">line 551</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".rowPanel"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>rowPanel <span class="signature">(title<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Panel with orientation 'row'.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">title</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Panel title. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line562">line 562</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".scrollbar"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>scrollbar <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Scrollbar element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line574">line 574</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".set"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>set <span class="signature">(property, value<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Sets the property/properties of the current element.
+Does not check if this property exists in the element.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">property</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Property name or Object of the property name-value pairs.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">value</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Ignored if property is Object. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line210">line 210</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".showWindow"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>showWindow <span class="signature">(position<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Shows the window.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">position</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>The window position. Supported only 'center'. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if Window doesn't exist.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line227">line 227</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".slider"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>slider <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Slider element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line585">line 585</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".stack"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>stack <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Group with orientation 'stack'.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line595">line 595</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".stackPanel"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>stackPanel <span class="signature">(title<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Panel with orientation 'stack'.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">title</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Panel title. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line606">line 606</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".staticText"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>staticText <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new StaticText element.<br>Element component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line618">line 618</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".subItem"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>subItem <span class="signature">(index, text, image<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Sets the subitem of the multicolumn ListBox item.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">index</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Index of the subitem. Note: subitem[0] is the second item of the ScriptUI ListBox row.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">text</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text of this subitem.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">image</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">File</span>
+|
+
+<span class="param-type">ScriptUIImage</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Image of this subitem. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if element doesn't have 'item' property.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line252">line 252</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".tab"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>tab <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new Tab element.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line629">line 629</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".tabbedPanel"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>tabbedPanel <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new TabbedPanel element.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Text property or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line640">line 640</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".treeView"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>treeView <span class="signature">(resource<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Adds new TreeView element.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">resource</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Array of items or resource specification. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line651">line 651</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".validator"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>validator <span class="signature">(callback)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Sets the validation method on the current element.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">callback</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Validator method.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">args, ...</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                    &lt;repeatable><br>
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Additional arguments will be passed to the callback method. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if a validator cannot be set.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line273">line 273</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id=".window"><a href="#" class="toggler"></a> <span class="type-signature">(static) </span>window <span class="signature">(type, title<span class="signature-attributes">opt</span>, bounds<span class="signature-attributes">opt</span>, properties<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Creates new window with the standard ScriptUI Window parameters.
+Window is the base element and it is only a single Window element in each SuiBuilder instance.<br>Container component.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">type</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Window type: 'window'|'palette'|'dialog'.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">title</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Window title. (optional)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">bounds</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Bounds</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Position and size of the window. (optional)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">properties</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Creation-only properties. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">Error</span>
+
+: 
+	<p>Exception if Window is not the first element in this builder.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_ui_components_base.jsxinc.html">modules/ui/components/base.jsxinc</a> - <a href="modules_ui_components_base.jsxinc.html#line667">line 667</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+        </table>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+					</div>
+				</div>
+				<div id="side-column" class="pure-u-1-1 pure-u-md-1-3">
+					<div class="pad-box">
+						<div class="side-menu-wrap">
+							<div class="pure-menu side-menu"><span class="pure-menu-heading">Modules</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="module-_brixy.debug.callStack_.html">'brixy.debug.callStack'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.dump_.html">'brixy.debug.dump'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.helpers_.html">'brixy.debug.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_.html">'brixy.debug.Summary'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.systemInfo_.html">'brixy.debug.systemInfo'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_.html">'brixy.debug.Timer'</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_.html">'brixy.di.Container'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_.html">'brixy.err.DebugReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.helpers_.html">'brixy.err.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_.html">'brixy.err.ReleaseReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_.html">'brixy.err.SilentLog'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.reflection_.html">'brixy.es.reflection'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.typedXML_.html">'brixy.es.typedXML'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.types_.html">'brixy.es.types'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_.html">'brixy.fs.FileLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.filesystem_.html">'brixy.fs.filesystem'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_.html">'brixy.mvc.Application'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_.html">'brixy.mvc.AppManager'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_.html">'brixy.mvc.Controller'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_.html">'brixy.mvc.Router'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_.html">'brixy.mvc.View'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.html">'brixy.tester.Assert'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_.html">'brixy.tester.It'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_.html">'brixy.tester.Job'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_.html">'brixy.tester.JobLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.report_.html">'brixy.tester.report'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_.html">'brixy.tester.Result'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_.html">'brixy.tester.Section'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_.html">'brixy.tester.Specials'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.base_.html">'brixy.ui.components.base'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.colorize_.html">'brixy.ui.components.colorize'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.debug_.html">'brixy.ui.components.debug'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.safeHandlers_.html">'brixy.ui.components.safeHandlers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.helpers_.html">'brixy.ui.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_.html">'brixy.ui.SuiBuilder'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.html">'brixy.ui.SuiValidator'</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Classes</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.error.ErrorChain.html">BX.error.ErrorChain</a></li><li class="pure-menu-item"><a href="BX.error.ErrorItem.html">BX.error.ErrorItem</a></li><li class="pure-menu-item"><a href="BX.module.Module.html">BX.module.Module</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_-Summary.html">'brixy.debug.Summary'~Summary</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_-Timer.html">'brixy.debug.Timer'~Timer</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_-Container.html">'brixy.di.Container'~Container</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_-DebugReporter.html">'brixy.err.DebugReporter'~DebugReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_-ReleaseReporter.html">'brixy.err.ReleaseReporter'~ReleaseReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_-SilentLog.html">'brixy.err.SilentLog'~SilentLog</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_-FileLoader.html">'brixy.fs.FileLoader'~FileLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_-Application.html">'brixy.mvc.Application'~Application</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_-AppManager.html">'brixy.mvc.AppManager'~AppManager</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_-Controller.html">'brixy.mvc.Controller'~Controller</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Route.html">'brixy.mvc.Router'~Route</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Router.html">'brixy.mvc.Router'~Router</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_-View.html">'brixy.mvc.View'~View</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_-Rating.html">'brixy.tester.Assert'~Rating</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_-It.html">'brixy.tester.It'~It</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-AbortException.html">'brixy.tester.Job'~AbortException</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-Job.html">'brixy.tester.Job'~Job</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_-JobLoader.html">'brixy.tester.JobLoader'~JobLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Result.html">'brixy.tester.Result'~Result</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Value.html">'brixy.tester.Result'~Value</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_-Section.html">'brixy.tester.Section'~Section</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_-Specials.html">'brixy.tester.Specials'~Specials</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_-Tester.html">'brixy.tester.Tester'~Tester</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">'brixy.ui.SuiBuilder'~SuiBuilder</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_-SuiValidator.html">'brixy.ui.SuiValidator'~SuiValidator</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Namespaces</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.html">BX</a></li><li class="pure-menu-item"><a href="BX.apps.html">BX.apps</a></li><li class="pure-menu-item"><a href="BX.debug.html">BX.debug</a></li><li class="pure-menu-item"><a href="BX.di.html">BX.di</a></li><li class="pure-menu-item"><a href="BX.error.html">BX.error</a></li><li class="pure-menu-item"><a href="BX.module.html">BX.module</a></li><li class="pure-menu-item"><a href="BX.use.html">BX.use</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.Asserts.html">'brixy.tester.Assert'.Asserts</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.Validators.html">'brixy.ui.SuiValidator'.Validators</a></li></ul></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>API Reference generated by <a href="https://github.com/jsdoc3/jsdoc" target="_blank">JSDoc 3.4.3</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script> prettyPrint(); </script>
+	<script src="scripts/linenumber.js"> </script>
+	<script src="scripts/jquery.js"> </script>
+	<script src="scripts/scripts.js"> </script>
+</body>
+</html>

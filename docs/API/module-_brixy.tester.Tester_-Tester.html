@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Class: Tester | Brixy API</title>
+
+	<script src="scripts/prettify/prettify.js"> </script>
+	<script src="scripts/prettify/lang-css.js"> </script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	
+	<link rel="stylesheet" href="styles/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="styles/grids-responsive-min.css">
+<!--<![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../Guide/index.html">User Guide</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="./index.html">API reference</a>
+		</div>
+		
+		<div class="page">
+			<div class="pure-g">
+				<div id="main-column" class="pure-u-1-1 pure-u-md-2-3">
+					<div class="pad-box">
+						<a href="#" id="toggle-column">&#x25ba;</a>
+						<h1 class="page-title">Class: Tester</h1>
+						
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+            <span class="ancestors"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a>~</span>
+        
+        Tester
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview toggle-wrap expanded">
+    
+        
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="Tester"><a href="#" class="toggler"></a> <span class="type-signature"></span>new Tester <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Tester object. Default behavior is defined by the <code>setConfig()</code> and <code>getConfig()</code> methods.  </p>
+<table>
+<thead>
+<tr>
+<th>Predefined values</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dialogOnFailure</td>
+<td>true</td>
+<td>Shows the report dialog when test fails.</td>
+</tr>
+<tr>
+<td>comparisonDepth</td>
+<td>10</td>
+<td>Default nesting level of the comparison of the objects. Used by the job assert methods.</td>
+</tr>
+<tr>
+<td>assertLibrary</td>
+<td>'brixy.tester.It'</td>
+<td>Default assert library is specified by the constructor or module name.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line32">line 32</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+		
+		<table class="methods">
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="addJob"><a href="#" class="toggler"></a> <span class="type-signature"></span>addJob <span class="signature">(name<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="module-_brixy.tester.Job_-Job.html">module:'brixy.tester.Job'~Job</a>}</span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Creates new job.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">name</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Job name.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type"><a href="module-_brixy.tester.Job_-Job.html">module:'brixy.tester.Job'~Job</a></span>
+
+: 
+	<p>New job.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line89">line 89</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="clearJobs"><a href="#" class="toggler"></a> <span class="type-signature"></span>clearJobs <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Removes all jobs.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line100">line 100</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="currentJob"><a href="#" class="toggler"></a> <span class="type-signature"></span>currentJob <span class="signature">()</span><span class="type-signature"> &rarr; {<a href="module-_brixy.tester.Job_-Job.html">module:'brixy.tester.Job'~Job</a>}</span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Gets current job.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+<ul>
+    <li>
+
+    <div class="param-desc">
+    
+        
+<span class="param-type"><a href="module-_brixy.tester.Job_-Job.html">module:'brixy.tester.Job'~Job</a></span>
+
+
+    
+    </div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line109">line 109</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="errorReport"><a href="#" class="toggler"></a> <span class="type-signature"></span>errorReport <span class="signature">(e)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Shows a dialog with error report.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">e</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Error object or message.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line145">line 145</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="getConfig"><a href="#" class="toggler"></a> <span class="type-signature"></span>getConfig <span class="signature">(name)</span><span class="type-signature"> &rarr; {*}</span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Gets the config value.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">name</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Name of the option.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+<ul>
+    <li>
+
+	<div class="param-desc">
+	
+<span class="param-type">*</span>
+
+: 
+	<p>Config value or undefined.</p>
+	</div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line77">line 77</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="report"><a href="#" class="toggler"></a> <span class="type-signature"></span>report <span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Shows a dialog with tester result.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line137">line 137</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="runJobFiles"><a href="#" class="toggler"></a> <span class="type-signature"></span>runJobFiles <span class="signature">(folder, fileFilter<span class="signature-attributes">opt</span>, folderFilter<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Runs all test files in the folder. Default allowed file names: *job.(jsx|jsxinc|js).</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">folder</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">Folder</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Full path to a job file or folder with job files.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">fileFilter</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Callback filters the files in the job folders: <code>function(path){return boolean;}</code>. By default, accepts all files whose name ends with <strong>job.jsx</strong> / <strong>job.jsxinc</strong> / <strong>job.js</strong>. (optional)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">folderFilter</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Callback filters the job folders: <code>function(path){return boolean;}</code>. By default, accepts all folders and subfolders. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+    <div class="param-desc">
+    
+        <p>Exception on error.</p>
+    
+    </div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line124">line 124</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="setConfig"><a href="#" class="toggler"></a> <span class="type-signature"></span>setConfig <span class="signature">(nameOrObject, value<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Changes default config options or adds custom values.<br>All options are available in job files via <code>tester.getConfig('something')</code>.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">nameOrObject</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Name of the config option. If object is given, all key/value pairs are set to config and <code>value</code> parameter is ignored.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">value</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Value of the config option. (optional)</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+    <li>
+
+    <div class="param-desc">
+    
+        <p>Exception</p>
+    
+    </div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line58">line 58</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+			<tr>
+				<td class="method-row toggle-wrap">
+	            
+
+<div class="method-block">
+
+
+    
+
+    <h4 class="name" id="toString"><a href="#" class="toggler"></a> <span class="type-signature"></span>toString <span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+
+    
+
+
+
+<div class="method-extended">
+
+
+<div class="description">
+    <p>Returns a string representation of the object.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+<ul>
+    <li>
+
+    <div class="param-desc">
+    
+        
+<span class="param-type">string</span>
+
+
+    
+    </div>
+
+</li>
+</ul>
+
+
+
+
+
+
+
+<table class="details-tab">
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+	<tr>
+	    <td class="tag-source">Source:</td>
+	    <td class="tag-source"><ul class="dummy"><li>
+	        <a href="modules_tester_Tester.jsxinc.html">modules/tester/Tester.jsxinc</a> - <a href="modules_tester_Tester.jsxinc.html#line49">line 49</a>
+	    </li></ul></td>
+	</tr>
+    
+
+    
+
+    
+
+    
+
+</table>
+
+
+</div>
+</div>
+
+				</td>
+			</tr>
+        
+        </table>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+					</div>
+				</div>
+				<div id="side-column" class="pure-u-1-1 pure-u-md-1-3">
+					<div class="pad-box">
+						<div class="side-menu-wrap">
+							<div class="pure-menu side-menu"><span class="pure-menu-heading">Modules</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="module-_brixy.debug.callStack_.html">'brixy.debug.callStack'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.dump_.html">'brixy.debug.dump'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.helpers_.html">'brixy.debug.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_.html">'brixy.debug.Summary'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.systemInfo_.html">'brixy.debug.systemInfo'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_.html">'brixy.debug.Timer'</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_.html">'brixy.di.Container'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_.html">'brixy.err.DebugReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.helpers_.html">'brixy.err.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_.html">'brixy.err.ReleaseReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_.html">'brixy.err.SilentLog'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.reflection_.html">'brixy.es.reflection'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.typedXML_.html">'brixy.es.typedXML'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.types_.html">'brixy.es.types'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_.html">'brixy.fs.FileLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.filesystem_.html">'brixy.fs.filesystem'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_.html">'brixy.mvc.Application'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_.html">'brixy.mvc.AppManager'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_.html">'brixy.mvc.Controller'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_.html">'brixy.mvc.Router'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_.html">'brixy.mvc.View'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.html">'brixy.tester.Assert'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_.html">'brixy.tester.It'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_.html">'brixy.tester.Job'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_.html">'brixy.tester.JobLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.report_.html">'brixy.tester.report'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_.html">'brixy.tester.Result'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_.html">'brixy.tester.Section'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_.html">'brixy.tester.Specials'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.base_.html">'brixy.ui.components.base'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.colorize_.html">'brixy.ui.components.colorize'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.debug_.html">'brixy.ui.components.debug'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.safeHandlers_.html">'brixy.ui.components.safeHandlers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.helpers_.html">'brixy.ui.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_.html">'brixy.ui.SuiBuilder'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.html">'brixy.ui.SuiValidator'</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Classes</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.error.ErrorChain.html">BX.error.ErrorChain</a></li><li class="pure-menu-item"><a href="BX.error.ErrorItem.html">BX.error.ErrorItem</a></li><li class="pure-menu-item"><a href="BX.module.Module.html">BX.module.Module</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_-Summary.html">'brixy.debug.Summary'~Summary</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_-Timer.html">'brixy.debug.Timer'~Timer</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_-Container.html">'brixy.di.Container'~Container</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_-DebugReporter.html">'brixy.err.DebugReporter'~DebugReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_-ReleaseReporter.html">'brixy.err.ReleaseReporter'~ReleaseReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_-SilentLog.html">'brixy.err.SilentLog'~SilentLog</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_-FileLoader.html">'brixy.fs.FileLoader'~FileLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_-Application.html">'brixy.mvc.Application'~Application</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_-AppManager.html">'brixy.mvc.AppManager'~AppManager</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_-Controller.html">'brixy.mvc.Controller'~Controller</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Route.html">'brixy.mvc.Router'~Route</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Router.html">'brixy.mvc.Router'~Router</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_-View.html">'brixy.mvc.View'~View</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_-Rating.html">'brixy.tester.Assert'~Rating</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_-It.html">'brixy.tester.It'~It</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-AbortException.html">'brixy.tester.Job'~AbortException</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-Job.html">'brixy.tester.Job'~Job</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_-JobLoader.html">'brixy.tester.JobLoader'~JobLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Result.html">'brixy.tester.Result'~Result</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Value.html">'brixy.tester.Result'~Value</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_-Section.html">'brixy.tester.Section'~Section</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_-Specials.html">'brixy.tester.Specials'~Specials</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_-Tester.html">'brixy.tester.Tester'~Tester</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">'brixy.ui.SuiBuilder'~SuiBuilder</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_-SuiValidator.html">'brixy.ui.SuiValidator'~SuiValidator</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Namespaces</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.html">BX</a></li><li class="pure-menu-item"><a href="BX.apps.html">BX.apps</a></li><li class="pure-menu-item"><a href="BX.debug.html">BX.debug</a></li><li class="pure-menu-item"><a href="BX.di.html">BX.di</a></li><li class="pure-menu-item"><a href="BX.error.html">BX.error</a></li><li class="pure-menu-item"><a href="BX.module.html">BX.module</a></li><li class="pure-menu-item"><a href="BX.use.html">BX.use</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.Asserts.html">'brixy.tester.Assert'.Asserts</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.Validators.html">'brixy.ui.SuiValidator'.Validators</a></li></ul></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>API Reference generated by <a href="https://github.com/jsdoc3/jsdoc" target="_blank">JSDoc 3.4.3</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script> prettyPrint(); </script>
+	<script src="scripts/linenumber.js"> </script>
+	<script src="scripts/jquery.js"> </script>
+	<script src="scripts/scripts.js"> </script>
+</body>
+</html>

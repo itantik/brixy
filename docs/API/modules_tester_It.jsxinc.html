@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Source: modules/tester/It.jsxinc | Brixy API</title>
+
+	<script src="scripts/prettify/prettify.js"> </script>
+	<script src="scripts/prettify/lang-css.js"> </script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	
+	<link rel="stylesheet" href="styles/pure-min.css">
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="styles/grids-responsive-old-ie-min.css">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="styles/grids-responsive-min.css">
+<!--<![endif]-->
+	<link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,700&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+	<div class="content">
+		<div id="header">
+			<div class="menu"><a class="button" href="../Guide/index.html">User Guide</a> <a class="button" href="#">GitHub</a></div> <a href="../index.html" class="title">Brixy</a> <a href="./index.html">API reference</a>
+		</div>
+		
+		<div class="page">
+			<div class="pure-g">
+				<div id="main-column" class="pure-u-1-1 pure-u-md-2-3">
+					<div class="pad-box">
+						<a href="#" id="toggle-column">&#x25ba;</a>
+						<h1 class="page-title">Source: modules/tester/It.jsxinc</h1>
+						
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>BX.use('brixy', 'modules/tester/Result.jsxinc');
+BX.use('brixy', 'modules/tester/Assert.jsxinc');
+BX.use('brixy', 'modules/tester/Specials.jsxinc');
+
+/**
+* @module 'brixy.tester.It'
+*/
+BX.module.define('brixy.tester.It', function() {
+	var Asserts = BX.module('brixy.tester.Assert').Asserts,
+		Specials = BX.module('brixy.tester.Specials').Me,
+		Result = BX.module('brixy.tester.Result').Me,
+		STATUS = BX.module('brixy.tester.Result').STATUS;
+	
+	/**
+	* It object.
+	* @class
+	* @alias module:'brixy.tester.It'~It
+	* @param {module:'brixy.tester.Job'~Job} job - Reference to the job instance.
+	* @param {int} [comparisonDepth=10] - Nesting level of the comparison of the objects.
+	*/
+	function It(job, comparisonDepth) {
+		this._specials = null;
+		this._job = job;
+		comparisonDepth = parseInt(comparisonDepth);
+		this._comparisonDepth = isNaN(comparisonDepth) ? 10 : comparisonDepth;
+	}
+	
+	/**
+	* Returns a string representation of the object.
+	* @method
+	* @return {string}
+	*/
+	It.prototype.toString = BX.toString;
+	
+	/**
+	* Adds new special type definition. Methods `isLike()` and `notLike()` compares own properties of tested objects. 
+	* Special types allows to define own values to be used in testing.
+	* 
+	* @example
+	* // Before using a special type definition:
+	* // test passed because Date doesn't have own properties,
+	* // but dates are different
+	* it.isLike('', new Date(), new Date(1000));
+	* 
+	* // Let's define Date as a special type:
+	* it.addSpecialType(
+	* 	Date, 
+	* 	function(val) { return val.getTime(); }, 
+	* 	function(val) { return 'Date("' + val.toLocaleString() + '")'; }
+	* );
+	* it.notLike('', new Date(), new Date(1000));
+	* it.isLike('', new Date(1000), new Date(1000));
+	* // and that we wished
+	* 
+	* @param {Function} Type - Object's constructor.
+	* @param {Function} valueCallback - `function(val){ return val.something; }` returns a value for testing.
+	* @param {Function} captionCallback - `function(val){ return val.toString(); }` returns a string to show in report dialog.
+	*/
+	It.prototype.addSpecialType = function(Type, valueCallback, captionCallback) {
+		if (!this._specials)
+			this._specials = new Specials();
+		
+		this._specials.addType(Type, valueCallback, captionCallback);
+	};
+	
+	/**
+	* Adds new special type definition.
+	* @param {Object} def - `{constr: Type, value: Function, caption: Function}`
+	* @throws Exception
+	*/
+	It.prototype.addSpecialTypeDef = function(def) {
+		try {
+			this.addSpecialType(def.constr, def.value, def.caption);
+		}
+		catch (e) {
+			throw BX.error('brixy.tester.It.addSpecialTypeDef()', Error('Cannot add new special type definition.'), e);
+		}
+	};
+	
+	/*
+	* Creates a result of the test, sends it to the job.
+	* @param {module:'brixy.tester.Assert'~Rating} rating
+	* @param {string} testName
+	* @param {string} descO - Description of the successful test.
+	* @param {string} descF - Description of the failed test.
+	*/
+	It.prototype._evaluate = function(rating, testName, descO, descF) {
+		var description = '';
+		
+		switch (rating.status) {
+		case STATUS.OK:
+			description = (descO + '') || 'OK';
+			break;
+		case STATUS.FAILED:
+			description = (descF + '') || 'Failed';
+			break;
+		case STATUS.SKIPPED:
+			description = 'Incomplete test.';
+			break;
+		}
+		
+		if (rating.note)
+			description = description + ' ' + rating.note;
+		description = description.replace('%a', rating.actual.caption).replace('%e', rating.expected.caption);
+		
+		var result = new Result(rating.status, testName, description);
+		this._job.onResult(result, rating.actual, rating.expected, rating.depth);
+	};
+	
+
+	/* Test methods */
+	
+	/**
+	* Tests if values are identical.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.is = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.is(actual, expected), 
+			name || 'is',
+			'%a is %e.',
+			'%a should be %e.'
+		);
+	};
+	
+	/**
+	* Tests if values are not identical.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.isNot = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isNot(actual, expected), 
+			name || 'isNot',
+			'%a is not %e.',
+			'%a should not be %e.'
+		);
+	};
+	
+	/**
+	* Tests if actual value is member of the expected value.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.isMember = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isMember(actual, expected), 
+			name || 'is a member',
+			'%a is a member of the %e.',
+			'%a should be a member of the %e.'
+		);
+	};
+	
+	/**
+	* Tests if actual value is not member of the expected value.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	*/
+	It.prototype.notMember = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.notMember(actual, expected), 
+			name || 'is not a member',
+			'%a is not a member of the %e.',
+			'%a should not be a member of the %e.'
+		);
+	};
+	
+	/**
+	* Tests if values are equal.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} [depth=10] - Nesting level of the comparison of the objects.
+	*/
+	It.prototype.isLike = function(name, actual, expected, depth) {
+		depth = toDepth(depth, this._comparisonDepth);
+		this._evaluate(
+			Asserts.isLike(actual, expected, depth, this._specials), 
+			name || 'isLike',
+			'%a is like a %e. Max comparison depth: ' + depth + '.',
+			'%a should be like a %e. Max comparison depth: ' + depth + '.'
+		);
+	};
+	
+	/**
+	* Tests if values are not equal.
+	* @param {string} name
+	* @param {*} actual
+	* @param {*} expected
+	* @param {int} [depth=10] - Nesting level of the comparison of the objects.
+	*/
+	It.prototype.notLike = function(name, actual, expected, depth) {
+		depth = toDepth(depth, this._comparisonDepth);
+		this._evaluate(
+			Asserts.notLike(actual, expected, depth, this._specials), 
+			name || 'notLike',
+			'%a is not like a %e. Max comparison depth: ' + depth + '.',
+			'%a should not be like a %e. Max comparison depth: ' + depth + '.'
+		);
+	};
+	
+	/**
+	* Tests if actual function throws exception.
+	* @param {string} name
+	* @param {function} actual
+	* @param {*} [expected]
+	*/
+	It.prototype.isThrown = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.isThrown(actual, expected), 
+			name || 'isThrown',
+			'%a throws exception' + (expected ? ': ' + expected : '.'),
+			'%a should throw exception' + (expected ? ': ' + expected : '.')
+		);
+	};
+	
+	/**
+	* Tests if actual function doesn't throw exception.
+	* @param {string} name
+	* @param {function} actual
+	* @param {*} [expected]
+	*/
+	It.prototype.notThrown = function(name, actual, expected) {
+		this._evaluate(
+			Asserts.notThrown(actual, expected), 
+			name || 'notThrown',
+			'%a does not throw exception' + (expected ? ': ' + expected : '.'),
+			'%a should not throw exception' + (expected ? ': ' + expected : '.')
+		);
+	};
+
+	function toDepth(depth, defDepth) {
+		depth = parseInt(depth);
+		if (isNaN(depth)) {
+			depth = defDepth;
+		}
+		return (depth &lt; 0) ? 0 : depth;
+	}
+	
+	
+	// publish
+	return {
+		/** 
+		* It class.
+		* @memberOf module:'brixy.tester.It'
+		* @type {module:'brixy.tester.It'~It}
+		*/
+		Me: It
+	};
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+					</div>
+				</div>
+				<div id="side-column" class="pure-u-1-1 pure-u-md-1-3">
+					<div class="pad-box">
+						<div class="side-menu-wrap">
+							<div class="pure-menu side-menu"><span class="pure-menu-heading">Modules</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="module-_brixy.debug.callStack_.html">'brixy.debug.callStack'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.dump_.html">'brixy.debug.dump'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.helpers_.html">'brixy.debug.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_.html">'brixy.debug.Summary'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.systemInfo_.html">'brixy.debug.systemInfo'</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_.html">'brixy.debug.Timer'</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_.html">'brixy.di.Container'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_.html">'brixy.err.DebugReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.helpers_.html">'brixy.err.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_.html">'brixy.err.ReleaseReporter'</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_.html">'brixy.err.SilentLog'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.reflection_.html">'brixy.es.reflection'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.typedXML_.html">'brixy.es.typedXML'</a></li><li class="pure-menu-item"><a href="module-_brixy.es.types_.html">'brixy.es.types'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_.html">'brixy.fs.FileLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.filesystem_.html">'brixy.fs.filesystem'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_.html">'brixy.mvc.Application'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_.html">'brixy.mvc.AppManager'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_.html">'brixy.mvc.Controller'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_.html">'brixy.mvc.Router'</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_.html">'brixy.mvc.View'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.html">'brixy.tester.Assert'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_.html">'brixy.tester.It'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_.html">'brixy.tester.Job'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_.html">'brixy.tester.JobLoader'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.report_.html">'brixy.tester.report'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_.html">'brixy.tester.Result'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_.html">'brixy.tester.Section'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_.html">'brixy.tester.Specials'</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_.html">'brixy.tester.Tester'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.base_.html">'brixy.ui.components.base'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.colorize_.html">'brixy.ui.components.colorize'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.debug_.html">'brixy.ui.components.debug'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.components.safeHandlers_.html">'brixy.ui.components.safeHandlers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.helpers_.html">'brixy.ui.helpers'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_.html">'brixy.ui.SuiBuilder'</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.html">'brixy.ui.SuiValidator'</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Classes</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.error.ErrorChain.html">BX.error.ErrorChain</a></li><li class="pure-menu-item"><a href="BX.error.ErrorItem.html">BX.error.ErrorItem</a></li><li class="pure-menu-item"><a href="BX.module.Module.html">BX.module.Module</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Summary_-Summary.html">'brixy.debug.Summary'~Summary</a></li><li class="pure-menu-item"><a href="module-_brixy.debug.Timer_-Timer.html">'brixy.debug.Timer'~Timer</a></li><li class="pure-menu-item"><a href="module-_brixy.di.Container_-Container.html">'brixy.di.Container'~Container</a></li><li class="pure-menu-item"><a href="module-_brixy.err.DebugReporter_-DebugReporter.html">'brixy.err.DebugReporter'~DebugReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.ReleaseReporter_-ReleaseReporter.html">'brixy.err.ReleaseReporter'~ReleaseReporter</a></li><li class="pure-menu-item"><a href="module-_brixy.err.SilentLog_-SilentLog.html">'brixy.err.SilentLog'~SilentLog</a></li><li class="pure-menu-item"><a href="module-_brixy.fs.FileLoader_-FileLoader.html">'brixy.fs.FileLoader'~FileLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Application_-Application.html">'brixy.mvc.Application'~Application</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.AppManager_-AppManager.html">'brixy.mvc.AppManager'~AppManager</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Controller_-Controller.html">'brixy.mvc.Controller'~Controller</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Route.html">'brixy.mvc.Router'~Route</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.Router_-Router.html">'brixy.mvc.Router'~Router</a></li><li class="pure-menu-item"><a href="module-_brixy.mvc.View_-View.html">'brixy.mvc.View'~View</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_-Rating.html">'brixy.tester.Assert'~Rating</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.It_-It.html">'brixy.tester.It'~It</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-AbortException.html">'brixy.tester.Job'~AbortException</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Job_-Job.html">'brixy.tester.Job'~Job</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.JobLoader_-JobLoader.html">'brixy.tester.JobLoader'~JobLoader</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Result.html">'brixy.tester.Result'~Result</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Result_-Value.html">'brixy.tester.Result'~Value</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Section_-Section.html">'brixy.tester.Section'~Section</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Specials_-Specials.html">'brixy.tester.Specials'~Specials</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Tester_-Tester.html">'brixy.tester.Tester'~Tester</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiBuilder_-SuiBuilder.html">'brixy.ui.SuiBuilder'~SuiBuilder</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_-SuiValidator.html">'brixy.ui.SuiValidator'~SuiValidator</a></li></ul></div><div class="pure-menu side-menu"><span class="pure-menu-heading">Namespaces</span><ul class="pure-menu-list"><li class="pure-menu-item"><a href="BX.html">BX</a></li><li class="pure-menu-item"><a href="BX.apps.html">BX.apps</a></li><li class="pure-menu-item"><a href="BX.debug.html">BX.debug</a></li><li class="pure-menu-item"><a href="BX.di.html">BX.di</a></li><li class="pure-menu-item"><a href="BX.error.html">BX.error</a></li><li class="pure-menu-item"><a href="BX.module.html">BX.module</a></li><li class="pure-menu-item"><a href="BX.use.html">BX.use</a></li><li class="pure-menu-item"><a href="module-_brixy.tester.Assert_.Asserts.html">'brixy.tester.Assert'.Asserts</a></li><li class="pure-menu-item"><a href="module-_brixy.ui.SuiValidator_.Validators.html">'brixy.ui.SuiValidator'.Validators</a></li></ul></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="pure-g">
+				<div class="pure-u-1-1">
+					<h3>Brixy</h3>
+					<p>Version 1.0.0.</p>
+					<p>Extend Script module system and MVC framework.</p>
+					<p>&copy; 2015 - 2017, Stanislav Antos</p>
+					<p>API Reference generated by <a href="https://github.com/jsdoc3/jsdoc" target="_blank">JSDoc 3.4.3</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script> prettyPrint(); </script>
+	<script src="scripts/linenumber.js"> </script>
+	<script src="scripts/jquery.js"> </script>
+	<script src="scripts/scripts.js"> </script>
+</body>
+</html>
