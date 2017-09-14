@@ -1,4 +1,4 @@
-/Doc-source/api/node_modules
-/Doc-source/guide/node_modules
+/docs-source/api/node_modules
+/docs-source/guide/node_modules
 /Tools/Mixer/templates/presets.xml
 /.idea/
