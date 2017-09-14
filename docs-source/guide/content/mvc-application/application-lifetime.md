@@ -67,6 +67,6 @@ Events are called via `BX.apps.processEvent(event, data)`[API](API_LINK/module-_
 
 ## The end of the application
 
-Standard script ends when the last application request are finished.
+Standard script ends when the last application request is finished.
 
 Script running in the persistent Extend Script engine remains alive for the duration of the Adobe application. Application can process requests and events all this time.

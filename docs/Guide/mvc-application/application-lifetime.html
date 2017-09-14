@@ -5,7 +5,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<title>Application lifetime | Brixy</title>
-	
+
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
+
 	<meta name="Description" content="Brixy framework is Extend Script module system and MVC framework bundled with useful development tools.">
 	
 	<link rel="stylesheet" href="../css/pure-min.css">
@@ -164,7 +168,7 @@
 <p>Application <strong>events</strong> are intended for inter-application communication. Script can even publish a method for calling application events from the outside world, e.g. from CEP application.</p>
 <p>Events are called via <code>BX.apps.processEvent(event, data)</code><a class="api-link" href="../../API/module-_brixy.mvc.AppManager_-AppManager.html#processEvent">API</a> method. Application manager sends the event to all applications that listens this event.</p>
 <h2 id="the-end-of-the-application">The end of the application</h2>
-<p>Standard script ends when the last application request are finished.</p>
+<p>Standard script ends when the last application request is finished.</p>
 <p>Script running in the persistent Extend Script engine remains alive for the duration of the Adobe application. Application can process requests and events all this time.</p>
 
 						<p class="edited">Edited: 2017/09/14</p>
