@@ -2,7 +2,7 @@
 title: Application lifetime
 draft: false
 order: 2
-edited: 2016/11/26
+edited: 2017/09/14
 ---
 ## Birth of application
 
@@ -11,6 +11,8 @@ Applications are born in the _MyApp/config.jsxinc_ file in form of the configura
 Script may contain more applications.
 
 ## Doing jobs
+
+![Application lifetime](images/lifetime.png)
 
 Application receives tasks in the form of requests. **Request** is usually a string that is sent via `BX.apps.processRequest(id, request)`[API](API_LINK/module-_brixy.mvc.AppManager_-AppManager.html#processRequest) method to the application with this `id`.
 

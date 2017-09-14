@@ -122,6 +122,7 @@
 <p>Applications are born in the <em>MyApp/config.jsxinc</em> file in form of the configuration object that is passed to the application manager. It si method <code>BX.apps.add(config)</code><a class="api-link" href="../../API/module-_brixy.mvc.AppManager_-AppManager.html#add">API</a>, where <code>BX.apps</code> is instance of the <code>AppManager</code><a class="api-link" href="../../API/module-_brixy.mvc.AppManager_-AppManager.html">API</a> class, <code>config</code> is an object according to the <code>Application</code><a class="api-link" href="../../API/module-_brixy.mvc.Application_-Application.html">API</a> specification and may additionally contain <code>autorun</code>, <code>application</code> and <code>id</code> property.</p>
 <p>Script may contain more applications.</p>
 <h2 id="doing-jobs">Doing jobs</h2>
+<p><img src="images/lifetime.png" alt="Application lifetime"></p>
 <p>Application receives tasks in the form of requests. <strong>Request</strong> is usually a string that is sent via <code>BX.apps.processRequest(id, request)</code><a class="api-link" href="../../API/module-_brixy.mvc.AppManager_-AppManager.html#processRequest">API</a> method to the application with this <code>id</code>.</p>
 <p>If application configuration contains the <code>autorun</code> property, application manager immediately initializes this application and sends <code>autorun</code> request.</p>
 <h2 id="processing-of-the-request">Processing of the request</h2>
@@ -166,7 +167,7 @@
 <p>Standard script ends when the last application request are finished.</p>
 <p>Script running in the persistent Extend Script engine remains alive for the duration of the Adobe application. Application can process requests and events all this time.</p>
 
-						<p class="edited">Edited: 2016/11/26</p>
+						<p class="edited">Edited: 2017/09/14</p>
 					</div>
 				</div>
 			</div>
@@ -176,11 +177,11 @@
 				<div class="pure-u-1-1 pure-u-md-1-2">
 						<h3>Recently edited chapters</h3>
 						<ul>
+							<li><span class="date">2017/09/14</span> <a href="application-lifetime.html">Application lifetime</a></li>
 							<li><span class="date">2017/09/10</span> <a href="../debugging/debug-tools.html">Debug tools</a></li>
 							<li><span class="date">2017/09/10</span> <a href="../debugging/error-reporting.html">Error reporting</a></li>
-							<li><span class="date">2017/08/16</span> <a href="../tools/tester.html">Tester</a></li>
 							<li><span class="date">2017/08/16</span> <a href="../tools/mixer.html">Mixer</a></li>
-							<li><span class="date">2017/06/16</span> <a href="../guides/dependency-injection/standalone-usage.html">Dependency injection / Standalone usage</a></li>
+							<li><span class="date">2017/08/16</span> <a href="../tools/tester.html">Tester</a></li>
 						</ul>
 				</div>
 				<div class="pure-u-1-1 pure-u-md-1-2">
